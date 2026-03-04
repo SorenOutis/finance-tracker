@@ -4,6 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\Income;
 use App\Models\Expense;
+use App\Models\Budget;
+use App\Models\FinancialGoal;
+use App\Models\RecurringTransaction;
 use Inertia\Inertia;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -31,40 +34,31 @@ class DashboardController extends Controller
         $totalExpenses = $expenses->sum('amount');
         $netIncome = $totalIncome - $totalExpenses;
 
-        // Get yearly data for stats
+        // Yearly data
         $yearStart = $selectedDate->clone()->startOfYear();
         $yearEnd = $selectedDate->clone()->endOfYear();
 
         $yearlyIncomes = Income::where('user_id', $user->id)
             ->whereBetween('date', [$yearStart, $yearEnd])
             ->sum('amount');
-
         $yearlyExpenses = Expense::where('user_id', $user->id)
             ->whereBetween('date', [$yearStart, $yearEnd])
             ->sum('amount');
-
         $netWorth = $yearlyIncomes - $yearlyExpenses;
 
-        // Previous month data for month-over-month comparison
+        // Previous month data for MoM comparison
         $prevStart = $selectedDate->clone()->subMonth()->startOfMonth();
         $prevEnd = $selectedDate->clone()->subMonth()->endOfMonth();
+        $prevMonthIncome = Income::where('user_id', $user->id)->whereBetween('date', [$prevStart, $prevEnd])->sum('amount');
+        $prevMonthExpense = Expense::where('user_id', $user->id)->whereBetween('date', [$prevStart, $prevEnd])->sum('amount');
 
-        $prevMonthIncome = Income::where('user_id', $user->id)
-            ->whereBetween('date', [$prevStart, $prevEnd])
-            ->sum('amount');
-
-        $prevMonthExpense = Expense::where('user_id', $user->id)
-            ->whereBetween('date', [$prevStart, $prevEnd])
-            ->sum('amount');
-
-        // Daily spending for sparkline chart
+        // Daily spending for sparkline
         $daysInMonth = $startOfMonth->daysInMonth;
         $dailySpending = [];
         $expensesByDay = $expenses->groupBy(function ($e) {
             $date = $e->date instanceof Carbon ? $e->date : Carbon::parse($e->date);
             return (int) $date->format('d');
         });
-
         for ($d = 1; $d <= $daysInMonth; $d++) {
             $dailySpending[] = [
                 'day' => $d,
@@ -84,6 +78,93 @@ class DashboardController extends Controller
             ];
         })->sortByDesc('amount')->values()->all();
 
+        // Top expense spotlight
+        $topExpense = $expenses->sortByDesc('amount')->first();
+        $topExpenseData = $topExpense ? [
+            'amount' => (float) $topExpense->amount,
+            'category' => $topExpense->category ?? 'Uncategorized',
+            'description' => $topExpense->description,
+            'date' => $topExpense->date instanceof Carbon
+                ? $topExpense->date->format('m/d/Y')
+                : Carbon::parse($topExpense->date)->format('m/d/Y'),
+        ] : null;
+
+        // Transaction stats
+        $incomeCount = $incomes->count();
+        $expenseCount = $expenses->count();
+        $totalTransactions = $incomeCount + $expenseCount;
+        $avgExpense = $expenseCount > 0 ? $totalExpenses / $expenseCount : 0;
+
+        // Recent activity (merged timeline, last 10)
+        $recentActivity = collect();
+        foreach ($incomes->take(10) as $income) {
+            $date = $income->date instanceof Carbon ? $income->date : Carbon::parse($income->date);
+            $recentActivity->push([
+                'id' => $income->id,
+                'type' => 'income',
+                'amount' => (float) $income->amount,
+                'category' => $income->category,
+                'description' => $income->description,
+                'date' => $date->format('m/d/Y'),
+                'timestamp' => $date->timestamp,
+            ]);
+        }
+        foreach ($expenses->take(10) as $expense) {
+            $date = $expense->date instanceof Carbon ? $expense->date : Carbon::parse($expense->date);
+            $recentActivity->push([
+                'id' => $expense->id,
+                'type' => 'expense',
+                'amount' => (float) $expense->amount,
+                'category' => $expense->category,
+                'description' => $expense->description,
+                'date' => $date->format('m/d/Y'),
+                'timestamp' => $date->timestamp,
+            ]);
+        }
+        $recentActivity = $recentActivity->sortByDesc('timestamp')->take(8)->values()->all();
+
+        // Spending streak: consecutive months with positive savings
+        $streakCount = 0;
+        $checkDate = $selectedDate->clone();
+        for ($i = 0; $i < 12; $i++) {
+            $mStart = $checkDate->clone()->startOfMonth();
+            $mEnd = $checkDate->clone()->endOfMonth();
+            $mIncome = Income::where('user_id', $user->id)->whereBetween('date', [$mStart, $mEnd])->sum('amount');
+            $mExpense = Expense::where('user_id', $user->id)->whereBetween('date', [$mStart, $mEnd])->sum('amount');
+
+            if ($mIncome > $mExpense && ($mIncome > 0 || $mExpense > 0)) {
+                $streakCount++;
+            } else {
+                break;
+            }
+            $checkDate->subMonth();
+        }
+
+        // YTD data for year progress
+        $ytdIncome = Income::where('user_id', $user->id)->whereBetween('date', [$yearStart, $selectedDate->clone()->endOfDay()])->sum('amount');
+        $ytdExpense = Expense::where('user_id', $user->id)->whereBetween('date', [$yearStart, $selectedDate->clone()->endOfDay()])->sum('amount');
+
+        // Days with no spending this month
+        $daysNoSpending = collect($dailySpending)->filter(fn($d) => $d['amount'] == 0 && $d['day'] <= min($selectedDate->day, $daysInMonth))->count();
+
+        // Budget
+        $budget = Budget::where('user_id', $user->id)->first();
+
+        // Financial goals
+        $financialGoals = FinancialGoal::where('user_id', $user->id)->orderBy('created_at', 'desc')->get();
+
+        // Recurring transactions & upcoming bills
+        $recurringTransactions = RecurringTransaction::where('user_id', $user->id)
+            ->where('is_active', true)
+            ->orderBy('next_due_date', 'asc')
+            ->get();
+
+        $upcomingBills = $recurringTransactions
+            ->where('type', 'expense')
+            ->where('next_due_date', '>=', Carbon::today())
+            ->where('next_due_date', '<=', Carbon::today()->addDays(30))
+            ->values();
+
         return Inertia::render('Dashboard', [
             'user' => $user,
             'dashboard' => [
@@ -97,23 +178,66 @@ class DashboardController extends Controller
             'incomeEntries' => $incomes->map(fn($income) => [
                 'id' => $income->id,
                 'amount' => (float) $income->amount,
-                'date' => $income->date instanceof \Carbon\Carbon
+                'date' => $income->date instanceof Carbon
                     ? $income->date->format('m/d/Y')
-                    : \Carbon\Carbon::parse($income->date)->format('m/d/Y'),
+                    : Carbon::parse($income->date)->format('m/d/Y'),
                 'category' => $income->category,
                 'description' => $income->description,
             ]),
             'expenseEntries' => $expenses->map(fn($expense) => [
                 'id' => $expense->id,
                 'amount' => (float) $expense->amount,
-                'date' => $expense->date instanceof \Carbon\Carbon
+                'date' => $expense->date instanceof Carbon
                     ? $expense->date->format('m/d/Y')
-                    : \Carbon\Carbon::parse($expense->date)->format('m/d/Y'),
+                    : Carbon::parse($expense->date)->format('m/d/Y'),
                 'category' => $expense->category,
                 'description' => $expense->description,
             ]),
             'dailySpending' => $dailySpending,
             'expensesByCategory' => $expensesByCategory,
+            'topExpense' => $topExpenseData,
+            'transactionStats' => [
+                'total' => $totalTransactions,
+                'incomeCount' => $incomeCount,
+                'expenseCount' => $expenseCount,
+                'avgExpense' => round($avgExpense, 2),
+                'daysNoSpending' => $daysNoSpending,
+            ],
+            'recentActivity' => $recentActivity,
+            'savingsStreak' => $streakCount,
+            'ytd' => [
+                'income' => (float) $ytdIncome,
+                'expense' => (float) $ytdExpense,
+                'net' => (float) ($ytdIncome - $ytdExpense),
+                'dayOfYear' => $selectedDate->dayOfYear,
+                'daysInYear' => $selectedDate->isLeapYear() ? 366 : 365,
+            ],
+            'budget' => $budget ? ['monthly_limit' => (float) $budget->monthly_limit] : null,
+            'financialGoals' => $financialGoals->map(fn($goal) => [
+                'id' => $goal->id,
+                'name' => $goal->name,
+                'target_amount' => (float) $goal->target_amount,
+                'current_amount' => (float) $goal->current_amount,
+                'deadline' => $goal->deadline?->format('Y-m-d'),
+                'color' => $goal->color,
+            ]),
+            'recurringTransactions' => $recurringTransactions->map(fn($rt) => [
+                'id' => $rt->id,
+                'name' => $rt->name,
+                'amount' => (float) $rt->amount,
+                'type' => $rt->type,
+                'category' => $rt->category,
+                'frequency' => $rt->frequency,
+                'next_due_date' => $rt->next_due_date->format('Y-m-d'),
+            ]),
+            'upcomingBills' => $upcomingBills->map(fn($bill) => [
+                'id' => $bill->id,
+                'name' => $bill->name,
+                'amount' => (float) $bill->amount,
+                'next_due_date' => $bill->next_due_date->format('Y-m-d'),
+                'days_until' => Carbon::today()->diffInDays($bill->next_due_date),
+                'frequency' => $bill->frequency,
+            ])->values(),
         ]);
     }
 }

@@ -6,7 +6,10 @@ import type { BreadcrumbItem } from '@/types';
 import { ref, computed, watch, onMounted } from 'vue';
 import { useStorage } from '@vueuse/core';
 import { formatCurrency } from '@/utils/currency';
-import { Wallet, TrendingDown, TrendingUp, DollarSign, PieChart, Plus, ArrowUpRight, ArrowDownRight, Minus } from 'lucide-vue-next';
+import {
+    Wallet, TrendingDown, TrendingUp, DollarSign, PieChart, Plus, ArrowUpRight, ArrowDownRight,
+    Target, CalendarClock, Download, Flame, Activity, Clock, Zap, AlertCircle, Trash2, X
+} from 'lucide-vue-next';
 import { router } from '@inertiajs/vue3';
 import { useChartDefaults } from '@/composables/useChartDefaults';
 import { Chart as ChartJS, registerables } from 'chart.js';
@@ -14,737 +17,551 @@ import { Line as LineChart } from 'vue-chartjs';
 
 ChartJS.register(...registerables);
 
-interface Entry {
-    id: number;
-    amount: number;
-    date: string;
-    category?: string;
-    description?: string;
-}
-
-interface User {
-    name: string;
-    email: string;
-}
-
+interface Entry { id: number; amount: number; date: string; category?: string; description?: string; }
+interface User { name: string; email: string; }
 interface DashboardData {
-    totalIncome: number;
-    totalExpense: number;
-    netIncome: number;
-    netWorth: number;
-    prevMonthIncome: number;
-    prevMonthExpense: number;
+    totalIncome: number; totalExpense: number; netIncome: number; netWorth: number;
+    prevMonthIncome: number; prevMonthExpense: number;
 }
-
-interface DailySpendingItem {
-    day: number;
-    amount: number;
-}
-
-interface CategoryBreakdownItem {
-    category: string;
-    amount: number;
-    percentage: number;
-}
+interface DailySpendingItem { day: number; amount: number; }
+interface CategoryBreakdownItem { category: string; amount: number; percentage: number; }
+interface TransactionStats { total: number; incomeCount: number; expenseCount: number; avgExpense: number; daysNoSpending: number; }
+interface ActivityItem { id: number; type: string; amount: number; category?: string; description?: string; date: string; timestamp: number; }
+interface YtdData { income: number; expense: number; net: number; dayOfYear: number; daysInYear: number; }
+interface GoalItem { id: number; name: string; target_amount: number; current_amount: number; deadline?: string; color: string; }
+interface RecurringItem { id: number; name: string; amount: number; type: string; category?: string; frequency: string; next_due_date: string; }
+interface BillItem { id: number; name: string; amount: number; next_due_date: string; days_until: number; frequency: string; }
 
 interface Props {
-    user: User;
-    dashboard: DashboardData;
-    incomeEntries: Entry[];
-    expenseEntries: Entry[];
-    dailySpending: DailySpendingItem[];
-    expensesByCategory: CategoryBreakdownItem[];
+    user: User; dashboard: DashboardData; incomeEntries: Entry[]; expenseEntries: Entry[];
+    dailySpending: DailySpendingItem[]; expensesByCategory: CategoryBreakdownItem[];
+    topExpense: { amount: number; category: string; description?: string; date: string } | null;
+    transactionStats: TransactionStats; recentActivity: ActivityItem[]; savingsStreak: number;
+    ytd: YtdData; budget: { monthly_limit: number } | null; financialGoals: GoalItem[];
+    recurringTransactions: RecurringItem[]; upcomingBills: BillItem[];
 }
 
 const props = defineProps<Props>();
-
-const breadcrumbs: BreadcrumbItem[] = [
-    {
-        title: 'Dashboard',
-        href: dashboard(),
-    },
-];
-
+const breadcrumbs: BreadcrumbItem[] = [{ title: 'Dashboard', href: dashboard() }];
 const { chartColors, isDark } = useChartDefaults();
 
-const getYYYYMMDDFromDate = (date: Date): string => {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-};
-
-const getInitialDate = (): string => {
-    const params = new URLSearchParams(window.location.search);
-    const dateParam = params.get('date');
-    return dateParam || getYYYYMMDDFromDate(new Date());
-};
-
+// Date handling
+const getYYYYMMDD = (d: Date) => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+const getInitialDate = () => new URLSearchParams(window.location.search).get('date') || getYYYYMMDD(new Date());
 const selectedDate = ref(getInitialDate());
 const currentMonth = computed(() => new Date(selectedDate.value));
+const fmtMonthYear = (d: Date) => d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+const fmtYearMonth = (d: Date) => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
 
-const formatMonthYear = (date: Date): string => {
-    return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-};
+watch(selectedDate, () => { router.get(route('dashboard'), { date: selectedDate.value }, { preserveState: true, preserveScroll: true }); });
 
-const formatYearMonth = (date: Date): string => {
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const year = date.getFullYear();
-    return `${year}-${month}`;
-};
+// MoM changes
+const incomeChange = computed(() => props.dashboard.prevMonthIncome === 0 ? null : ((props.dashboard.totalIncome - props.dashboard.prevMonthIncome) / props.dashboard.prevMonthIncome) * 100);
+const expenseChange = computed(() => props.dashboard.prevMonthExpense === 0 ? null : ((props.dashboard.totalExpense - props.dashboard.prevMonthExpense) / props.dashboard.prevMonthExpense) * 100);
 
-// Month-over-month change calculations
-const incomeChange = computed(() => {
-    if (props.dashboard.prevMonthIncome === 0) return null;
-    return ((props.dashboard.totalIncome - props.dashboard.prevMonthIncome) / props.dashboard.prevMonthIncome) * 100;
+// Financial health score (0-100)
+const healthScore = computed(() => {
+    let score = 50;
+    const savingsRate = props.dashboard.totalIncome > 0 ? (props.dashboard.netIncome / props.dashboard.totalIncome) * 100 : 0;
+    if (savingsRate >= 20) score += 25; else if (savingsRate >= 10) score += 15; else if (savingsRate > 0) score += 5; else score -= 15;
+    if (props.savingsStreak >= 3) score += 15; else if (props.savingsStreak >= 1) score += 5;
+    if (props.budget && props.dashboard.totalExpense <= props.budget.monthly_limit) score += 10;
+    return Math.max(0, Math.min(100, score));
 });
+const healthLabel = computed(() => { if (healthScore.value >= 80) return 'Excellent'; if (healthScore.value >= 60) return 'Good'; if (healthScore.value >= 40) return 'Fair'; return 'Needs Work'; });
+const healthColor = computed(() => { if (healthScore.value >= 80) return 'oklch(0.76 0.16 162)'; if (healthScore.value >= 60) return 'oklch(0.68 0.14 245)'; if (healthScore.value >= 40) return 'oklch(0.76 0.14 75)'; return 'oklch(0.62 0.22 18)'; });
 
-const expenseChange = computed(() => {
-    if (props.dashboard.prevMonthExpense === 0) return null;
-    return ((props.dashboard.totalExpense - props.dashboard.prevMonthExpense) / props.dashboard.prevMonthExpense) * 100;
-});
-
-const getStatTint = (label: string) => {
-    switch (label) {
-        case 'Total Income': return 'stat-tint-income';
-        case 'Total Expenses': return 'stat-tint-expense';
-        case 'Net Income': return props.dashboard.netIncome >= 0 ? 'stat-tint-positive' : 'stat-tint-negative';
-        case 'Net Worth': return 'stat-tint-accent';
-        default: return '';
-    }
-};
-
-const getStatIcon = (label: string) => {
-    switch (label) {
-        case 'Total Income': return Wallet;
-        case 'Total Expenses': return TrendingDown;
-        case 'Net Income': return DollarSign;
-        case 'Net Worth': return PieChart;
-        default: return DollarSign;
-    }
-};
-
-const getStatChange = (label: string) => {
-    switch (label) {
-        case 'Total Income': return incomeChange.value;
-        case 'Total Expenses': return expenseChange.value;
-        default: return null;
-    }
-};
-
-const savingsRate = computed(() => {
-    if (props.dashboard.totalIncome === 0) return 0;
-    return ((props.dashboard.totalIncome - props.dashboard.totalExpense) / props.dashboard.totalIncome) * 100;
-});
+const savingsRate = computed(() => props.dashboard.totalIncome === 0 ? 0 : ((props.dashboard.totalIncome - props.dashboard.totalExpense) / props.dashboard.totalIncome) * 100);
 
 const displayStats = computed(() => [
-    {
-        label: 'Total Income',
-        value: formatCurrency(props.dashboard.totalIncome),
-        icon: getStatIcon('Total Income'),
-        tint: getStatTint('Total Income'),
-        change: getStatChange('Total Income'),
-    },
-    {
-        label: 'Total Expenses',
-        value: formatCurrency(props.dashboard.totalExpense),
-        icon: getStatIcon('Total Expenses'),
-        tint: getStatTint('Total Expenses'),
-        change: getStatChange('Total Expenses'),
-    },
-    {
-        label: 'Net Income',
-        value: formatCurrency(props.dashboard.netIncome),
-        icon: getStatIcon('Net Income'),
-        tint: getStatTint('Net Income'),
-        change: null,
-    },
-    {
-        label: 'Net Worth',
-        value: formatCurrency(props.dashboard.netWorth),
-        icon: getStatIcon('Net Worth'),
-        tint: getStatTint('Net Worth'),
-        change: null,
-    }
+    { label: 'Total Income', value: formatCurrency(props.dashboard.totalIncome), icon: Wallet, tint: 'stat-tint-income', change: incomeChange.value, changeInverted: false },
+    { label: 'Total Expenses', value: formatCurrency(props.dashboard.totalExpense), icon: TrendingDown, tint: 'stat-tint-expense', change: expenseChange.value, changeInverted: true },
+    { label: 'Net Income', value: formatCurrency(props.dashboard.netIncome), icon: DollarSign, tint: props.dashboard.netIncome >= 0 ? 'stat-tint-positive' : 'stat-tint-negative', change: null, changeInverted: false, colorClass: props.dashboard.netIncome >= 0 ? 'text-[--fin-gain]' : 'text-[--fin-loss]' },
+    { label: 'Net Worth', value: formatCurrency(props.dashboard.netWorth), icon: PieChart, tint: 'stat-tint-accent', change: null, changeInverted: false },
 ]);
 
 // Animated savings ring
-const animatedSavingsRate = ref(0);
-const ringRadius = 54;
-const ringCircumference = 2 * Math.PI * ringRadius;
-const ringDashOffset = computed(() => {
-    const clamped = Math.max(0, Math.min(100, animatedSavingsRate.value));
-    return ringCircumference - (clamped / 100) * ringCircumference;
-});
+const animatedSR = ref(0);
+const R = 54; const C = 2 * Math.PI * R;
+const ringOffset = computed(() => C - (Math.max(0, Math.min(100, animatedSR.value)) / 100) * C);
+// Animated health ring
+const animatedHS = ref(0);
+const healthOffset = computed(() => C - (Math.max(0, Math.min(100, animatedHS.value)) / 100) * C);
 
 onMounted(() => {
-    // Animate savings rate counter
-    const target = Math.max(0, Math.min(100, savingsRate.value));
-    const duration = 1200;
-    const startTime = performance.now();
-
-    const animate = (currentTime: number) => {
-        const elapsed = currentTime - startTime;
-        const progress = Math.min(elapsed / duration, 1);
-        const eased = 1 - Math.pow(1 - progress, 3); // easeOutCubic
-        animatedSavingsRate.value = eased * target;
-
-        if (progress < 1) {
-            requestAnimationFrame(animate);
-        }
+    const animateVal = (target: number, setter: (v: number) => void) => {
+        const start = performance.now();
+        const run = (t: number) => { const p = Math.min((t - start) / 1200, 1); setter((1 - Math.pow(1 - p, 3)) * target); if (p < 1) requestAnimationFrame(run); };
+        requestAnimationFrame(run);
     };
-    requestAnimationFrame(animate);
+    animateVal(Math.max(0, Math.min(100, savingsRate.value)), v => animatedSR.value = v);
+    animateVal(healthScore.value, v => animatedHS.value = v);
 });
 
-// Daily spending sparkline chart
+// Sparkline
 const sparklineData = computed(() => {
-    if (!props.dailySpending || props.dailySpending.length === 0) {
-        return { labels: [], datasets: [] };
-    }
-
-    return {
-        labels: props.dailySpending.map(d => d.day.toString()),
-        datasets: [{
-            data: props.dailySpending.map(d => d.amount),
-            borderColor: chartColors.loss,
-            backgroundColor: chartColors.lossMuted,
-            borderWidth: 2,
-            tension: 0.4,
-            fill: true,
-            pointRadius: 0,
-            pointHoverRadius: 5,
-            pointHoverBackgroundColor: chartColors.loss,
-            pointHoverBorderColor: '#fff',
-            pointHoverBorderWidth: 2,
-        }]
-    };
+    if (!props.dailySpending?.length) return { labels: [], datasets: [] };
+    return { labels: props.dailySpending.map(d => d.day.toString()), datasets: [{ data: props.dailySpending.map(d => d.amount), borderColor: chartColors.loss, backgroundColor: chartColors.lossMuted, borderWidth: 2, tension: 0.4, fill: true, pointRadius: 0, pointHoverRadius: 5, pointHoverBackgroundColor: chartColors.loss, pointHoverBorderColor: '#fff', pointHoverBorderWidth: 2 }] };
 });
+const sparkOpts = computed(() => ({ responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { backgroundColor: isDark.value ? 'oklch(0.145 0 0)' : 'oklch(0.205 0 0)', titleColor: 'oklch(0.985 0 0)', bodyColor: 'oklch(0.985 0 0)', borderColor: isDark.value ? 'oklch(0.269 0 0)' : 'oklch(0.922 0 0)', borderWidth: 1, cornerRadius: 8, padding: 10, displayColors: false, callbacks: { title: (i: any[]) => `Day ${i[0].label}`, label: (i: any) => `₱${Number(i.raw).toLocaleString('en-US', { minimumFractionDigits: 2 })}` } } }, scales: { x: { display: false }, y: { display: false, beginAtZero: true } }, interaction: { mode: 'index' as const, intersect: false }, animation: { duration: 1000, easing: 'easeInOutQuart' as const } }));
 
-const sparklineOptions = computed(() => ({
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-        legend: { display: false },
-        tooltip: {
-            backgroundColor: isDark.value ? 'oklch(0.145 0 0)' : 'oklch(0.205 0 0)',
-            titleColor: 'oklch(0.985 0 0)',
-            bodyColor: 'oklch(0.985 0 0)',
-            borderColor: isDark.value ? 'oklch(0.269 0 0)' : 'oklch(0.922 0 0)',
-            borderWidth: 1,
-            cornerRadius: 8,
-            padding: 10,
-            displayColors: false,
-            callbacks: {
-                title: (items: any[]) => `Day ${items[0].label}`,
-                label: (item: any) => `₱${Number(item.raw).toLocaleString('en-US', { minimumFractionDigits: 2 })}`,
-            },
-        },
-    },
-    scales: {
-        x: { display: false },
-        y: {
-            display: false,
-            beginAtZero: true,
-        },
-    },
-    interaction: {
-        mode: 'index' as const,
-        intersect: false,
-    },
-    animation: {
-        duration: 1000,
-        easing: 'easeInOutQuart' as const,
-    },
-}));
+const catColors = [chartColors.teal, chartColors.azure, chartColors.amber, chartColors.slate, chartColors.loss];
 
-// Category colors for breakdown bars
-const categoryBarColors = [
-    chartColors.teal,
-    chartColors.azure,
-    chartColors.amber,
-    chartColors.slate,
-    chartColors.loss,
-];
-
-const getCategoryColor = (index: number) => {
-    return categoryBarColors[index % categoryBarColors.length];
-};
-
+// Modals
 const showIncomeModal = useStorage('dashboard-income-modal', false);
 const showExpenseModal = useStorage('dashboard-expense-modal', false);
+const showBudgetModal = ref(false);
+const showGoalModal = ref(false);
+const showRecurringModal = ref(false);
 
-// Reload page when date changes
-watch(selectedDate, () => {
-    router.get(
-        route('dashboard'),
-        { date: selectedDate.value },
-        { preserveState: true, preserveScroll: true }
-    );
-});
+// Forms
+const incomeForm = useForm({ amount: '', date: getYYYYMMDD(new Date()), category: '', description: '' });
+const expenseForm = useForm({ amount: '', date: getYYYYMMDD(new Date()), category: '', description: '' });
+const budgetForm = useForm({ monthly_limit: props.budget?.monthly_limit?.toString() || '' });
+const goalForm = useForm({ name: '', target_amount: '', current_amount: '', deadline: '', color: '#14b8a6' });
+const recurringForm = useForm({ name: '', amount: '', type: 'expense' as string, category: '', description: '', frequency: 'monthly' as string, next_due_date: getYYYYMMDD(new Date()) });
 
-const incomeForm = useForm({
-    amount: '',
-    date: getYYYYMMDDFormat(new Date()),
-    category: '',
-    description: '',
-});
+const addIncome = () => { if (!incomeForm.amount) return; incomeForm.post('/incomes', { onSuccess: () => { incomeForm.reset(); incomeForm.date = getYYYYMMDD(new Date()); showIncomeModal.value = false; } }); };
+const addExpense = () => { if (!expenseForm.amount) return; expenseForm.post('/expenses', { onSuccess: () => { expenseForm.reset(); expenseForm.date = getYYYYMMDD(new Date()); showExpenseModal.value = false; } }); };
+const saveBudget = () => { if (!budgetForm.monthly_limit) return; budgetForm.post('/budgets', { onSuccess: () => { showBudgetModal.value = false; } }); };
+const addGoal = () => { if (!goalForm.name || !goalForm.target_amount) return; goalForm.post('/financial-goals', { onSuccess: () => { goalForm.reset(); goalForm.color = '#14b8a6'; showGoalModal.value = false; } }); };
+const deleteGoal = (id: number) => { router.delete(`/financial-goals/${id}`, { preserveScroll: true }); };
+const addRecurring = () => { if (!recurringForm.name || !recurringForm.amount) return; recurringForm.post('/recurring-transactions', { onSuccess: () => { recurringForm.reset(); recurringForm.type = 'expense'; recurringForm.frequency = 'monthly'; recurringForm.next_due_date = getYYYYMMDD(new Date()); showRecurringModal.value = false; } }); };
+const deleteRecurring = (id: number) => { router.delete(`/recurring-transactions/${id}`, { preserveScroll: true }); };
+const deleteEntry = (id: number, type: 'income' | 'expense') => { router.delete(`/${type}s/${id}`, { preserveScroll: true }); };
 
-const expenseForm = useForm({
-    amount: '',
-    date: getYYYYMMDDFormat(new Date()),
-    category: '',
-    description: '',
-});
+const exportCsv = () => { window.location.href = `/export/csv?month=${fmtYearMonth(currentMonth.value)}`; };
 
-function getYYYYMMDDFormat(date: Date): string {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-}
-
-const addIncome = () => {
-    if (!incomeForm.amount) return;
-
-    incomeForm.post('/incomes', {
-        onSuccess: () => {
-            incomeForm.reset();
-            incomeForm.date = getYYYYMMDDFormat(new Date());
-            showIncomeModal.value = false;
-        },
-    });
-};
-
-const addExpense = () => {
-    if (!expenseForm.amount) return;
-
-    expenseForm.post('/expenses', {
-        onSuccess: () => {
-            expenseForm.reset();
-            expenseForm.date = getYYYYMMDDFormat(new Date());
-            showExpenseModal.value = false;
-        },
-    });
-};
-
-const deleteEntry = (id: number, type: 'income' | 'expense') => {
-    router.delete(`/${type}s/${id}`, {
-        preserveScroll: true,
-    });
-};
-
-// Greeting based on time of day
-const greeting = computed(() => {
-    const hour = new Date().getHours();
-    if (hour < 12) return 'Good morning';
-    if (hour < 17) return 'Good afternoon';
-    return 'Good evening';
-});
+const greeting = computed(() => { const h = new Date().getHours(); return h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening'; });
+const yearProgress = computed(() => Math.round((props.ytd.dayOfYear / props.ytd.daysInYear) * 100));
+const budgetUsedPct = computed(() => props.budget ? Math.min(100, (props.dashboard.totalExpense / props.budget.monthly_limit) * 100) : 0);
 </script>
 
 <template>
+<Head title="Dashboard" />
+<AppLayout :breadcrumbs="breadcrumbs">
+<div class="flex h-full flex-1 flex-col gap-6 overflow-x-auto p-6 sm:p-8 pb-20 md:pb-8">
 
-    <Head title="Dashboard" />
+<!-- Header + Controls -->
+<div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between animate-fade-up stagger-1">
+    <div>
+        <h1 class="text-3xl lg:text-4xl font-bold leading-tight tracking-tight">Finance Tracker</h1>
+        <p class="mt-2 text-sm text-muted-foreground font-sans">{{ greeting }}, {{ props.user.name }}. <span class="font-semibold text-foreground">{{ fmtMonthYear(currentMonth) }}</span></p>
+    </div>
+    <div class="flex flex-wrap items-center gap-2">
+        <input v-model="selectedDate" type="date" class="rounded-lg border border-border bg-card px-3 py-2 text-sm font-medium transition-all hover:border-border focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/10" />
+        <button @click="exportCsv" class="group flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-2 text-sm font-medium text-muted-foreground transition-all hover:text-foreground hover:bg-accent/50">
+            <Download class="h-3.5 w-3.5 transition-transform group-hover:-translate-y-0.5" /> Export
+        </button>
+    </div>
+</div>
 
-    <AppLayout :breadcrumbs="breadcrumbs">
-        <div class="flex h-full flex-1 flex-col gap-8 overflow-x-auto p-6 sm:p-8 pb-20 md:pb-8">
-            <!-- Header -->
-            <div class="animate-fade-up stagger-1">
-                <h1 class="text-3xl lg:text-4xl font-bold leading-tight tracking-tight">Finance Tracker</h1>
-                <p class="mt-2 text-sm text-muted-foreground font-sans">{{ greeting }}, {{
-                    props.user.name }}. Here's your financial overview for <span class="font-semibold text-foreground">{{ formatMonthYear(currentMonth) }}</span>.</p>
+<!-- Quick Action Buttons -->
+<div class="flex flex-wrap gap-2 animate-fade-up stagger-2">
+    <button @click="showIncomeModal = true" class="group flex items-center gap-1.5 rounded-lg border border-border bg-card px-4 py-2 text-sm font-semibold transition-all hover:bg-accent/50 hover:shadow-md">
+        <Plus class="h-3.5 w-3.5 transition-transform group-hover:rotate-90" /> Income
+    </button>
+    <button @click="showExpenseModal = true" class="group flex items-center gap-1.5 rounded-lg border border-primary bg-primary/8 px-4 py-2 text-sm font-bold text-primary transition-all hover:bg-primary/12 hover:shadow-md">
+        <Plus class="h-3.5 w-3.5 transition-transform group-hover:rotate-90" /> Expense
+    </button>
+    <button @click="showBudgetModal = true" class="group flex items-center gap-1.5 rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium text-muted-foreground transition-all hover:text-foreground hover:bg-accent/50">
+        <Target class="h-3.5 w-3.5" /> Budget
+    </button>
+    <button @click="showGoalModal = true" class="group flex items-center gap-1.5 rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium text-muted-foreground transition-all hover:text-foreground hover:bg-accent/50">
+        <Zap class="h-3.5 w-3.5" /> Goal
+    </button>
+    <button @click="showRecurringModal = true" class="group flex items-center gap-1.5 rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium text-muted-foreground transition-all hover:text-foreground hover:bg-accent/50">
+        <CalendarClock class="h-3.5 w-3.5" /> Recurring
+    </button>
+</div>
+
+<!-- Stat Cards -->
+<div class="grid grid-cols-2 gap-3 md:grid-cols-4 lg:gap-4">
+    <div v-for="(stat, idx) in displayStats" :key="stat.label"
+        :class="['group surface-card p-4 overflow-hidden relative hover:scale-[1.03] transition-all duration-300 hover:shadow-lg cursor-default animate-fade-up', `stagger-${idx+1}`, stat.tint]">
+        <div class="absolute top-0 right-0 w-20 h-20 opacity-[0.04] pointer-events-none group-hover:scale-110 transition-transform duration-500">
+            <component :is="stat.icon" class="size-20 -translate-y-3 translate-x-3" />
+        </div>
+        <div class="flex items-center justify-between mb-2">
+            <p class="text-[10px] font-semibold tracking-[0.08em] uppercase text-muted-foreground font-sans">{{ stat.label }}</p>
+            <span v-if="stat.change != null" :class="['inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[9px] font-bold',
+                stat.changeInverted ? (stat.change <= 0 ? 'bg-[--fin-gain]/12 text-[--fin-gain]' : 'bg-[--fin-loss]/12 text-[--fin-loss]') : (stat.change >= 0 ? 'bg-[--fin-gain]/12 text-[--fin-gain]' : 'bg-[--fin-loss]/12 text-[--fin-loss]')]">
+                <component :is="stat.changeInverted ? (stat.change <= 0 ? ArrowDownRight : ArrowUpRight) : (stat.change >= 0 ? ArrowUpRight : ArrowDownRight)" class="h-2.5 w-2.5" />
+                {{ Math.abs(stat.change).toFixed(1) }}%
+            </span>
+        </div>
+        <p :class="['text-xl lg:text-2xl font-bold font-mono tracking-tighter leading-none', stat.colorClass || 'text-foreground']">{{ stat.value }}</p>
+    </div>
+</div>
+
+<!-- Transaction Chips + Income vs Expense Bar -->
+<div class="grid gap-3 md:grid-cols-2 animate-fade-up stagger-5">
+    <!-- Transaction Stats Chips -->
+    <div class="surface-card p-4 flex flex-wrap items-center gap-2">
+        <span class="inline-flex items-center gap-1.5 rounded-full bg-muted/50 px-3 py-1 text-[11px] font-semibold text-muted-foreground">
+            <Activity class="h-3 w-3" /> {{ transactionStats.total }} transactions
+        </span>
+        <span class="inline-flex items-center gap-1.5 rounded-full bg-[--fin-gain]/8 px-3 py-1 text-[11px] font-semibold text-[--fin-gain]">
+            {{ transactionStats.incomeCount }} income
+        </span>
+        <span class="inline-flex items-center gap-1.5 rounded-full bg-[--fin-loss]/8 px-3 py-1 text-[11px] font-semibold text-[--fin-loss]">
+            {{ transactionStats.expenseCount }} expenses
+        </span>
+        <span v-if="transactionStats.avgExpense > 0" class="inline-flex items-center gap-1.5 rounded-full bg-muted/50 px-3 py-1 text-[11px] font-semibold text-muted-foreground">
+            Avg {{ formatCurrency(transactionStats.avgExpense) }}
+        </span>
+        <span class="inline-flex items-center gap-1.5 rounded-full bg-muted/50 px-3 py-1 text-[11px] font-semibold text-muted-foreground">
+            {{ transactionStats.daysNoSpending }} no-spend days
+        </span>
+    </div>
+
+    <!-- Income vs Expense Comparison Bar -->
+    <div class="surface-card p-4">
+        <p class="text-[10px] font-semibold tracking-[0.08em] uppercase text-muted-foreground mb-2 font-sans">Income vs Expenses</p>
+        <div class="flex h-3 rounded-full overflow-hidden bg-muted/30">
+            <div class="bg-[--fin-gain] transition-all duration-700 rounded-l-full"
+                :style="{ width: (dashboard.totalIncome + dashboard.totalExpense > 0 ? (dashboard.totalIncome / (dashboard.totalIncome + dashboard.totalExpense)) * 100 : 50) + '%' }"></div>
+            <div class="bg-[--fin-loss] transition-all duration-700 rounded-r-full flex-1"></div>
+        </div>
+        <div class="flex justify-between mt-1.5 text-[10px] font-mono font-semibold">
+            <span class="text-[--fin-gain]">{{ formatCurrency(dashboard.totalIncome) }}</span>
+            <span class="text-[--fin-loss]">{{ formatCurrency(dashboard.totalExpense) }}</span>
+        </div>
+    </div>
+</div>
+
+<!-- Rings Row: Savings + Health + Year Progress -->
+<div class="grid gap-3 md:grid-cols-3 animate-fade-up stagger-5">
+    <!-- Savings Rate Ring -->
+    <div class="surface-card p-4 flex flex-col items-center justify-center">
+        <p class="text-[10px] font-semibold tracking-[0.08em] uppercase text-muted-foreground mb-3 font-sans">Savings Rate</p>
+        <div class="relative w-24 h-24">
+            <svg class="w-full h-full -rotate-90" viewBox="0 0 120 120">
+                <circle cx="60" cy="60" :r="R" fill="none" class="stroke-border/30" stroke-width="8" />
+                <circle cx="60" cy="60" :r="R" fill="none" :stroke="savingsRate >= 0 ? 'oklch(0.76 0.16 162)' : 'oklch(0.62 0.22 18)'" stroke-width="8" stroke-linecap="round" :stroke-dasharray="C" :stroke-dashoffset="ringOffset" class="transition-all duration-1000 ease-out" />
+            </svg>
+            <div class="absolute inset-0 flex items-center justify-center">
+                <span class="text-lg font-bold font-mono tracking-tighter" :class="savingsRate >= 0 ? 'text-[--fin-gain]' : 'text-[--fin-loss]'">{{ animatedSR.toFixed(0) }}%</span>
             </div>
+        </div>
+        <p class="mt-2 text-[10px] text-muted-foreground text-center font-sans">{{ savingsRate >= 20 ? 'Great job!' : savingsRate >= 0 ? 'Room to improve' : 'Over budget' }}</p>
+    </div>
 
-            <!-- Controls -->
-            <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between animate-fade-up stagger-2">
-                <div class="flex items-center gap-3">
-                    <label class="text-sm font-semibold text-muted-foreground font-sans">Date</label>
-                    <input v-model="selectedDate" type="date"
-                        class="rounded-lg border border-border bg-card px-4 py-2.5 text-sm font-medium transition-all duration-200 hover:border-border focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/10" />
-                </div>
-
-                <div class="flex gap-3">
-                    <button @click="showIncomeModal = true"
-                        class="group flex items-center gap-2 rounded-lg border border-border bg-card px-5 py-2.5 text-sm font-semibold text-foreground shadow-sm transition-all duration-200 hover:border-border hover:bg-accent/50 hover:shadow-md">
-                        <Plus class="h-4 w-4 transition-transform duration-200 group-hover:rotate-90" />
-                        Add Income
-                    </button>
-                    <button @click="showExpenseModal = true"
-                        class="group flex items-center gap-2 rounded-lg border border-primary bg-primary/8 px-5 py-2.5 text-sm font-bold text-primary hover:bg-primary/12 transition-all duration-200 hover:shadow-md">
-                        <Plus class="h-4 w-4 transition-transform duration-200 group-hover:rotate-90" />
-                        Add Expense
-                    </button>
-                </div>
+    <!-- Health Score Gauge -->
+    <div class="surface-card p-4 flex flex-col items-center justify-center">
+        <p class="text-[10px] font-semibold tracking-[0.08em] uppercase text-muted-foreground mb-3 font-sans">Financial Health</p>
+        <div class="relative w-24 h-24">
+            <svg class="w-full h-full -rotate-90" viewBox="0 0 120 120">
+                <circle cx="60" cy="60" :r="R" fill="none" class="stroke-border/30" stroke-width="8" />
+                <circle cx="60" cy="60" :r="R" fill="none" :stroke="healthColor" stroke-width="8" stroke-linecap="round" :stroke-dasharray="C" :stroke-dashoffset="healthOffset" class="transition-all duration-1000 ease-out" />
+            </svg>
+            <div class="absolute inset-0 flex items-center justify-center">
+                <span class="text-lg font-bold font-mono tracking-tighter">{{ animatedHS.toFixed(0) }}</span>
             </div>
+        </div>
+        <p class="mt-2 text-[10px] font-semibold text-center font-sans" :style="{ color: healthColor }">{{ healthLabel }}</p>
+    </div>
 
-            <!-- Stats Cards -->
-            <div class="grid grid-cols-2 gap-4 md:grid-cols-4 lg:gap-6">
-                <div v-for="(stat, idx) in displayStats" :key="stat.label"
-                    :class="['group surface-card p-4 lg:p-5 overflow-hidden relative hover:scale-[1.03] transition-all duration-300 hover:shadow-lg cursor-default animate-fade-up', `stagger-${idx + 1}`, stat.tint]">
-                    <!-- Watermark icon -->
-                    <div class="absolute top-0 right-0 w-24 h-24 opacity-[0.04] pointer-events-none transition-transform duration-500 group-hover:scale-110">
-                        <component :is="stat.icon" class="size-24 -translate-y-4 translate-x-4" />
-                    </div>
-                    <div class="flex items-center justify-between mb-2.5">
-                        <p
-                            class="text-[11px] font-semibold tracking-[0.08em] uppercase text-muted-foreground font-sans">
-                            {{ stat.label }}
-                        </p>
-                        <!-- MoM change badge -->
-                        <span v-if="stat.change !== null && stat.change !== undefined"
-                            :class="[
-                                'inline-flex items-center gap-0.5 rounded-full px-2 py-0.5 text-[10px] font-bold',
-                                stat.label === 'Total Expenses'
-                                    ? (stat.change <= 0 ? 'bg-[--fin-gain]/12 text-[--fin-gain]' : 'bg-[--fin-loss]/12 text-[--fin-loss]')
-                                    : (stat.change >= 0 ? 'bg-[--fin-gain]/12 text-[--fin-gain]' : 'bg-[--fin-loss]/12 text-[--fin-loss]')
-                            ]">
-                            <component :is="stat.label === 'Total Expenses'
-                                ? (stat.change <= 0 ? ArrowDownRight : ArrowUpRight)
-                                : (stat.change >= 0 ? ArrowUpRight : ArrowDownRight)"
-                                class="h-3 w-3" />
-                            {{ Math.abs(stat.change).toFixed(1) }}%
-                        </span>
-                    </div>
-                    <p :class="[
-                        'text-2xl lg:text-3xl font-bold font-mono tracking-tighter leading-none',
-                        stat.label === 'Net Income'
-                            ? (props.dashboard.netIncome >= 0 ? 'text-[--fin-gain]' : 'text-[--fin-loss]')
-                            : 'text-foreground'
-                    ]">
-                        {{ stat.value }}
-                    </p>
-                </div>
+    <!-- Year Progress -->
+    <div class="surface-card p-4">
+        <p class="text-[10px] font-semibold tracking-[0.08em] uppercase text-muted-foreground mb-2 font-sans">Year Progress</p>
+        <div class="w-full h-2 rounded-full bg-muted/30 overflow-hidden mb-3">
+            <div class="h-full rounded-full bg-primary transition-all duration-700" :style="{ width: yearProgress + '%' }"></div>
+        </div>
+        <p class="text-[10px] text-muted-foreground font-sans mb-3">{{ yearProgress }}% of {{ new Date(selectedDate).getFullYear() }} complete</p>
+        <div class="space-y-1.5">
+            <div class="flex justify-between text-[10px] font-sans">
+                <span class="text-muted-foreground">YTD Income</span>
+                <span class="font-mono font-semibold text-[--fin-gain]">{{ formatCurrency(ytd.income) }}</span>
             </div>
-
-            <!-- Savings Rate Ring + Daily Spending Row -->
-            <div class="grid gap-6 md:grid-cols-3 animate-fade-up stagger-5">
-                <!-- Savings Rate Ring -->
-                <div class="surface-card p-5 lg:p-6 flex flex-col items-center justify-center">
-                    <p class="text-[11px] font-semibold tracking-[0.08em] uppercase text-muted-foreground mb-4 font-sans">
-                        Savings Rate
-                    </p>
-                    <div class="relative w-32 h-32">
-                        <svg class="w-full h-full -rotate-90" viewBox="0 0 120 120">
-                            <!-- background ring -->
-                            <circle cx="60" cy="60" :r="ringRadius" fill="none"
-                                class="stroke-border/30" stroke-width="8" />
-                            <!-- progress ring -->
-                            <circle cx="60" cy="60" :r="ringRadius" fill="none"
-                                :stroke="savingsRate >= 0 ? 'oklch(0.76 0.16 162)' : 'oklch(0.62 0.22 18)'"
-                                stroke-width="8"
-                                stroke-linecap="round"
-                                :stroke-dasharray="ringCircumference"
-                                :stroke-dashoffset="ringDashOffset"
-                                class="transition-all duration-1000 ease-out" />
-                        </svg>
-                        <div class="absolute inset-0 flex items-center justify-center">
-                            <span class="text-2xl font-bold font-mono tracking-tighter"
-                                :class="savingsRate >= 0 ? 'text-[--fin-gain]' : 'text-[--fin-loss]'">
-                                {{ animatedSavingsRate.toFixed(0) }}%
-                            </span>
-                        </div>
-                    </div>
-                    <p class="mt-3 text-[11px] text-muted-foreground text-center font-sans">
-                        {{ savingsRate >= 20 ? 'Great job saving!' : savingsRate >= 0 ? 'Try to save more' : 'Spending exceeds income' }}
-                    </p>
-                </div>
-
-                <!-- Daily Spending Sparkline -->
-                <div class="surface-card p-5 lg:p-6 md:col-span-2">
-                    <div class="flex items-center justify-between mb-1">
-                        <h2 class="text-sm font-bold text-foreground font-display tracking-tight">Daily Spending</h2>
-                        <p class="text-[11px] text-muted-foreground font-sans">{{ formatMonthYear(currentMonth) }}</p>
-                    </div>
-                    <p class="text-[11px] text-muted-foreground font-sans mb-4">Expense distribution across the month</p>
-
-                    <div v-if="dailySpending && dailySpending.some(d => d.amount > 0)" class="relative" style="height: 160px;">
-                        <LineChart
-                            :key="JSON.stringify(sparklineData)"
-                            :data="sparklineData"
-                            :options="sparklineOptions"
-                            style="position: relative; height: 100%;"
-                        />
-                    </div>
-                    <div v-else class="flex h-40 items-center justify-center">
-                        <div class="text-center">
-                            <TrendingDown class="h-8 w-8 text-muted-foreground/30 mx-auto mb-2" />
-                            <p class="text-[11px] font-medium text-muted-foreground font-sans">No spending data this month</p>
-                        </div>
-                    </div>
-                </div>
+            <div class="flex justify-between text-[10px] font-sans">
+                <span class="text-muted-foreground">YTD Expenses</span>
+                <span class="font-mono font-semibold text-[--fin-loss]">{{ formatCurrency(ytd.expense) }}</span>
             </div>
-
-            <!-- Expense Breakdown by Category -->
-            <div v-if="expensesByCategory && expensesByCategory.length > 0" class="surface-card p-5 lg:p-6 animate-fade-up stagger-5">
-                <h2 class="text-sm font-bold text-foreground font-display tracking-tight">Expense Breakdown</h2>
-                <p class="mt-0.5 text-[11px] text-muted-foreground font-sans mb-6">Where your money goes this month</p>
-
-                <div class="space-y-4">
-                    <div v-for="(cat, idx) in expensesByCategory" :key="cat.category"
-                        class="group">
-                        <div class="flex items-center justify-between mb-1.5">
-                            <div class="flex items-center gap-2">
-                                <span class="w-2.5 h-2.5 rounded-full shrink-0"
-                                    :style="{ backgroundColor: getCategoryColor(idx) }"></span>
-                                <span class="text-sm font-semibold text-foreground font-sans">{{ cat.category }}</span>
-                            </div>
-                            <div class="flex items-center gap-3">
-                                <span class="text-xs font-medium text-muted-foreground font-sans">{{ cat.percentage }}%</span>
-                                <span class="text-sm font-bold font-mono text-foreground">{{ formatCurrency(cat.amount) }}</span>
-                            </div>
-                        </div>
-                        <div class="w-full h-2 bg-muted/40 rounded-full overflow-hidden">
-                            <div
-                                class="h-full rounded-full animate-bar-fill origin-left"
-                                :style="{
-                                    width: cat.percentage + '%',
-                                    backgroundColor: getCategoryColor(idx),
-                                    animationDelay: (idx * 100) + 'ms'
-                                }"
-                            ></div>
-                        </div>
-                    </div>
-                </div>
+            <div class="flex justify-between text-[10px] font-sans border-t border-border/30 pt-1.5">
+                <span class="font-semibold text-foreground">YTD Net</span>
+                <span :class="['font-mono font-bold', ytd.net >= 0 ? 'text-[--fin-gain]' : 'text-[--fin-loss]']">{{ formatCurrency(ytd.net) }}</span>
             </div>
+        </div>
+    </div>
+</div>
 
-            <!-- Entries Grid -->
-            <div class="grid gap-6 md:grid-cols-2 animate-fade-up stagger-5">
-                <!-- Income Section -->
-                <div class="surface-card p-5 lg:p-6 relative overflow-hidden">
-                    <div class="mb-4 flex items-center justify-between">
-                        <div class="flex items-center gap-2">
-                            <div class="p-1.5 rounded-lg bg-[--fin-gain]/10">
-                                <Wallet class="h-4 w-4 text-[--fin-gain]" />
-                            </div>
-                            <h2 class="text-sm font-bold text-foreground font-display tracking-tight">Income</h2>
-                        </div>
-                        <span class="text-[11px] text-muted-foreground font-sans">
-                            {{ formatYearMonth(currentMonth) }}
-                        </span>
-                    </div>
+<!-- Sparkline + Top Expense + Streak -->
+<div class="grid gap-3 md:grid-cols-3 animate-fade-up stagger-5">
+    <!-- Daily Spending Sparkline -->
+    <div class="surface-card p-4 md:col-span-2">
+        <h2 class="text-sm font-bold text-foreground font-display tracking-tight">Daily Spending</h2>
+        <p class="text-[10px] text-muted-foreground font-sans mb-3">{{ fmtMonthYear(currentMonth) }}</p>
+        <div v-if="dailySpending?.some(d => d.amount > 0)" class="relative" style="height: 140px;">
+            <LineChart :key="JSON.stringify(sparklineData)" :data="sparklineData" :options="sparkOpts" style="position: relative; height: 100%;" />
+        </div>
+        <div v-else class="flex h-32 items-center justify-center">
+            <div class="text-center"><TrendingDown class="h-6 w-6 text-muted-foreground/20 mx-auto mb-1" /><p class="text-[10px] text-muted-foreground font-sans">No spending data</p></div>
+        </div>
+    </div>
 
-                    <div v-if="props.incomeEntries.length > 0" class="space-y-0 divide-y divide-border/30">
-                        <div v-for="entry in props.incomeEntries" :key="entry.id"
-                            class="entry-row group flex items-start justify-between py-3.5 transition-colors first:pt-0">
-                            <div class="flex-1">
-                                <p class="font-semibold text-[--fin-gain] text-[13px] font-mono">+{{
-                                    formatCurrency(entry.amount) }}</p>
-                                <div class="mt-2 flex flex-wrap items-center gap-2">
-                                    <span class="text-xs text-muted-foreground font-sans">{{ entry.date }}</span>
-                                    <span v-if="entry.category"
-                                        class="inline-flex items-center text-[10px] font-semibold text-muted-foreground bg-muted/50 px-2 py-0.5 rounded-full font-sans">{{
-                                            entry.category
-                                        }}</span>
-                                </div>
-                                <p v-if="entry.description"
-                                    class="mt-1 text-xs leading-relaxed text-muted-foreground font-sans">
-                                    {{ entry.description }}
-                                </p>
-                            </div>
-                            <button @click="deleteEntry(entry.id, 'income')"
-                                class="ml-4 rounded-lg p-1.5 text-muted-foreground opacity-0 transition-all hover:bg-destructive/10 hover:text-destructive group-hover:opacity-100">
-                                <span class="text-sm">✕</span>
-                            </button>
-                        </div>
-                    </div>
+    <!-- Top Expense + Streak -->
+    <div class="space-y-3">
+        <!-- Top Expense Spotlight -->
+        <div v-if="topExpense" class="surface-card p-4">
+            <div class="flex items-center gap-1.5 mb-2">
+                <AlertCircle class="h-3.5 w-3.5 text-[--fin-loss]" />
+                <p class="text-[10px] font-semibold tracking-[0.08em] uppercase text-muted-foreground font-sans">Biggest Expense</p>
+            </div>
+            <p class="text-lg font-bold font-mono text-[--fin-loss]">{{ formatCurrency(topExpense.amount) }}</p>
+            <p class="text-[11px] font-semibold text-foreground mt-1">{{ topExpense.category }}</p>
+            <p v-if="topExpense.description" class="text-[10px] text-muted-foreground mt-0.5">{{ topExpense.description }}</p>
+        </div>
 
-                    <div v-else class="mt-6 flex flex-col items-center justify-center py-8">
-                        <Wallet class="h-10 w-10 text-muted-foreground/20 mb-3" />
-                        <p class="text-[11px] font-medium text-muted-foreground font-sans">No income entries this month</p>
-                        <button @click="showIncomeModal = true" class="mt-3 text-[11px] font-semibold text-primary hover:underline">
-                            Add your first income →
-                        </button>
-                    </div>
+        <!-- Spending Streak -->
+        <div class="surface-card p-4">
+            <div class="flex items-center gap-1.5 mb-2">
+                <Flame class="h-3.5 w-3.5 text-amber-500" />
+                <p class="text-[10px] font-semibold tracking-[0.08em] uppercase text-muted-foreground font-sans">Savings Streak</p>
+            </div>
+            <p class="text-2xl font-bold font-mono text-foreground">{{ savingsStreak }}</p>
+            <p class="text-[10px] text-muted-foreground font-sans">consecutive month{{ savingsStreak !== 1 ? 's' : '' }} saving</p>
+        </div>
+    </div>
+</div>
+
+<!-- Budget Tracker -->
+<div v-if="budget" class="surface-card p-4 animate-fade-up stagger-5">
+    <div class="flex items-center justify-between mb-2">
+        <div class="flex items-center gap-1.5">
+            <Target class="h-3.5 w-3.5 text-primary" />
+            <p class="text-[10px] font-semibold tracking-[0.08em] uppercase text-muted-foreground font-sans">Monthly Budget</p>
+        </div>
+        <span :class="['text-[10px] font-bold px-2 py-0.5 rounded-full', budgetUsedPct > 100 ? 'bg-[--fin-loss]/12 text-[--fin-loss]' : budgetUsedPct > 80 ? 'bg-amber-500/12 text-amber-600' : 'bg-[--fin-gain]/12 text-[--fin-gain]']">
+            {{ budgetUsedPct.toFixed(0) }}% used
+        </span>
+    </div>
+    <div class="w-full h-2.5 rounded-full bg-muted/30 overflow-hidden">
+        <div class="h-full rounded-full transition-all duration-700" :class="budgetUsedPct > 100 ? 'bg-[--fin-loss]' : budgetUsedPct > 80 ? 'bg-amber-500' : 'bg-[--fin-gain]'" :style="{ width: Math.min(100, budgetUsedPct) + '%' }"></div>
+    </div>
+    <div class="flex justify-between mt-1.5 text-[10px] font-mono">
+        <span class="text-muted-foreground">{{ formatCurrency(dashboard.totalExpense) }} spent</span>
+        <span class="text-foreground font-semibold">{{ formatCurrency(budget.monthly_limit) }} limit</span>
+    </div>
+</div>
+
+<!-- Category Breakdown -->
+<div v-if="expensesByCategory?.length" class="surface-card p-4 animate-fade-up stagger-5">
+    <h2 class="text-sm font-bold text-foreground font-display tracking-tight">Expense Breakdown</h2>
+    <p class="text-[10px] text-muted-foreground font-sans mb-4">Where your money goes</p>
+    <div class="space-y-3">
+        <div v-for="(cat, idx) in expensesByCategory" :key="cat.category">
+            <div class="flex items-center justify-between mb-1">
+                <div class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full shrink-0" :style="{ backgroundColor: catColors[idx % catColors.length] }"></span><span class="text-xs font-semibold text-foreground font-sans">{{ cat.category }}</span></div>
+                <div class="flex items-center gap-2"><span class="text-[10px] text-muted-foreground">{{ cat.percentage }}%</span><span class="text-xs font-bold font-mono text-foreground">{{ formatCurrency(cat.amount) }}</span></div>
+            </div>
+            <div class="w-full h-1.5 bg-muted/40 rounded-full overflow-hidden"><div class="h-full rounded-full animate-bar-fill origin-left" :style="{ width: cat.percentage + '%', backgroundColor: catColors[idx % catColors.length], animationDelay: (idx * 100) + 'ms' }"></div></div>
+        </div>
+    </div>
+</div>
+
+<!-- Financial Goals -->
+<div v-if="financialGoals?.length" class="surface-card p-4 animate-fade-up stagger-5">
+    <h2 class="text-sm font-bold text-foreground font-display tracking-tight mb-4">Financial Goals</h2>
+    <div class="grid gap-3 md:grid-cols-2">
+        <div v-for="goal in financialGoals" :key="goal.id" class="group p-3 rounded-xl bg-muted/20 border border-border/30 relative">
+            <button @click="deleteGoal(goal.id)" class="absolute top-2 right-2 p-1 rounded text-muted-foreground opacity-0 transition-all hover:bg-destructive/10 hover:text-destructive group-hover:opacity-100"><X class="h-3 w-3" /></button>
+            <div class="flex items-center gap-3">
+                <div class="relative w-12 h-12 shrink-0">
+                    <svg class="w-full h-full -rotate-90" viewBox="0 0 120 120">
+                        <circle cx="60" cy="60" r="50" fill="none" class="stroke-border/30" stroke-width="8" />
+                        <circle cx="60" cy="60" r="50" fill="none" :stroke="goal.color" stroke-width="8" stroke-linecap="round"
+                            :stroke-dasharray="2 * Math.PI * 50"
+                            :stroke-dashoffset="2 * Math.PI * 50 - (Math.min(1, goal.current_amount / goal.target_amount) * 2 * Math.PI * 50)" />
+                    </svg>
+                    <div class="absolute inset-0 flex items-center justify-center"><span class="text-[9px] font-bold font-mono">{{ Math.round((goal.current_amount / goal.target_amount) * 100) }}%</span></div>
                 </div>
-
-                <!-- Expenses Section -->
-                <div class="surface-card p-5 lg:p-6 relative overflow-hidden">
-                    <div class="mb-4 flex items-center justify-between">
-                        <div class="flex items-center gap-2">
-                            <div class="p-1.5 rounded-lg bg-[--fin-loss]/10">
-                                <TrendingDown class="h-4 w-4 text-[--fin-loss]" />
-                            </div>
-                            <h2 class="text-sm font-bold text-foreground font-display tracking-tight">Expenses</h2>
-                        </div>
-                        <span class="text-[11px] text-muted-foreground font-sans">
-                            {{ formatYearMonth(currentMonth) }}
-                        </span>
-                    </div>
-
-                    <div v-if="props.expenseEntries.length > 0" class="space-y-0 divide-y divide-border/30">
-                        <div v-for="entry in props.expenseEntries" :key="entry.id"
-                            class="entry-row group flex items-start justify-between py-3.5 transition-colors first:pt-0">
-                            <div class="flex-1">
-                                <p class="font-semibold text-[--fin-loss] text-[13px] font-mono">-{{
-                                    formatCurrency(entry.amount) }}</p>
-                                <div class="mt-2 flex flex-wrap items-center gap-2">
-                                    <span class="text-xs text-muted-foreground font-sans">{{ entry.date }}</span>
-                                    <span v-if="entry.category"
-                                        class="inline-flex items-center text-[10px] font-semibold text-muted-foreground bg-muted/50 px-2 py-0.5 rounded-full font-sans">{{
-                                            entry.category
-                                        }}</span>
-                                </div>
-                                <p v-if="entry.description"
-                                    class="mt-1 text-xs leading-relaxed text-muted-foreground font-sans">
-                                    {{ entry.description }}
-                                </p>
-                            </div>
-                            <button @click="deleteEntry(entry.id, 'expense')"
-                                class="ml-4 rounded-lg p-1.5 text-muted-foreground opacity-0 transition-all hover:bg-destructive/10 hover:text-destructive group-hover:opacity-100">
-                                <span class="text-sm">✕</span>
-                            </button>
-                        </div>
-                    </div>
-
-                    <div v-else class="mt-6 flex flex-col items-center justify-center py-8">
-                        <TrendingDown class="h-10 w-10 text-muted-foreground/20 mb-3" />
-                        <p class="text-[11px] font-medium text-muted-foreground font-sans">No expense entries this month</p>
-                        <button @click="showExpenseModal = true" class="mt-3 text-[11px] font-semibold text-primary hover:underline">
-                            Add your first expense →
-                        </button>
-                    </div>
+                <div class="flex-1 min-w-0">
+                    <p class="text-xs font-bold text-foreground truncate">{{ goal.name }}</p>
+                    <p class="text-[10px] font-mono text-muted-foreground">{{ formatCurrency(goal.current_amount) }} / {{ formatCurrency(goal.target_amount) }}</p>
+                    <p v-if="goal.deadline" class="text-[9px] text-muted-foreground mt-0.5">Due {{ goal.deadline }}</p>
                 </div>
             </div>
         </div>
-    </AppLayout>
+    </div>
+</div>
 
-    <!-- Income Modal -->
-    <Transition
-        enter-active-class="transition duration-300 ease-out"
-        enter-from-class="opacity-0"
-        enter-to-class="opacity-100"
-        leave-active-class="transition duration-200 ease-in"
-        leave-from-class="opacity-100"
-        leave-to-class="opacity-0">
-        <div v-if="showIncomeModal"
-            class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm"
-            @click.self="showIncomeModal = false">
-            <Transition
-                enter-active-class="transition duration-300 ease-out"
-                enter-from-class="opacity-0 scale-95 translate-y-2"
-                enter-to-class="opacity-100 scale-100 translate-y-0"
-                leave-active-class="transition duration-200 ease-in"
-                leave-from-class="opacity-100 scale-100"
-                leave-to-class="opacity-0 scale-95"
-                appear>
-                <div class="w-full max-w-md transform rounded-2xl surface-card p-8">
-                    <div class="flex items-center gap-3 mb-6">
-                        <div class="p-2 rounded-xl bg-[--fin-gain]/10">
-                            <Wallet class="h-5 w-5 text-[--fin-gain]" />
-                        </div>
-                        <h2 class="text-lg font-bold leading-tight">Add Income</h2>
-                    </div>
-
-                    <div class="space-y-5">
-                        <div>
-                            <label class="block text-sm font-semibold text-muted-foreground font-sans">Amount</label>
-                            <input v-model="incomeForm.amount" type="number" placeholder="0.00"
-                                class="mt-2 w-full rounded-lg border border-border bg-muted/40 px-4 py-2.5 text-sm transition-all focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/10" />
-                        </div>
-
-                        <div>
-                            <label class="block text-sm font-semibold text-muted-foreground font-sans">Date</label>
-                            <input v-model="incomeForm.date" type="date"
-                                class="mt-2 w-full rounded-lg border border-border bg-muted/40 px-4 py-2.5 text-sm transition-all focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/10" />
-                        </div>
-
-                        <div>
-                            <label class="block text-sm font-semibold text-muted-foreground font-sans">Category <span
-                                    class="font-normal text-muted-foreground/70">(Optional)</span></label>
-                            <input v-model="incomeForm.category" type="text" placeholder="Salary, Bonus, etc."
-                                class="mt-2 w-full rounded-lg border border-border bg-muted/40 px-4 py-2.5 text-sm transition-all focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/10" />
-                        </div>
-
-                        <div>
-                            <label class="block text-sm font-semibold text-muted-foreground font-sans">Description <span
-                                    class="font-normal text-muted-foreground/70">(Optional)</span></label>
-                            <input v-model="incomeForm.description" type="text" placeholder="Notes"
-                                class="mt-2 w-full rounded-lg border border-border bg-muted/40 px-4 py-2.5 text-sm transition-all focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/10" />
-                        </div>
-                    </div>
-
-                    <div class="mt-8 flex gap-3">
-                        <button @click="showIncomeModal = false"
-                            class="flex-1 rounded-lg border border-border bg-card px-4 py-2.5 text-sm font-semibold text-foreground transition-all duration-200 hover:bg-accent/50">
-                            Cancel
-                        </button>
-                        <button @click="addIncome"
-                            class="flex-1 rounded-lg border border-primary bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm transition-all duration-200 hover:bg-primary/90 hover:shadow-md">
-                            Add Income
-                        </button>
-                    </div>
-                </div>
-            </Transition>
+<!-- Upcoming Bills + Recurring -->
+<div class="grid gap-3 md:grid-cols-2 animate-fade-up stagger-5">
+    <!-- Upcoming Bills -->
+    <div class="surface-card p-4">
+        <div class="flex items-center gap-1.5 mb-3">
+            <Clock class="h-3.5 w-3.5 text-amber-500" />
+            <h2 class="text-sm font-bold text-foreground font-display tracking-tight">Upcoming Bills</h2>
         </div>
-    </Transition>
-
-    <!-- Expense Modal -->
-    <Transition
-        enter-active-class="transition duration-300 ease-out"
-        enter-from-class="opacity-0"
-        enter-to-class="opacity-100"
-        leave-active-class="transition duration-200 ease-in"
-        leave-from-class="opacity-100"
-        leave-to-class="opacity-0">
-        <div v-if="showExpenseModal"
-            class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm"
-            @click.self="showExpenseModal = false">
-            <Transition
-                enter-active-class="transition duration-300 ease-out"
-                enter-from-class="opacity-0 scale-95 translate-y-2"
-                enter-to-class="opacity-100 scale-100 translate-y-0"
-                leave-active-class="transition duration-200 ease-in"
-                leave-from-class="opacity-100 scale-100"
-                leave-to-class="opacity-0 scale-95"
-                appear>
-                <div class="w-full max-w-md transform rounded-2xl surface-card p-8">
-                    <div class="flex items-center gap-3 mb-6">
-                        <div class="p-2 rounded-xl bg-[--fin-loss]/10">
-                            <TrendingDown class="h-5 w-5 text-[--fin-loss]" />
-                        </div>
-                        <h2 class="text-lg font-bold leading-tight">Add Expense</h2>
-                    </div>
-
-                    <div class="space-y-5">
-                        <div>
-                            <label class="block text-sm font-semibold text-muted-foreground font-sans">Amount</label>
-                            <input v-model="expenseForm.amount" type="number" placeholder="0.00"
-                                class="mt-2 w-full rounded-lg border border-border bg-muted/40 px-4 py-2.5 text-sm transition-all focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/10" />
-                        </div>
-
-                        <div>
-                            <label class="block text-sm font-semibold text-muted-foreground font-sans">Date</label>
-                            <input v-model="expenseForm.date" type="date"
-                                class="mt-2 w-full rounded-lg border border-border bg-muted/40 px-4 py-2.5 text-sm transition-all focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/10" />
-                        </div>
-
-                        <div>
-                            <label class="block text-sm font-semibold text-muted-foreground font-sans">Category <span
-                                    class="font-normal text-muted-foreground/70">(Optional)</span></label>
-                            <input v-model="expenseForm.category" type="text" placeholder="Food, Transport, Utilities, etc."
-                                class="mt-2 w-full rounded-lg border border-border bg-muted/40 px-4 py-2.5 text-sm transition-all focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/10" />
-                        </div>
-
-                        <div>
-                            <label class="block text-sm font-semibold text-muted-foreground font-sans">Description <span
-                                    class="font-normal text-muted-foreground/70">(Optional)</span></label>
-                            <input v-model="expenseForm.description" type="text" placeholder="Notes"
-                                class="mt-2 w-full rounded-lg border border-border bg-muted/40 px-4 py-2.5 text-sm transition-all focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/10" />
-                        </div>
-                    </div>
-
-                    <div class="mt-8 flex gap-3">
-                        <button @click="showExpenseModal = false"
-                            class="flex-1 rounded-lg border border-border bg-card px-4 py-2.5 text-sm font-semibold text-foreground transition-all duration-200 hover:bg-accent/50">
-                            Cancel
-                        </button>
-                        <button @click="addExpense"
-                            class="flex-1 rounded-lg border border-primary bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm transition-all duration-200 hover:bg-primary/90 hover:shadow-md">
-                            Add Expense
-                        </button>
-                    </div>
+        <div v-if="upcomingBills?.length" class="space-y-2">
+            <div v-for="bill in upcomingBills" :key="bill.id" class="flex items-center justify-between p-2 rounded-lg bg-muted/20">
+                <div>
+                    <p class="text-xs font-semibold text-foreground">{{ bill.name }}</p>
+                    <p class="text-[10px] text-muted-foreground">{{ bill.days_until === 0 ? 'Due today' : `In ${bill.days_until} day${bill.days_until !== 1 ? 's' : ''}` }}</p>
                 </div>
-            </Transition>
+                <span class="text-xs font-bold font-mono text-[--fin-loss]">{{ formatCurrency(bill.amount) }}</span>
+            </div>
         </div>
-    </Transition>
+        <div v-else class="flex flex-col items-center py-6"><Clock class="h-6 w-6 text-muted-foreground/20 mb-1" /><p class="text-[10px] text-muted-foreground">No upcoming bills</p></div>
+    </div>
+
+    <!-- Recurring Transactions -->
+    <div class="surface-card p-4">
+        <h2 class="text-sm font-bold text-foreground font-display tracking-tight mb-3">Recurring</h2>
+        <div v-if="recurringTransactions?.length" class="space-y-2">
+            <div v-for="rt in recurringTransactions" :key="rt.id" class="group flex items-center justify-between p-2 rounded-lg bg-muted/20">
+                <div>
+                    <p class="text-xs font-semibold text-foreground">{{ rt.name }}</p>
+                    <p class="text-[10px] text-muted-foreground capitalize">{{ rt.frequency }} · {{ rt.next_due_date }}</p>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span :class="['text-xs font-bold font-mono', rt.type === 'income' ? 'text-[--fin-gain]' : 'text-[--fin-loss]']">{{ rt.type === 'income' ? '+' : '-' }}{{ formatCurrency(rt.amount) }}</span>
+                    <button @click="deleteRecurring(rt.id)" class="p-1 rounded text-muted-foreground opacity-0 transition-all hover:bg-destructive/10 hover:text-destructive group-hover:opacity-100"><Trash2 class="h-3 w-3" /></button>
+                </div>
+            </div>
+        </div>
+        <div v-else class="flex flex-col items-center py-6"><CalendarClock class="h-6 w-6 text-muted-foreground/20 mb-1" /><p class="text-[10px] text-muted-foreground">No recurring items</p></div>
+    </div>
+</div>
+
+<!-- Recent Activity Timeline -->
+<div v-if="recentActivity?.length" class="surface-card p-4 animate-fade-up stagger-5">
+    <div class="flex items-center gap-1.5 mb-3"><Activity class="h-3.5 w-3.5 text-primary" /><h2 class="text-sm font-bold text-foreground font-display tracking-tight">Recent Activity</h2></div>
+    <div class="space-y-0 divide-y divide-border/20">
+        <div v-for="item in recentActivity" :key="`${item.type}-${item.id}`" class="flex items-center justify-between py-2.5 first:pt-0 last:pb-0">
+            <div class="flex items-center gap-2.5">
+                <div :class="['w-1.5 h-1.5 rounded-full shrink-0', item.type === 'income' ? 'bg-[--fin-gain]' : 'bg-[--fin-loss]']"></div>
+                <div>
+                    <p class="text-xs font-semibold text-foreground">{{ item.category || (item.type === 'income' ? 'Income' : 'Expense') }}</p>
+                    <p class="text-[10px] text-muted-foreground">{{ item.date }}</p>
+                </div>
+            </div>
+            <span :class="['text-xs font-bold font-mono', item.type === 'income' ? 'text-[--fin-gain]' : 'text-[--fin-loss]']">{{ item.type === 'income' ? '+' : '-' }}{{ formatCurrency(item.amount) }}</span>
+        </div>
+    </div>
+</div>
+
+<!-- Income & Expense Entry Lists -->
+<div class="grid gap-3 md:grid-cols-2 animate-fade-up stagger-5">
+    <div class="surface-card p-4">
+        <div class="mb-3 flex items-center gap-2"><div class="p-1 rounded bg-[--fin-gain]/10"><Wallet class="h-3.5 w-3.5 text-[--fin-gain]" /></div><h2 class="text-sm font-bold text-foreground">Income</h2><span class="text-[10px] text-muted-foreground ml-auto">{{ fmtYearMonth(currentMonth) }}</span></div>
+        <div v-if="incomeEntries.length" class="divide-y divide-border/20">
+            <div v-for="e in incomeEntries" :key="e.id" class="entry-row group flex items-start justify-between py-2.5 first:pt-0">
+                <div><p class="text-xs font-semibold font-mono text-[--fin-gain]">+{{ formatCurrency(e.amount) }}</p><div class="flex gap-1.5 mt-1"><span class="text-[10px] text-muted-foreground">{{ e.date }}</span><span v-if="e.category" class="text-[9px] font-semibold bg-muted/50 px-1.5 py-0.5 rounded-full text-muted-foreground">{{ e.category }}</span></div></div>
+                <button @click="deleteEntry(e.id, 'income')" class="p-1 text-muted-foreground opacity-0 transition-all hover:text-destructive group-hover:opacity-100"><span class="text-xs">✕</span></button>
+            </div>
+        </div>
+        <div v-else class="py-6 text-center"><Wallet class="h-6 w-6 text-muted-foreground/20 mx-auto mb-1" /><p class="text-[10px] text-muted-foreground">No income</p></div>
+    </div>
+    <div class="surface-card p-4">
+        <div class="mb-3 flex items-center gap-2"><div class="p-1 rounded bg-[--fin-loss]/10"><TrendingDown class="h-3.5 w-3.5 text-[--fin-loss]" /></div><h2 class="text-sm font-bold text-foreground">Expenses</h2><span class="text-[10px] text-muted-foreground ml-auto">{{ fmtYearMonth(currentMonth) }}</span></div>
+        <div v-if="expenseEntries.length" class="divide-y divide-border/20">
+            <div v-for="e in expenseEntries" :key="e.id" class="entry-row group flex items-start justify-between py-2.5 first:pt-0">
+                <div><p class="text-xs font-semibold font-mono text-[--fin-loss]">-{{ formatCurrency(e.amount) }}</p><div class="flex gap-1.5 mt-1"><span class="text-[10px] text-muted-foreground">{{ e.date }}</span><span v-if="e.category" class="text-[9px] font-semibold bg-muted/50 px-1.5 py-0.5 rounded-full text-muted-foreground">{{ e.category }}</span></div></div>
+                <button @click="deleteEntry(e.id, 'expense')" class="p-1 text-muted-foreground opacity-0 transition-all hover:text-destructive group-hover:opacity-100"><span class="text-xs">✕</span></button>
+            </div>
+        </div>
+        <div v-else class="py-6 text-center"><TrendingDown class="h-6 w-6 text-muted-foreground/20 mx-auto mb-1" /><p class="text-[10px] text-muted-foreground">No expenses</p></div>
+    </div>
+</div>
+
+</div>
+</AppLayout>
+
+<!-- Add Income Modal -->
+<Teleport to="body">
+<Transition enter-active-class="transition duration-200 ease-out" enter-from-class="opacity-0" enter-to-class="opacity-100" leave-active-class="transition duration-150 ease-in" leave-from-class="opacity-100" leave-to-class="opacity-0">
+<div v-if="showIncomeModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm" @click.self="showIncomeModal = false">
+    <Transition appear enter-active-class="transition duration-200 ease-out" enter-from-class="opacity-0 scale-95 translate-y-2" enter-to-class="opacity-100 scale-100 translate-y-0">
+    <div class="surface-elevated w-full max-w-md mx-4 p-6 rounded-2xl">
+        <div class="flex items-center gap-2 mb-5"><div class="p-1.5 rounded-lg bg-[--fin-gain]/10"><Wallet class="h-4 w-4 text-[--fin-gain]" /></div><h3 class="text-lg font-bold">Add Income</h3></div>
+        <div class="space-y-4">
+            <div><label class="block text-sm font-semibold text-muted-foreground">Amount</label><input v-model="incomeForm.amount" type="number" placeholder="0.00" class="mt-1 w-full rounded-lg border border-border bg-card px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/10" /></div>
+            <div><label class="block text-sm font-semibold text-muted-foreground">Date</label><input v-model="incomeForm.date" type="date" class="mt-1 w-full rounded-lg border border-border bg-card px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/10" /></div>
+            <div><label class="block text-sm font-semibold text-muted-foreground">Category</label><input v-model="incomeForm.category" type="text" placeholder="e.g., Salary" class="mt-1 w-full rounded-lg border border-border bg-card px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/10" /></div>
+            <div><label class="block text-sm font-semibold text-muted-foreground">Description</label><input v-model="incomeForm.description" type="text" placeholder="Optional" class="mt-1 w-full rounded-lg border border-border bg-card px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/10" /></div>
+        </div>
+        <div class="flex gap-2 mt-5"><button @click="showIncomeModal = false" class="flex-1 rounded-lg border border-border px-4 py-2.5 text-sm font-semibold text-muted-foreground hover:bg-accent/50">Cancel</button><button @click="addIncome" class="flex-1 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90">Add</button></div>
+    </div></Transition>
+</div></Transition>
+</Teleport>
+
+<!-- Add Expense Modal -->
+<Teleport to="body">
+<Transition enter-active-class="transition duration-200 ease-out" enter-from-class="opacity-0" enter-to-class="opacity-100" leave-active-class="transition duration-150 ease-in" leave-from-class="opacity-100" leave-to-class="opacity-0">
+<div v-if="showExpenseModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm" @click.self="showExpenseModal = false">
+    <Transition appear enter-active-class="transition duration-200 ease-out" enter-from-class="opacity-0 scale-95 translate-y-2" enter-to-class="opacity-100 scale-100 translate-y-0">
+    <div class="surface-elevated w-full max-w-md mx-4 p-6 rounded-2xl">
+        <div class="flex items-center gap-2 mb-5"><div class="p-1.5 rounded-lg bg-[--fin-loss]/10"><TrendingDown class="h-4 w-4 text-[--fin-loss]" /></div><h3 class="text-lg font-bold">Add Expense</h3></div>
+        <div class="space-y-4">
+            <div><label class="block text-sm font-semibold text-muted-foreground">Amount</label><input v-model="expenseForm.amount" type="number" placeholder="0.00" class="mt-1 w-full rounded-lg border border-border bg-card px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/10" /></div>
+            <div><label class="block text-sm font-semibold text-muted-foreground">Date</label><input v-model="expenseForm.date" type="date" class="mt-1 w-full rounded-lg border border-border bg-card px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/10" /></div>
+            <div><label class="block text-sm font-semibold text-muted-foreground">Category</label><input v-model="expenseForm.category" type="text" placeholder="e.g., Food" class="mt-1 w-full rounded-lg border border-border bg-card px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/10" /></div>
+            <div><label class="block text-sm font-semibold text-muted-foreground">Description</label><input v-model="expenseForm.description" type="text" placeholder="Optional" class="mt-1 w-full rounded-lg border border-border bg-card px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/10" /></div>
+        </div>
+        <div class="flex gap-2 mt-5"><button @click="showExpenseModal = false" class="flex-1 rounded-lg border border-border px-4 py-2.5 text-sm font-semibold text-muted-foreground hover:bg-accent/50">Cancel</button><button @click="addExpense" class="flex-1 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90">Add</button></div>
+    </div></Transition>
+</div></Transition>
+</Teleport>
+
+<!-- Budget Modal -->
+<Teleport to="body">
+<Transition enter-active-class="transition duration-200 ease-out" enter-from-class="opacity-0" enter-to-class="opacity-100" leave-active-class="transition duration-150 ease-in" leave-from-class="opacity-100" leave-to-class="opacity-0">
+<div v-if="showBudgetModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm" @click.self="showBudgetModal = false">
+    <Transition appear enter-active-class="transition duration-200 ease-out" enter-from-class="opacity-0 scale-95 translate-y-2" enter-to-class="opacity-100 scale-100 translate-y-0">
+    <div class="surface-elevated w-full max-w-sm mx-4 p-6 rounded-2xl">
+        <div class="flex items-center gap-2 mb-5"><div class="p-1.5 rounded-lg bg-primary/10"><Target class="h-4 w-4 text-primary" /></div><h3 class="text-lg font-bold">Set Monthly Budget</h3></div>
+        <div><label class="block text-sm font-semibold text-muted-foreground">Monthly Spending Limit</label><input v-model="budgetForm.monthly_limit" type="number" placeholder="0.00" class="mt-1 w-full rounded-lg border border-border bg-card px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/10" /></div>
+        <div class="flex gap-2 mt-5"><button @click="showBudgetModal = false" class="flex-1 rounded-lg border border-border px-4 py-2.5 text-sm font-semibold text-muted-foreground hover:bg-accent/50">Cancel</button><button @click="saveBudget" class="flex-1 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90">Save</button></div>
+    </div></Transition>
+</div></Transition>
+</Teleport>
+
+<!-- Goal Modal -->
+<Teleport to="body">
+<Transition enter-active-class="transition duration-200 ease-out" enter-from-class="opacity-0" enter-to-class="opacity-100" leave-active-class="transition duration-150 ease-in" leave-from-class="opacity-100" leave-to-class="opacity-0">
+<div v-if="showGoalModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm" @click.self="showGoalModal = false">
+    <Transition appear enter-active-class="transition duration-200 ease-out" enter-from-class="opacity-0 scale-95 translate-y-2" enter-to-class="opacity-100 scale-100 translate-y-0">
+    <div class="surface-elevated w-full max-w-md mx-4 p-6 rounded-2xl">
+        <div class="flex items-center gap-2 mb-5"><div class="p-1.5 rounded-lg bg-primary/10"><Zap class="h-4 w-4 text-primary" /></div><h3 class="text-lg font-bold">Add Financial Goal</h3></div>
+        <div class="space-y-4">
+            <div><label class="block text-sm font-semibold text-muted-foreground">Goal Name</label><input v-model="goalForm.name" type="text" placeholder="e.g., Emergency Fund" class="mt-1 w-full rounded-lg border border-border bg-card px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/10" /></div>
+            <div class="grid gap-4 grid-cols-2">
+                <div><label class="block text-sm font-semibold text-muted-foreground">Target</label><input v-model="goalForm.target_amount" type="number" placeholder="50000" class="mt-1 w-full rounded-lg border border-border bg-card px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/10" /></div>
+                <div><label class="block text-sm font-semibold text-muted-foreground">Saved So Far</label><input v-model="goalForm.current_amount" type="number" placeholder="0" class="mt-1 w-full rounded-lg border border-border bg-card px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/10" /></div>
+            </div>
+            <div class="grid gap-4 grid-cols-2">
+                <div><label class="block text-sm font-semibold text-muted-foreground">Deadline</label><input v-model="goalForm.deadline" type="date" class="mt-1 w-full rounded-lg border border-border bg-card px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/10" /></div>
+                <div><label class="block text-sm font-semibold text-muted-foreground">Color</label><input v-model="goalForm.color" type="color" class="mt-1 w-full h-[38px] rounded-lg border border-border bg-card cursor-pointer" /></div>
+            </div>
+        </div>
+        <div class="flex gap-2 mt-5"><button @click="showGoalModal = false" class="flex-1 rounded-lg border border-border px-4 py-2.5 text-sm font-semibold text-muted-foreground hover:bg-accent/50">Cancel</button><button @click="addGoal" class="flex-1 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90">Add</button></div>
+    </div></Transition>
+</div></Transition>
+</Teleport>
+
+<!-- Recurring Transaction Modal -->
+<Teleport to="body">
+<Transition enter-active-class="transition duration-200 ease-out" enter-from-class="opacity-0" enter-to-class="opacity-100" leave-active-class="transition duration-150 ease-in" leave-from-class="opacity-100" leave-to-class="opacity-0">
+<div v-if="showRecurringModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm" @click.self="showRecurringModal = false">
+    <Transition appear enter-active-class="transition duration-200 ease-out" enter-from-class="opacity-0 scale-95 translate-y-2" enter-to-class="opacity-100 scale-100 translate-y-0">
+    <div class="surface-elevated w-full max-w-md mx-4 p-6 rounded-2xl">
+        <div class="flex items-center gap-2 mb-5"><div class="p-1.5 rounded-lg bg-primary/10"><CalendarClock class="h-4 w-4 text-primary" /></div><h3 class="text-lg font-bold">Add Recurring Transaction</h3></div>
+        <div class="space-y-4">
+            <div><label class="block text-sm font-semibold text-muted-foreground">Name</label><input v-model="recurringForm.name" type="text" placeholder="e.g., Rent" class="mt-1 w-full rounded-lg border border-border bg-card px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/10" /></div>
+            <div class="grid gap-4 grid-cols-2">
+                <div><label class="block text-sm font-semibold text-muted-foreground">Amount</label><input v-model="recurringForm.amount" type="number" placeholder="0.00" class="mt-1 w-full rounded-lg border border-border bg-card px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/10" /></div>
+                <div><label class="block text-sm font-semibold text-muted-foreground">Type</label><select v-model="recurringForm.type" class="mt-1 w-full rounded-lg border border-border bg-card px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/10"><option value="expense">Expense</option><option value="income">Income</option></select></div>
+            </div>
+            <div class="grid gap-4 grid-cols-2">
+                <div><label class="block text-sm font-semibold text-muted-foreground">Frequency</label><select v-model="recurringForm.frequency" class="mt-1 w-full rounded-lg border border-border bg-card px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/10"><option value="weekly">Weekly</option><option value="monthly">Monthly</option><option value="yearly">Yearly</option></select></div>
+                <div><label class="block text-sm font-semibold text-muted-foreground">Next Due</label><input v-model="recurringForm.next_due_date" type="date" class="mt-1 w-full rounded-lg border border-border bg-card px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/10" /></div>
+            </div>
+            <div><label class="block text-sm font-semibold text-muted-foreground">Category</label><input v-model="recurringForm.category" type="text" placeholder="e.g., Housing" class="mt-1 w-full rounded-lg border border-border bg-card px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/10" /></div>
+        </div>
+        <div class="flex gap-2 mt-5"><button @click="showRecurringModal = false" class="flex-1 rounded-lg border border-border px-4 py-2.5 text-sm font-semibold text-muted-foreground hover:bg-accent/50">Cancel</button><button @click="addRecurring" class="flex-1 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90">Add</button></div>
+    </div></Transition>
+</div></Transition>
+</Teleport>
 </template>
