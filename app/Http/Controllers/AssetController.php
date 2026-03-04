@@ -15,16 +15,35 @@ class AssetController extends Controller
             'type' => 'nullable|string',
         ]);
 
-        $asset = Asset::create([
+        Asset::create([
             'user_id' => auth()->id(),
             ...$validated,
         ]);
 
-        return response()->json($asset, 201);
+        return redirect()->back();
     }
 
-    public function index()
+    public function destroy(Asset $asset)
     {
-        return Asset::where('user_id', auth()->id())->get();
+        if ($asset->user_id !== auth()->id()) {
+            abort(403);
+        }
+
+        $asset->delete();
+
+        return redirect()->back();
+    }
+
+    public function update(Asset $asset)
+    {
+        if ($asset->user_id !== auth()->id()) {
+            abort(403);
+        }
+
+        $asset->update([
+            'checked' => !$asset->checked,
+        ]);
+
+        return redirect()->back();
     }
 }

@@ -66,7 +66,7 @@ class AnalyticsController extends Controller
                 'amount' => $item['amount'],
                 'percentage' => round(($item['amount'] / $totalExpenses) * 100, 2),
             ];
-        })->take(1); // Show top category
+        })->sortByDesc('amount')->take(5); // Show top 5 categories
 
         return Inertia::render('Analytics', [
             'trendData' => $trendData,

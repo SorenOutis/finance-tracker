@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Form, Head, Link, usePage } from '@inertiajs/vue3';
+import { Form, Head, Link, useForm, usePage } from '@inertiajs/vue3';
 import { computed } from 'vue';
 import ProfileController from '@/actions/App/Http/Controllers/Settings/ProfileController';
 import DeleteUser from '@/components/DeleteUser.vue';
@@ -12,6 +12,7 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import SettingsLayout from '@/layouts/settings/Layout.vue';
 import { edit } from '@/routes/profile';
 import { send } from '@/routes/verification';
+import { LogOut } from 'lucide-vue-next';
 import type { BreadcrumbItem } from '@/types';
 
 type Props = {
@@ -30,6 +31,12 @@ const breadcrumbItems: BreadcrumbItem[] = [
 
 const page = usePage();
 const user = computed(() => page.props.auth.user);
+
+const logoutForm = useForm({});
+
+const handleLogout = () => {
+    logoutForm.post('/logout');
+};
 </script>
 
 <template>
@@ -126,6 +133,24 @@ const user = computed(() => page.props.auth.user);
             </div>
 
             <DeleteUser />
+
+            <div class="flex flex-col space-y-6">
+                <Heading
+                    variant="small"
+                    title="Logout"
+                    description="Sign out of your account"
+                />
+
+                <div>
+                    <button
+                        @click="handleLogout"
+                        class="flex items-center justify-center gap-2 rounded-lg border border-destructive/50 bg-destructive/10 px-4 py-2.5 text-sm font-semibold text-destructive transition-all duration-200 hover:bg-destructive/20 hover:border-destructive"
+                    >
+                        <LogOut class="h-4 w-4" />
+                        Logout
+                    </button>
+                </div>
+            </div>
         </SettingsLayout>
     </AppLayout>
 </template>

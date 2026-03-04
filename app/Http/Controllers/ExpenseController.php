@@ -28,4 +28,15 @@ class ExpenseController extends Controller
     {
         return Expense::where('user_id', auth()->id())->get();
     }
+
+    public function destroy(Expense $expense)
+    {
+        if ($expense->user_id !== auth()->id()) {
+            abort(403);
+        }
+        
+        $expense->delete();
+        
+        return redirect()->back();
+    }
 }

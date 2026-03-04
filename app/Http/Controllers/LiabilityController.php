@@ -15,16 +15,35 @@ class LiabilityController extends Controller
             'type' => 'nullable|string',
         ]);
 
-        $liability = Liability::create([
+        Liability::create([
             'user_id' => auth()->id(),
             ...$validated,
         ]);
 
-        return response()->json($liability, 201);
+        return redirect()->back();
     }
 
-    public function index()
+    public function destroy(Liability $liability)
     {
-        return Liability::where('user_id', auth()->id())->get();
+        if ($liability->user_id !== auth()->id()) {
+            abort(403);
+        }
+
+        $liability->delete();
+
+        return redirect()->back();
+    }
+
+    public function update(Liability $liability)
+    {
+        if ($liability->user_id !== auth()->id()) {
+            abort(403);
+        }
+
+        $liability->update([
+            'checked' => !$liability->checked,
+        ]);
+
+        return redirect()->back();
     }
 }

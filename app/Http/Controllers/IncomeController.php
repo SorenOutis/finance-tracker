@@ -28,4 +28,15 @@ class IncomeController extends Controller
     {
         return Income::where('user_id', auth()->id())->get();
     }
+
+    public function destroy(Income $income)
+    {
+        if ($income->user_id !== auth()->id()) {
+            abort(403);
+        }
+        
+        $income->delete();
+        
+        return redirect()->back();
+    }
 }

@@ -46,11 +46,12 @@ class DashboardController extends Controller
         $netWorth = $yearlyIncomes - $yearlyExpenses;
 
         return Inertia::render('Dashboard', [
-            'stats' => [
-                ['label' => 'Total Income', 'value' => $totalIncome],
-                ['label' => 'Total Expenses', 'value' => $totalExpenses],
-                ['label' => 'Net Income', 'value' => $netIncome],
-                ['label' => 'Net Worth', 'value' => $netWorth],
+            'user' => $user,
+            'dashboard' => [
+                'totalIncome' => $totalIncome,
+                'totalExpense' => $totalExpenses,
+                'netIncome' => $netIncome,
+                'netWorth' => $netWorth,
             ],
             'incomeEntries' => $incomes->map(fn($income) => [
                 'id' => $income->id,

@@ -5,6 +5,11 @@ import { analytics } from '@/routes';
 import type { BreadcrumbItem } from '@/types';
 import { computed } from 'vue';
 import { formatCurrency } from '@/utils/currency';
+import { useChartDefaults } from '@/composables/useChartDefaults';
+import { Chart as ChartJS, registerables } from 'chart.js';
+import { Line as LineChart, Bar as BarChart, Doughnut as DoughnutChart } from 'vue-chartjs';
+
+ChartJS.register(...registerables);
 
 interface TrendItem {
     month: string;
@@ -32,191 +37,190 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-const categoryDataWithColor = computed(() =>
-    props.categoryData.map((item, index) => ({
-        ...item,
-        color: '#a855f7',
-    }))
-);
+const { chartColors, lineChartOptions, barChartOptions, doughnutChartOptions, isDark } = useChartDefaults();
+
+// Income vs Expenses Trend Chart
+const incomeExpensesChart = computed(() => {
+    if (!props.trendData || props.trendData.length === 0) {
+        return {
+            labels: [],
+            datasets: []
+        };
+    }
+    
+    const labels = props.trendData.map((d: any) => d.month);
+    const incomeData = props.trendData.map((d: any) => d.income);
+    const expensesData = props.trendData.map((d: any) => d.expenses);
+    
+    return {
+        labels: labels,
+        datasets: [
+            {
+                label: 'Income',
+                data: incomeData,
+                borderColor: chartColors.teal,
+                backgroundColor: chartColors.tealMuted,
+                borderWidth: 3,
+                tension: 0.4,
+                fill: true,
+                pointRadius: 5,
+                pointHoverRadius: 7,
+                pointBackgroundColor: chartColors.teal,
+                pointBorderColor: '#fff',
+                pointBorderWidth: 2,
+            },
+            {
+                label: 'Expenses',
+                data: expensesData,
+                borderColor: chartColors.loss,
+                backgroundColor: chartColors.lossMuted,
+                borderWidth: 3,
+                tension: 0.4,
+                fill: true,
+                pointRadius: 5,
+                pointHoverRadius: 7,
+                pointBackgroundColor: chartColors.loss,
+                pointBorderColor: '#fff',
+                pointBorderWidth: 2,
+            }
+        ]
+    };
+});
+
+// Monthly Net Income Chart
+const netIncomeChart = computed(() => {
+    if (!props.trendData || props.trendData.length === 0) {
+        return {
+            labels: [],
+            datasets: []
+        };
+    }
+    
+    return {
+        labels: props.trendData.map(d => d.month),
+        datasets: [{
+            label: 'Net Income',
+            data: props.trendData.map(d => {
+                const net = d.income - d.expenses;
+                return net >= 0 ? net : 0;
+            }),
+            backgroundColor: props.trendData.map(d => d.income - d.expenses >= 0 ? chartColors.gain : chartColors.loss),
+            borderRadius: 6,
+            borderSkipped: false,
+        }]
+    };
+});
+
+// Expenses by Category Chart
+const categoryChart = computed(() => {
+    if (!props.categoryData || props.categoryData.length === 0) {
+        return {
+            labels: [],
+            datasets: []
+        };
+    }
+    
+    const categoryColors = [
+        chartColors.teal,
+        chartColors.azure,
+        chartColors.amber,
+        chartColors.slate,
+        chartColors.loss,
+    ];
+    
+    return {
+        labels: props.categoryData.map(c => c.name),
+        datasets: [{
+            data: props.categoryData.map(c => c.amount),
+            backgroundColor: props.categoryData.map((_, i) => categoryColors[i % categoryColors.length]),
+            borderColor: isDark.value ? 'oklch(0.269 0 0)' : 'oklch(0.922 0 0)',
+            borderWidth: 2,
+            hoverOffset: 4,
+        }]
+    };
+});
+
+// Top category
+const topCategory = computed(() => {
+    if (props.categoryData && props.categoryData.length > 0) {
+        return props.categoryData[0];
+    }
+    return null;
+});
 </script>
 
 <template>
     <Head title="Analytics" />
 
     <AppLayout :breadcrumbs="breadcrumbs">
-        <div class="flex h-full flex-1 flex-col gap-6 overflow-x-auto p-6">
+        <div class="flex h-full flex-1 flex-col gap-8 overflow-x-auto p-6 sm:p-8 pb-20 md:pb-8">
+            <!-- Header -->
+            <div>
+                <h1 class="text-3xl lg:text-4xl font-bold leading-tight tracking-tight">Analytics</h1>
+                <p class="mt-2 text-sm text-muted-foreground font-sans">Track your financial trends and insights</p>
+            </div>
+
             <!-- Income vs Expenses Trend -->
-             <div class="rounded-lg border border-gray-200 bg-white p-6 text-black dark:border-slate-600 dark:bg-black dark:text-white">
-                 <h2 class="mb-1 text-xl font-bold">Income vs Expenses Trend</h2>
-                 <p class="mb-6 text-sm text-gray-600 dark:text-gray-400">Monthly comparison throughout the year</p>
+            <div class="surface-card p-5 lg:p-6">
+                <h2 class="text-sm font-bold text-foreground font-display tracking-tight">Income vs Expenses Trend</h2>
+                <p class="mt-0.5 text-[11px] text-muted-foreground font-sans">Monthly comparison of income and expenses</p>
 
-                <!-- SVG Line Chart -->
-                <svg viewBox="0 0 1200 350" class="w-full">
-                    <!-- Grid lines -->
-                    <line x1="60" y1="50" x2="60" y2="300" stroke="#374151" stroke-width="2" />
-                    <line x1="60" y1="300" x2="1150" y2="300" stroke="#374151" stroke-width="2" />
-
-                    <!-- Y-axis labels -->
-                    <text x="40" y="55" font-size="12" fill="#9CA3AF" text-anchor="end">6000</text>
-                    <text x="40" y="105" font-size="12" fill="#9CA3AF" text-anchor="end">4500</text>
-                    <text x="40" y="155" font-size="12" fill="#9CA3AF" text-anchor="end">3000</text>
-                    <text x="40" y="205" font-size="12" fill="#9CA3AF" text-anchor="end">1500</text>
-                    <text x="40" y="305" font-size="12" fill="#9CA3AF" text-anchor="end">0</text>
-
-                    <!-- X-axis labels -->
-                    <text x="90" y="325" font-size="12" fill="#9CA3AF" text-anchor="middle">Jan</text>
-                    <text x="185" y="325" font-size="12" fill="#9CA3AF" text-anchor="middle">Feb</text>
-                    <text x="280" y="325" font-size="12" fill="#9CA3AF" text-anchor="middle">Mar</text>
-                    <text x="375" y="325" font-size="12" fill="#9CA3AF" text-anchor="middle">Apr</text>
-                    <text x="470" y="325" font-size="12" fill="#9CA3AF" text-anchor="middle">May</text>
-                    <text x="565" y="325" font-size="12" fill="#9CA3AF" text-anchor="middle">Jun</text>
-                    <text x="660" y="325" font-size="12" fill="#9CA3AF" text-anchor="middle">Jul</text>
-                    <text x="755" y="325" font-size="12" fill="#9CA3AF" text-anchor="middle">Aug</text>
-                    <text x="850" y="325" font-size="12" fill="#9CA3AF" text-anchor="middle">Sep</text>
-                    <text x="945" y="325" font-size="12" fill="#9CA3AF" text-anchor="middle">Oct</text>
-                    <text x="1040" y="325" font-size="12" fill="#9CA3AF" text-anchor="middle">Nov</text>
-                    <text x="1135" y="325" font-size="12" fill="#9CA3AF" text-anchor="middle">Dec</text>
-
-                    <!-- Income line (cyan/teal) -->
-                    <polyline
-                        points="90,300 185,300 280,300 375,300 470,300 565,300 660,300 755,300 850,300 945,300 1040,300 1135,300"
-                        fill="none"
-                        stroke="#06b6d4"
-                        stroke-width="3"
-                        stroke-linejoin="round"
-                        stroke-linecap="round"
+                <div v-if="props.trendData && props.trendData.length > 0" class="relative mt-6" style="height: 400px; position: relative;">
+                    <LineChart
+                        :key="JSON.stringify(incomeExpensesChart)"
+                        :data="incomeExpensesChart"
+                        :options="lineChartOptions"
+                        style="position: relative; height: 100%;"
                     />
-
-                    <!-- Income data points -->
-                    <circle cx="90" cy="300" r="5" fill="#06b6d4" />
-                    <circle cx="185" cy="300" r="5" fill="#06b6d4" />
-                    <circle cx="280" cy="300" r="5" fill="#06b6d4" />
-                    <circle cx="375" cy="300" r="5" fill="#06b6d4" />
-                    <circle cx="470" cy="300" r="5" fill="#06b6d4" />
-                    <circle cx="565" cy="300" r="5" fill="#06b6d4" />
-                    <circle cx="660" cy="300" r="5" fill="#06b6d4" />
-                    <circle cx="755" cy="300" r="5" fill="#06b6d4" />
-                    <circle cx="850" cy="300" r="5" fill="#06b6d4" />
-                    <circle cx="945" cy="300" r="5" fill="#06b6d4" />
-                    <circle cx="1040" cy="300" r="5" fill="#06b6d4" />
-                    <circle cx="1135" cy="300" r="5" fill="#06b6d4" />
-
-                    <!-- Expenses line (red) -->
-                    <polyline
-                        points="90,300 185,300 280,300 375,300 470,300 565,300 660,300 755,300 850,300 945,300 1040,300 1135,300"
-                        fill="none"
-                        stroke="#ef4444"
-                        stroke-width="3"
-                        stroke-linejoin="round"
-                        stroke-linecap="round"
-                    />
-
-                    <!-- Expenses data points -->
-                    <circle cx="90" cy="300" r="5" fill="#ef4444" />
-                    <circle cx="185" cy="300" r="5" fill="#ef4444" />
-                    <circle cx="280" cy="300" r="5" fill="#ef4444" />
-                    <circle cx="375" cy="300" r="5" fill="#ef4444" />
-                    <circle cx="470" cy="300" r="5" fill="#ef4444" />
-                    <circle cx="565" cy="300" r="5" fill="#ef4444" />
-                    <circle cx="660" cy="300" r="5" fill="#ef4444" />
-                    <circle cx="755" cy="300" r="5" fill="#ef4444" />
-                    <circle cx="850" cy="300" r="5" fill="#ef4444" />
-                    <circle cx="945" cy="300" r="5" fill="#ef4444" />
-                    <circle cx="1040" cy="300" r="5" fill="#ef4444" />
-                    <circle cx="1135" cy="300" r="5" fill="#ef4444" />
-                </svg>
-
-                <!-- Legend -->
-                <div class="mt-6 flex justify-center gap-8">
-                    <div class="flex items-center gap-2">
-                        <div class="h-3 w-3 rounded-full" style="background-color: #06b6d4" />
-                        <span class="text-sm text-gray-700 dark:text-gray-300">income</span>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <div class="h-3 w-3 rounded-full" style="background-color: #ef4444" />
-                        <span class="text-sm text-gray-700 dark:text-gray-300">expenses</span>
-                    </div>
                 </div>
+                <div v-else class="mt-6 flex h-96 items-center justify-center text-sm text-muted-foreground">
+                    No data available
                 </div>
+            </div>
 
             <!-- Monthly Net Income -->
-            <div class="rounded-lg border border-gray-200 bg-white p-6 text-black dark:border-slate-600 dark:bg-black dark:text-white">
-                <h2 class="mb-1 text-xl font-bold">Monthly Net Income</h2>
-                <p class="mb-6 text-sm text-gray-600 dark:text-gray-400">Your earnings after expenses</p>
+            <div class="surface-card p-5 lg:p-6">
+                <h2 class="text-sm font-bold text-foreground font-display tracking-tight">Monthly Net Income</h2>
+                <p class="mt-0.5 text-[11px] text-muted-foreground font-sans">Your earnings after expenses</p>
 
-                <!-- SVG Bar Chart -->
-                <svg viewBox="0 0 1200 350" class="w-full">
-                    <!-- Grid lines -->
-                    <line x1="60" y1="50" x2="60" y2="300" stroke="#374151" stroke-width="2" />
-                    <line x1="60" y1="300" x2="1150" y2="300" stroke="#374151" stroke-width="2" />
-
-                    <!-- Y-axis labels -->
-                    <text x="40" y="55" font-size="12" fill="#9CA3AF" text-anchor="end">3000</text>
-                    <text x="40" y="155" font-size="12" fill="#9CA3AF" text-anchor="end">1500</text>
-                    <text x="40" y="255" font-size="12" fill="#9CA3AF" text-anchor="end">0</text>
-
-                    <!-- X-axis labels -->
-                    <text x="90" y="325" font-size="12" fill="#9CA3AF" text-anchor="middle">Jan</text>
-                    <text x="185" y="325" font-size="12" fill="#9CA3AF" text-anchor="middle">Feb</text>
-                    <text x="280" y="325" font-size="12" fill="#9CA3AF" text-anchor="middle">Mar</text>
-                    <text x="375" y="325" font-size="12" fill="#9CA3AF" text-anchor="middle">Apr</text>
-                    <text x="470" y="325" font-size="12" fill="#9CA3AF" text-anchor="middle">May</text>
-                    <text x="565" y="325" font-size="12" fill="#9CA3AF" text-anchor="middle">Jun</text>
-                    <text x="660" y="325" font-size="12" fill="#9CA3AF" text-anchor="middle">Jul</text>
-                    <text x="755" y="325" font-size="12" fill="#9CA3AF" text-anchor="middle">Aug</text>
-                    <text x="850" y="325" font-size="12" fill="#9CA3AF" text-anchor="middle">Sep</text>
-                    <text x="945" y="325" font-size="12" fill="#9CA3AF" text-anchor="middle">Oct</text>
-                    <text x="1040" y="325" font-size="12" fill="#9CA3AF" text-anchor="middle">Nov</text>
-                    <text x="1135" y="325" font-size="12" fill="#9CA3AF" text-anchor="middle">Dec</text>
-
-                    <!-- Bars -->
-                    <rect x="75" y="300" width="30" height="0" fill="#a855f7" rx="4" />
-                    <rect x="170" y="300" width="30" height="0" fill="#a855f7" rx="4" />
-                    <rect x="265" y="300" width="30" height="0" fill="#a855f7" rx="4" />
-                    <rect x="360" y="300" width="30" height="0" fill="#a855f7" rx="4" />
-                    <rect x="455" y="300" width="30" height="0" fill="#a855f7" rx="4" />
-                    <rect x="550" y="300" width="30" height="0" fill="#a855f7" rx="4" />
-                    <rect x="645" y="300" width="30" height="0" fill="#a855f7" rx="4" />
-                    <rect x="740" y="300" width="30" height="0" fill="#a855f7" rx="4" />
-                    <rect x="835" y="300" width="30" height="0" fill="#a855f7" rx="4" />
-                    <rect x="930" y="300" width="30" height="0" fill="#a855f7" rx="4" />
-                    <rect x="1025" y="300" width="30" height="0" fill="#a855f7" rx="4" />
-                    <rect x="1120" y="300" width="30" height="0" fill="#a855f7" rx="4" />
-                </svg>
+                <div v-if="props.trendData.length > 0" class="relative mt-6" style="height: 400px; position: relative;">
+                    <BarChart
+                        :key="JSON.stringify(netIncomeChart)"
+                        :data="netIncomeChart"
+                        :options="barChartOptions"
+                        style="position: relative; height: 100%;"
+                    />
+                </div>
+                <div v-else class="mt-6 flex h-96 items-center justify-center text-sm text-muted-foreground">
+                    No data available
+                </div>
             </div>
 
             <!-- Expenses by Category -->
-            <div class="rounded-lg border border-gray-200 bg-white p-6 text-black dark:border-slate-600 dark:bg-black dark:text-white">
+            <div class="surface-card p-5 lg:p-6">
                 <div class="flex items-start justify-between">
                     <div>
-                        <h2 class="mb-1 text-xl font-bold">Expenses by Category</h2>
-                        <p class="text-sm text-gray-600 dark:text-gray-400">Breakdown of your spending</p>
+                        <h2 class="text-sm font-bold text-foreground font-display tracking-tight">Expenses by Category</h2>
+                        <p class="mt-0.5 text-[11px] text-muted-foreground font-sans">Breakdown of your spending patterns</p>
                     </div>
-                    <div v-if="props.categoryData.length > 0" class="text-right">
-                         <p class="text-sm text-gray-600 dark:text-gray-400">{{ props.categoryData[0].name }}</p>
-                         <p class="text-2xl font-bold">{{ formatCurrency(props.categoryData[0].amount) }}</p>
-                     </div>
+                    <div v-if="topCategory" class="text-right">
+                        <p class="text-[11px] text-muted-foreground font-sans">Top Category</p>
+                        <p class="text-lg lg:text-2xl font-bold text-foreground font-mono mt-1">{{ formatCurrency(topCategory.amount) }}</p>
+                    </div>
                 </div>
 
-                <!-- Pie Chart Placeholder -->
-                <div class="mt-8 flex justify-center">
-                    <svg viewBox="0 0 200 200" class="h-64 w-64">
-                        <!-- Circle background -->
-                        <circle cx="100" cy="100" r="80" fill="#a855f7" opacity="0.9" />
-                        <!-- Inner circle for donut effect -->
-                        <circle cx="100" cy="100" r="50" fill="#000000" />
-                        <!-- Percentage text -->
-                        <text
-                            x="100"
-                            y="110"
-                            font-size="20"
-                            fill="#a855f7"
-                            text-anchor="middle"
-                            opacity="0.6"
-                        >
-                            100%
-                        </text>
-                    </svg>
+                <!-- Category Chart -->
+                <div v-if="props.categoryData.length > 0" class="relative mt-6" style="height: 400px; position: relative;">
+                    <DoughnutChart
+                        :key="JSON.stringify(categoryChart)"
+                        :data="categoryChart"
+                        :options="doughnutChartOptions"
+                        style="position: relative; height: 100%;"
+                    />
+                </div>
+
+                <div v-else class="mt-6 flex h-96 items-center justify-center text-sm text-muted-foreground">
+                    No category data available
                 </div>
             </div>
         </div>
