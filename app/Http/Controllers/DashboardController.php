@@ -32,8 +32,8 @@ class DashboardController extends Controller
         $netIncome = $totalIncome - $totalExpenses;
 
         // Get yearly data for stats
-         $yearStart = $selectedDate->clone()->startOfYear();
-         $yearEnd = $selectedDate->clone()->endOfYear();
+        $yearStart = $selectedDate->clone()->startOfYear();
+        $yearEnd = $selectedDate->clone()->endOfYear();
 
         $yearlyIncomes = Income::where('user_id', $user->id)
             ->whereBetween('date', [$yearStart, $yearEnd])
@@ -45,6 +45,45 @@ class DashboardController extends Controller
 
         $netWorth = $yearlyIncomes - $yearlyExpenses;
 
+        // Previous month data for month-over-month comparison
+        $prevStart = $selectedDate->clone()->subMonth()->startOfMonth();
+        $prevEnd = $selectedDate->clone()->subMonth()->endOfMonth();
+
+        $prevMonthIncome = Income::where('user_id', $user->id)
+            ->whereBetween('date', [$prevStart, $prevEnd])
+            ->sum('amount');
+
+        $prevMonthExpense = Expense::where('user_id', $user->id)
+            ->whereBetween('date', [$prevStart, $prevEnd])
+            ->sum('amount');
+
+        // Daily spending for sparkline chart
+        $daysInMonth = $startOfMonth->daysInMonth;
+        $dailySpending = [];
+        $expensesByDay = $expenses->groupBy(function ($e) {
+            $date = $e->date instanceof Carbon ? $e->date : Carbon::parse($e->date);
+            return (int) $date->format('d');
+        });
+
+        for ($d = 1; $d <= $daysInMonth; $d++) {
+            $dailySpending[] = [
+                'day' => $d,
+                'amount' => $expensesByDay->has($d) ? $expensesByDay[$d]->sum('amount') : 0,
+            ];
+        }
+
+        // Expenses by category
+        $expensesByCategory = $expenses->groupBy(function ($e) {
+            return $e->category ?: 'Uncategorized';
+        })->map(function ($group, $category) use ($totalExpenses) {
+            $amount = $group->sum('amount');
+            return [
+                'category' => $category,
+                'amount' => (float) $amount,
+                'percentage' => $totalExpenses > 0 ? round(($amount / $totalExpenses) * 100, 1) : 0,
+            ];
+        })->sortByDesc('amount')->values()->all();
+
         return Inertia::render('Dashboard', [
             'user' => $user,
             'dashboard' => [
@@ -52,11 +91,13 @@ class DashboardController extends Controller
                 'totalExpense' => $totalExpenses,
                 'netIncome' => $netIncome,
                 'netWorth' => $netWorth,
+                'prevMonthIncome' => (float) $prevMonthIncome,
+                'prevMonthExpense' => (float) $prevMonthExpense,
             ],
             'incomeEntries' => $incomes->map(fn($income) => [
                 'id' => $income->id,
                 'amount' => (float) $income->amount,
-                'date' => $income->date instanceof \Carbon\Carbon 
+                'date' => $income->date instanceof \Carbon\Carbon
                     ? $income->date->format('m/d/Y')
                     : \Carbon\Carbon::parse($income->date)->format('m/d/Y'),
                 'category' => $income->category,
@@ -65,12 +106,14 @@ class DashboardController extends Controller
             'expenseEntries' => $expenses->map(fn($expense) => [
                 'id' => $expense->id,
                 'amount' => (float) $expense->amount,
-                'date' => $expense->date instanceof \Carbon\Carbon 
+                'date' => $expense->date instanceof \Carbon\Carbon
                     ? $expense->date->format('m/d/Y')
                     : \Carbon\Carbon::parse($expense->date)->format('m/d/Y'),
                 'category' => $expense->category,
                 'description' => $expense->description,
             ]),
+            'dailySpending' => $dailySpending,
+            'expensesByCategory' => $expensesByCategory,
         ]);
     }
 }

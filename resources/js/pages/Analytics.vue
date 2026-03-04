@@ -8,6 +8,7 @@ import { formatCurrency } from '@/utils/currency';
 import { useChartDefaults } from '@/composables/useChartDefaults';
 import { Chart as ChartJS, registerables } from 'chart.js';
 import { Line as LineChart, Bar as BarChart, Doughnut as DoughnutChart } from 'vue-chartjs';
+import { TrendingUp, TrendingDown, BarChart3, PieChart, ArrowUpRight, ArrowDownRight } from 'lucide-vue-next';
 
 ChartJS.register(...registerables);
 
@@ -39,25 +40,69 @@ const breadcrumbs: BreadcrumbItem[] = [
 
 const { chartColors, lineChartOptions, barChartOptions, doughnutChartOptions, isDark } = useChartDefaults();
 
+// Summary stats computed from trend data
+const totalYearIncome = computed(() => props.trendData?.reduce((sum, d) => sum + d.income, 0) ?? 0);
+const totalYearExpenses = computed(() => props.trendData?.reduce((sum, d) => sum + d.expenses, 0) ?? 0);
+const totalYearNet = computed(() => totalYearIncome.value - totalYearExpenses.value);
+const avgMonthlyExpense = computed(() => {
+    const monthsWithData = props.trendData?.filter(d => d.expenses > 0).length ?? 0;
+    return monthsWithData > 0 ? totalYearExpenses.value / monthsWithData : 0;
+});
+
+const summaryStats = computed(() => [
+    {
+        label: 'Total Income',
+        value: formatCurrency(totalYearIncome.value),
+        icon: TrendingUp,
+        tint: 'stat-tint-income',
+    },
+    {
+        label: 'Total Expenses',
+        value: formatCurrency(totalYearExpenses.value),
+        icon: TrendingDown,
+        tint: 'stat-tint-expense',
+    },
+    {
+        label: 'Net Profit',
+        value: formatCurrency(totalYearNet.value),
+        icon: totalYearNet.value >= 0 ? ArrowUpRight : ArrowDownRight,
+        tint: totalYearNet.value >= 0 ? 'stat-tint-positive' : 'stat-tint-negative',
+        colorClass: totalYearNet.value >= 0 ? 'text-[--fin-gain]' : 'text-[--fin-loss]',
+    },
+    {
+        label: 'Avg Monthly Spend',
+        value: formatCurrency(avgMonthlyExpense.value),
+        icon: BarChart3,
+        tint: 'stat-tint-accent',
+    },
+]);
+
+// Best/worst months
+const bestMonth = computed(() => {
+    if (!props.trendData || props.trendData.length === 0) return null;
+    const withNet = props.trendData.map(d => ({ ...d, net: d.income - d.expenses }));
+    return withNet.reduce((best, d) => d.net > best.net ? d : best, withNet[0]);
+});
+
+const worstMonth = computed(() => {
+    if (!props.trendData || props.trendData.length === 0) return null;
+    const withNet = props.trendData.filter(d => d.income > 0 || d.expenses > 0).map(d => ({ ...d, net: d.income - d.expenses }));
+    if (withNet.length === 0) return null;
+    return withNet.reduce((worst, d) => d.net < worst.net ? d : worst, withNet[0]);
+});
+
 // Income vs Expenses Trend Chart
 const incomeExpensesChart = computed(() => {
     if (!props.trendData || props.trendData.length === 0) {
-        return {
-            labels: [],
-            datasets: []
-        };
+        return { labels: [], datasets: [] };
     }
     
-    const labels = props.trendData.map((d: any) => d.month);
-    const incomeData = props.trendData.map((d: any) => d.income);
-    const expensesData = props.trendData.map((d: any) => d.expenses);
-    
     return {
-        labels: labels,
+        labels: props.trendData.map(d => d.month),
         datasets: [
             {
                 label: 'Income',
-                data: incomeData,
+                data: props.trendData.map(d => d.income),
                 borderColor: chartColors.teal,
                 backgroundColor: chartColors.tealMuted,
                 borderWidth: 3,
@@ -71,7 +116,7 @@ const incomeExpensesChart = computed(() => {
             },
             {
                 label: 'Expenses',
-                data: expensesData,
+                data: props.trendData.map(d => d.expenses),
                 borderColor: chartColors.loss,
                 backgroundColor: chartColors.lossMuted,
                 borderWidth: 3,
@@ -90,20 +135,14 @@ const incomeExpensesChart = computed(() => {
 // Monthly Net Income Chart
 const netIncomeChart = computed(() => {
     if (!props.trendData || props.trendData.length === 0) {
-        return {
-            labels: [],
-            datasets: []
-        };
+        return { labels: [], datasets: [] };
     }
     
     return {
         labels: props.trendData.map(d => d.month),
         datasets: [{
             label: 'Net Income',
-            data: props.trendData.map(d => {
-                const net = d.income - d.expenses;
-                return net >= 0 ? net : 0;
-            }),
+            data: props.trendData.map(d => d.income - d.expenses),
             backgroundColor: props.trendData.map(d => d.income - d.expenses >= 0 ? chartColors.gain : chartColors.loss),
             borderRadius: 6,
             borderSkipped: false,
@@ -114,10 +153,7 @@ const netIncomeChart = computed(() => {
 // Expenses by Category Chart
 const categoryChart = computed(() => {
     if (!props.categoryData || props.categoryData.length === 0) {
-        return {
-            labels: [],
-            datasets: []
-        };
+        return { labels: [], datasets: [] };
     }
     
     const categoryColors = [
@@ -147,6 +183,15 @@ const topCategory = computed(() => {
     }
     return null;
 });
+
+// Category colors for the breakdown list
+const categoryBarColors = [
+    chartColors.teal,
+    chartColors.azure,
+    chartColors.amber,
+    chartColors.slate,
+    chartColors.loss,
+];
 </script>
 
 <template>
@@ -155,15 +200,65 @@ const topCategory = computed(() => {
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="flex h-full flex-1 flex-col gap-8 overflow-x-auto p-6 sm:p-8 pb-20 md:pb-8">
             <!-- Header -->
-            <div>
+            <div class="animate-fade-up stagger-1">
                 <h1 class="text-3xl lg:text-4xl font-bold leading-tight tracking-tight">Analytics</h1>
-                <p class="mt-2 text-sm text-muted-foreground font-sans">Track your financial trends and insights</p>
+                <p class="mt-2 text-sm text-muted-foreground font-sans">Track your financial trends and insights for the year</p>
+            </div>
+
+            <!-- Summary Stats Row -->
+            <div class="grid grid-cols-2 gap-4 md:grid-cols-4 lg:gap-6">
+                <div v-for="(stat, idx) in summaryStats" :key="stat.label"
+                    :class="['group surface-card p-4 lg:p-5 overflow-hidden relative hover:scale-[1.03] transition-all duration-300 hover:shadow-lg cursor-default animate-fade-up', `stagger-${idx + 1}`, stat.tint]">
+                    <div class="absolute top-0 right-0 w-20 h-20 opacity-[0.04] pointer-events-none transition-transform duration-500 group-hover:scale-110">
+                        <component :is="stat.icon" class="size-20 -translate-y-3 translate-x-3" />
+                    </div>
+                    <p class="text-[11px] font-semibold tracking-[0.08em] uppercase text-muted-foreground mb-2.5 font-sans">
+                        {{ stat.label }}
+                    </p>
+                    <p :class="[
+                        'text-xl lg:text-2xl font-bold font-mono tracking-tighter leading-none',
+                        stat.colorClass || 'text-foreground'
+                    ]">
+                        {{ stat.value }}
+                    </p>
+                </div>
+            </div>
+
+            <!-- Best/Worst Month Callout -->
+            <div v-if="bestMonth || worstMonth" class="grid gap-4 md:grid-cols-2 animate-fade-up stagger-5">
+                <div v-if="bestMonth" class="surface-card p-4 lg:p-5 flex items-center gap-4">
+                    <div class="p-2.5 rounded-xl bg-[--fin-gain]/10 shrink-0">
+                        <TrendingUp class="h-5 w-5 text-[--fin-gain]" />
+                    </div>
+                    <div>
+                        <p class="text-[11px] font-semibold tracking-[0.08em] uppercase text-muted-foreground font-sans">Best Month</p>
+                        <p class="text-lg font-bold text-foreground font-sans mt-0.5">{{ bestMonth.month }}</p>
+                        <p class="text-sm font-mono text-[--fin-gain]">+{{ formatCurrency(bestMonth.net) }}</p>
+                    </div>
+                </div>
+                <div v-if="worstMonth" class="surface-card p-4 lg:p-5 flex items-center gap-4">
+                    <div class="p-2.5 rounded-xl bg-[--fin-loss]/10 shrink-0">
+                        <TrendingDown class="h-5 w-5 text-[--fin-loss]" />
+                    </div>
+                    <div>
+                        <p class="text-[11px] font-semibold tracking-[0.08em] uppercase text-muted-foreground font-sans">Worst Month</p>
+                        <p class="text-lg font-bold text-foreground font-sans mt-0.5">{{ worstMonth.month }}</p>
+                        <p class="text-sm font-mono" :class="worstMonth.net >= 0 ? 'text-[--fin-gain]' : 'text-[--fin-loss]'">
+                            {{ worstMonth.net >= 0 ? '+' : '' }}{{ formatCurrency(worstMonth.net) }}
+                        </p>
+                    </div>
+                </div>
             </div>
 
             <!-- Income vs Expenses Trend -->
-            <div class="surface-card p-5 lg:p-6">
-                <h2 class="text-sm font-bold text-foreground font-display tracking-tight">Income vs Expenses Trend</h2>
-                <p class="mt-0.5 text-[11px] text-muted-foreground font-sans">Monthly comparison of income and expenses</p>
+            <div class="surface-card p-5 lg:p-6 animate-fade-up stagger-5">
+                <div class="flex items-center gap-2 mb-1">
+                    <div class="p-1.5 rounded-lg bg-primary/8">
+                        <TrendingUp class="h-4 w-4 text-primary" />
+                    </div>
+                    <h2 class="text-sm font-bold text-foreground font-display tracking-tight">Income vs Expenses Trend</h2>
+                </div>
+                <p class="mt-0.5 text-[11px] text-muted-foreground font-sans ml-9">Monthly comparison of income and expenses</p>
 
                 <div v-if="props.trendData && props.trendData.length > 0" class="relative mt-6" style="height: 400px; position: relative;">
                     <LineChart
@@ -173,17 +268,24 @@ const topCategory = computed(() => {
                         style="position: relative; height: 100%;"
                     />
                 </div>
-                <div v-else class="mt-6 flex h-96 items-center justify-center text-sm text-muted-foreground">
-                    No data available
+                <div v-else class="mt-6 flex h-96 flex-col items-center justify-center">
+                    <TrendingUp class="h-12 w-12 text-muted-foreground/20 mb-3" />
+                    <p class="text-sm text-muted-foreground font-sans">No trend data available yet</p>
+                    <p class="text-[11px] text-muted-foreground/70 font-sans mt-1">Start adding income and expenses to see trends</p>
                 </div>
             </div>
 
             <!-- Monthly Net Income -->
-            <div class="surface-card p-5 lg:p-6">
-                <h2 class="text-sm font-bold text-foreground font-display tracking-tight">Monthly Net Income</h2>
-                <p class="mt-0.5 text-[11px] text-muted-foreground font-sans">Your earnings after expenses</p>
+            <div class="surface-card p-5 lg:p-6 animate-fade-up stagger-5">
+                <div class="flex items-center gap-2 mb-1">
+                    <div class="p-1.5 rounded-lg bg-primary/8">
+                        <BarChart3 class="h-4 w-4 text-primary" />
+                    </div>
+                    <h2 class="text-sm font-bold text-foreground font-display tracking-tight">Monthly Net Income</h2>
+                </div>
+                <p class="mt-0.5 text-[11px] text-muted-foreground font-sans ml-9">Your earnings after expenses each month</p>
 
-                <div v-if="props.trendData.length > 0" class="relative mt-6" style="height: 400px; position: relative;">
+                <div v-if="props.trendData && props.trendData.length > 0" class="relative mt-6" style="height: 400px; position: relative;">
                     <BarChart
                         :key="JSON.stringify(netIncomeChart)"
                         :data="netIncomeChart"
@@ -191,36 +293,86 @@ const topCategory = computed(() => {
                         style="position: relative; height: 100%;"
                     />
                 </div>
-                <div v-else class="mt-6 flex h-96 items-center justify-center text-sm text-muted-foreground">
-                    No data available
+                <div v-else class="mt-6 flex h-96 flex-col items-center justify-center">
+                    <BarChart3 class="h-12 w-12 text-muted-foreground/20 mb-3" />
+                    <p class="text-sm text-muted-foreground font-sans">No data available</p>
                 </div>
             </div>
 
             <!-- Expenses by Category -->
-            <div class="surface-card p-5 lg:p-6">
-                <div class="flex items-start justify-between">
-                    <div>
-                        <h2 class="text-sm font-bold text-foreground font-display tracking-tight">Expenses by Category</h2>
-                        <p class="mt-0.5 text-[11px] text-muted-foreground font-sans">Breakdown of your spending patterns</p>
+            <div class="grid gap-6 md:grid-cols-2 animate-fade-up stagger-5">
+                <!-- Doughnut Chart -->
+                <div class="surface-card p-5 lg:p-6">
+                    <div class="flex items-start justify-between">
+                        <div>
+                            <div class="flex items-center gap-2 mb-1">
+                                <div class="p-1.5 rounded-lg bg-primary/8">
+                                    <PieChart class="h-4 w-4 text-primary" />
+                                </div>
+                                <h2 class="text-sm font-bold text-foreground font-display tracking-tight">Expenses by Category</h2>
+                            </div>
+                            <p class="mt-0.5 text-[11px] text-muted-foreground font-sans ml-9">Breakdown of your spending patterns</p>
+                        </div>
                     </div>
-                    <div v-if="topCategory" class="text-right">
+
+                    <div v-if="props.categoryData && props.categoryData.length > 0 && props.categoryData[0].amount > 0" class="relative mt-6" style="height: 300px; position: relative;">
+                        <DoughnutChart
+                            :key="JSON.stringify(categoryChart)"
+                            :data="categoryChart"
+                            :options="doughnutChartOptions"
+                            style="position: relative; height: 100%;"
+                        />
+                    </div>
+                    <div v-else class="mt-6 flex h-72 flex-col items-center justify-center">
+                        <PieChart class="h-12 w-12 text-muted-foreground/20 mb-3" />
+                        <p class="text-sm text-muted-foreground font-sans">No category data available</p>
+                    </div>
+                </div>
+
+                <!-- Category Breakdown Bars -->
+                <div class="surface-card p-5 lg:p-6">
+                    <h2 class="text-sm font-bold text-foreground font-display tracking-tight">Category Ranking</h2>
+                    <p class="mt-0.5 text-[11px] text-muted-foreground font-sans mb-6">Top spending categories this year</p>
+
+                    <div v-if="props.categoryData && props.categoryData.length > 0 && props.categoryData[0].amount > 0" class="space-y-4">
+                        <div v-for="(cat, idx) in props.categoryData" :key="cat.name" class="group">
+                            <div class="flex items-center justify-between mb-1.5">
+                                <div class="flex items-center gap-2">
+                                    <span class="w-2.5 h-2.5 rounded-full shrink-0"
+                                        :style="{ backgroundColor: categoryBarColors[idx % categoryBarColors.length] }"></span>
+                                    <span class="text-sm font-semibold text-foreground font-sans">{{ cat.name }}</span>
+                                </div>
+                                <div class="flex items-center gap-3">
+                                    <span class="text-xs font-medium text-muted-foreground font-sans">{{ cat.percentage }}%</span>
+                                    <span class="text-sm font-bold font-mono text-foreground">{{ formatCurrency(cat.amount) }}</span>
+                                </div>
+                            </div>
+                            <div class="w-full h-2 bg-muted/40 rounded-full overflow-hidden">
+                                <div
+                                    class="h-full rounded-full animate-bar-fill origin-left"
+                                    :style="{
+                                        width: cat.percentage + '%',
+                                        backgroundColor: categoryBarColors[idx % categoryBarColors.length],
+                                        animationDelay: (idx * 120) + 'ms'
+                                    }"
+                                ></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div v-else class="flex h-72 flex-col items-center justify-center">
+                        <PieChart class="h-12 w-12 text-muted-foreground/20 mb-3" />
+                        <p class="text-sm text-muted-foreground font-sans">No category data yet</p>
+                    </div>
+
+                    <!-- Top category callout -->
+                    <div v-if="topCategory && topCategory.amount > 0" class="mt-6 p-3 rounded-xl bg-muted/30 border border-border/30">
                         <p class="text-[11px] text-muted-foreground font-sans">Top Category</p>
-                        <p class="text-lg lg:text-2xl font-bold text-foreground font-mono mt-1">{{ formatCurrency(topCategory.amount) }}</p>
+                        <div class="flex items-center justify-between mt-1">
+                            <span class="text-sm font-bold text-foreground font-sans">{{ topCategory.name }}</span>
+                            <span class="text-lg font-bold font-mono text-foreground">{{ formatCurrency(topCategory.amount) }}</span>
+                        </div>
                     </div>
-                </div>
-
-                <!-- Category Chart -->
-                <div v-if="props.categoryData.length > 0" class="relative mt-6" style="height: 400px; position: relative;">
-                    <DoughnutChart
-                        :key="JSON.stringify(categoryChart)"
-                        :data="categoryChart"
-                        :options="doughnutChartOptions"
-                        style="position: relative; height: 100%;"
-                    />
-                </div>
-
-                <div v-else class="mt-6 flex h-96 items-center justify-center text-sm text-muted-foreground">
-                    No category data available
                 </div>
             </div>
         </div>
