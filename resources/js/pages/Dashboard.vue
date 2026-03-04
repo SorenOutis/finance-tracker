@@ -42,8 +42,17 @@ const getYYYYMMDDFromDate = (date: Date): string => {
     return `${year}-${month}-${day}`;
 };
 
-const currentMonth = ref(new Date());
-const selectedDate = ref(getYYYYMMDDFromDate(new Date()));
+const getInitialDate = (): string => {
+    const params = new URLSearchParams(window.location.search);
+    const dateParam = params.get('date');
+    return dateParam || getYYYYMMDDFromDate(new Date());
+};
+
+const selectedDate = ref(getInitialDate());
+const currentMonth = computed(() => {
+    const [year, month] = selectedDate.value.split('-');
+    return new Date(parseInt(year), parseInt(month) - 1, 1);
+});
 
 const formatDate = (date: Date): string => {
     return date.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' });
