@@ -128,6 +128,7 @@ const showBudgetModal = ref(false);
 const showGoalModal = ref(false);
 const showWelcomeModal = useStorage('show-welcome-modal-v1', true, sessionStorage);
 const showRecurringModal = ref(false);
+const showQuickAddModal = ref(false);
 
 // Forms
 const incomeForm = useForm({ amount: '', date: getYYYYMMDD(new Date()), category: '', description: '' });
@@ -163,33 +164,19 @@ const budgetUsedPct = computed(() => props.budget ? Math.min(100, (props.dashboa
         <h1 class="text-4xl sm:text-4xl font-extrabold leading-tight tracking-tight text-foreground">Finance Tracker</h1>
         <p class="mt-2 text-sm text-muted-foreground/80 font-medium font-sans">{{ greeting }}, OB. <span class="font-bold text-foreground">{{ fmtMonthYear(currentMonth) }}</span></p>
     </div>
-    <div class="flex flex-wrap items-center gap-3">
-        <div class="relative">
-            <input v-model="selectedDate" type="date" class="rounded-2xl border border-border/50 bg-card/20 px-4 py-2.5 text-sm font-semibold transition-all hover:bg-card/40 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/50 [&::-webkit-calendar-picker-indicator]:opacity-40" />
+    <div class="flex flex-wrap items-center gap-2 sm:gap-3">
+        <div class="relative flex-1 sm:flex-initial">
+            <input v-model="selectedDate" type="date" class="w-full sm:w-auto rounded-2xl border border-border/50 bg-card/20 px-4 py-2.5 text-sm font-semibold transition-all hover:bg-card/40 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/50 [&::-webkit-calendar-picker-indicator]:opacity-40" />
         </div>
-        <button @click="exportCsv" class="group flex items-center gap-2 rounded-2xl border border-border/50 bg-card/20 px-4 py-2.5 text-sm font-semibold text-muted-foreground transition-all hover:text-foreground hover:bg-card/40">
-            <Download class="h-4 w-4 transition-transform group-hover:-translate-y-0.5" /> Export
-        </button>
+        <div class="flex items-center gap-2 flex-shrink-0">
+            <button @click="exportCsv" class="group flex items-center gap-2 rounded-2xl border border-border/50 bg-card/20 px-4 py-2.5 text-sm font-semibold text-muted-foreground transition-all hover:text-foreground hover:bg-card/40">
+                <Download class="h-4 w-4 transition-transform group-hover:-translate-y-0.5" /> Export
+            </button>
+            <button @click="showQuickAddModal = true" class="group flex items-center gap-2 rounded-2xl bg-primary px-4 py-2.5 text-sm font-bold text-primary-foreground transition-all hover:bg-primary/90 shadow-lg shadow-primary/20 active:scale-[0.98]">
+                <Plus class="h-4 w-4 transition-transform group-hover:rotate-90" /> Add
+            </button>
+        </div>
     </div>
-</div>
-
-<!-- Quick Action Buttons -->
-<div class="flex flex-wrap gap-2.5 animate-fade-up stagger-2 mt-2">
-    <button @click="showIncomeModal = true" class="group flex items-center gap-2 rounded-[20px] border border-border/60 bg-card/30 px-5 py-2.5 text-sm font-bold transition-all hover:bg-card active:scale-[0.98]">
-        <Plus class="h-4 w-4 text-muted-foreground transition-transform group-hover:rotate-90" /> Income
-    </button>
-    <button @click="showExpenseModal = true" class="group flex items-center gap-2 rounded-[20px] border border-border/60 bg-card/30 px-5 py-2.5 text-sm font-bold transition-all hover:bg-card active:scale-[0.98]">
-        <Plus class="h-4 w-4 text-muted-foreground transition-transform group-hover:rotate-90" /> Expense
-    </button>
-    <button @click="showBudgetModal = true" class="group flex items-center gap-2 rounded-[20px] border border-border/60 bg-card/30 px-5 py-2.5 text-sm font-bold text-muted-foreground transition-all hover:text-foreground hover:bg-card active:scale-[0.98]">
-        <Target class="h-4 w-4 opacity-70" /> Budget
-    </button>
-    <button @click="showGoalModal = true" class="group flex items-center gap-2 rounded-[20px] border border-border/60 bg-card/30 px-5 py-2.5 text-sm font-bold text-muted-foreground transition-all hover:text-foreground hover:bg-card active:scale-[0.98]">
-        <Zap class="h-4 w-4 opacity-70" /> Goal
-    </button>
-    <button @click="showRecurringModal = true" class="group flex items-center gap-2 rounded-[20px] border border-border/60 bg-card/30 px-5 py-2.5 text-sm font-bold text-muted-foreground transition-all hover:text-foreground hover:bg-card active:scale-[0.98]">
-        <CalendarClock class="h-4 w-4 opacity-70" /> Recurring
-    </button>
 </div>
 
 <!-- Stat Cards -->
@@ -250,7 +237,7 @@ const budgetUsedPct = computed(() => props.budget ? Math.min(100, (props.dashboa
 </div>
 
 <!-- Rings Row: Savings + Health + Year Progress -->
-<div class="grid gap-3 md:grid-cols-3 animate-fade-up stagger-5">
+<div class="grid grid-cols-2 lg:grid-cols-3 gap-3 animate-fade-up stagger-5">
     <!-- Savings Rate Ring -->
     <div class="surface-card p-4 flex flex-col items-center justify-center">
         <p class="text-[10px] font-semibold tracking-[0.08em] uppercase text-muted-foreground mb-3 font-sans">Savings Rate</p>
@@ -282,7 +269,7 @@ const budgetUsedPct = computed(() => props.budget ? Math.min(100, (props.dashboa
     </div>
 
     <!-- Year Progress -->
-    <div class="surface-card p-4">
+    <div class="surface-card p-4 col-span-2 lg:col-span-1">
         <p class="text-[10px] font-semibold tracking-[0.08em] uppercase text-muted-foreground mb-2 font-sans">Year Progress</p>
         <div class="w-full h-2 rounded-full bg-muted/30 overflow-hidden mb-3">
             <div class="h-full rounded-full bg-primary transition-all duration-700" :style="{ width: yearProgress + '%' }"></div>
@@ -320,7 +307,7 @@ const budgetUsedPct = computed(() => props.budget ? Math.min(100, (props.dashboa
     </div>
 
     <!-- Top Expense + Streak -->
-    <div class="space-y-3">
+    <div class="grid grid-cols-2 gap-3 md:block md:space-y-3">
         <!-- Top Expense Spotlight -->
         <div v-if="topExpense" class="surface-card p-4">
             <div class="flex items-center gap-1.5 mb-2">
@@ -406,7 +393,7 @@ const budgetUsedPct = computed(() => props.budget ? Math.min(100, (props.dashboa
 </div>
 
 <!-- Upcoming Bills + Recurring -->
-<div class="grid gap-3 md:grid-cols-2 animate-fade-up stagger-5">
+<div class="grid grid-cols-2 gap-3 animate-fade-up stagger-5">
     <!-- Upcoming Bills -->
     <div class="surface-card p-4">
         <div class="flex items-center gap-1.5 mb-3">
@@ -462,7 +449,7 @@ const budgetUsedPct = computed(() => props.budget ? Math.min(100, (props.dashboa
 </div>
 
 <!-- Income & Expense Entry Lists -->
-<div class="grid gap-3 md:grid-cols-2 animate-fade-up stagger-5">
+<div class="grid grid-cols-2 gap-3 animate-fade-up stagger-5">
     <div class="surface-card p-4">
         <div class="mb-3 flex items-center gap-2"><div class="p-1 rounded bg-[--fin-gain]/10"><Wallet class="h-3.5 w-3.5 text-[--fin-gain]" /></div><h2 class="text-sm font-bold text-foreground">Income</h2><span class="text-[10px] text-muted-foreground ml-auto">{{ fmtYearMonth(currentMonth) }}</span></div>
         <div v-if="incomeEntries.length" class="divide-y divide-border/20">
@@ -637,4 +624,62 @@ const budgetUsedPct = computed(() => props.budget ? Math.min(100, (props.dashboa
     </div></Transition>
 </div></Transition>
 </Teleport>
+<!-- Quick Add Modal -->
+<Dialog v-model:open="showQuickAddModal">
+    <DialogContent class="sm:max-w-[400px] max-w-[90vw] p-0 overflow-hidden border-none bg-transparent shadow-none">
+        <div class="relative bg-card rounded-[32px] overflow-hidden border border-border/50 shadow-2xl animate-in zoom-in-95 duration-200">
+            <div class="p-6 sm:p-8">
+                <DialogHeader class="mb-6">
+                    <DialogTitle class="text-xl font-black tracking-tight font-display">Quick Actions</DialogTitle>
+                    <DialogDescription class="text-xs text-muted-foreground font-medium">Choose an action to manage your finances.</DialogDescription>
+                </DialogHeader>
+
+                <div class="grid grid-cols-1 gap-2.5">
+                    <button @click="showQuickAddModal = false; showIncomeModal = true" class="group flex items-center justify-between p-4 rounded-2xl bg-muted/30 border border-border/40 hover:bg-card hover:border-primary/50 transition-all active:scale-[0.98]">
+                        <div class="flex items-center gap-3">
+                            <div class="p-2 rounded-xl bg-[--fin-gain]/10 text-[--fin-gain]"><Wallet class="h-5 w-5" /></div>
+                            <div class="text-left">
+                                <p class="text-sm font-bold text-foreground">Add Income</p>
+                                <p class="text-[10px] text-muted-foreground">Log your earnings</p>
+                            </div>
+                        </div>
+                        <Plus class="h-4 w-4 text-muted-foreground group-hover:text-primary transition-transform group-hover:rotate-90" />
+                    </button>
+
+                    <button @click="showQuickAddModal = false; showExpenseModal = true" class="group flex items-center justify-between p-4 rounded-2xl bg-muted/30 border border-border/40 hover:bg-card hover:border-primary/50 transition-all active:scale-[0.98]">
+                        <div class="flex items-center gap-3">
+                            <div class="p-2 rounded-xl bg-[--fin-loss]/10 text-[--fin-loss]"><TrendingDown class="h-5 w-5" /></div>
+                            <div class="text-left">
+                                <p class="text-sm font-bold text-foreground">Add Expense</p>
+                                <p class="text-[10px] text-muted-foreground">Log your spending</p>
+                            </div>
+                        </div>
+                        <Plus class="h-4 w-4 text-muted-foreground group-hover:text-primary transition-transform group-hover:rotate-90" />
+                    </button>
+
+                    <div class="grid grid-cols-3 gap-2.5 mt-2">
+                        <button @click="showQuickAddModal = false; showBudgetModal = true" class="flex flex-col items-center justify-center p-3 rounded-2xl bg-muted/30 border border-border/40 hover:bg-card hover:border-primary/50 transition-all active:scale-[0.98]">
+                            <Target class="h-5 w-5 text-primary mb-2" />
+                            <p class="text-[10px] font-bold">Budget</p>
+                        </button>
+                        <button @click="showQuickAddModal = false; showGoalModal = true" class="flex flex-col items-center justify-center p-3 rounded-2xl bg-muted/30 border border-border/40 hover:bg-card hover:border-primary/50 transition-all active:scale-[0.98]">
+                            <Zap class="h-5 w-5 text-amber-500 mb-2" />
+                            <p class="text-[10px] font-bold">Goal</p>
+                        </button>
+                        <button @click="showQuickAddModal = false; showRecurringModal = true" class="flex flex-col items-center justify-center p-3 rounded-2xl bg-muted/30 border border-border/40 hover:bg-card hover:border-primary/50 transition-all active:scale-[0.98]">
+                            <CalendarClock class="h-5 w-5 text-blue-500 mb-2" />
+                            <p class="text-[10px] font-bold">Recurring</p>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="mt-6">
+                    <button @click="showQuickAddModal = false" class="w-full py-3 rounded-xl bg-muted/50 text-muted-foreground font-bold text-sm hover:bg-muted transition-all active:scale-[0.98]">
+                        Close
+                    </button>
+                </div>
+            </div>
+        </div>
+    </DialogContent>
+</Dialog>
 </template>

@@ -237,9 +237,8 @@ const categoryBarColors = [
                     </p>
                 </div>
             </div>
-
             <!-- Best/Worst Month Callout -->
-            <div v-if="bestMonth || worstMonth" class="grid gap-4 md:grid-cols-2 animate-fade-up stagger-5">
+            <div v-if="bestMonth || worstMonth" class="grid grid-cols-2 gap-3 animate-fade-up stagger-5">
                 <div v-if="bestMonth" class="surface-card p-4 lg:p-5 flex items-center gap-4">
                     <div class="p-2.5 rounded-xl bg-[--fin-gain]/10 shrink-0">
                         <TrendingUp class="h-5 w-5 text-[--fin-gain]" />
