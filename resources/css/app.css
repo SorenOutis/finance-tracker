@@ -342,3 +342,26 @@
         transform: scaleX(1);
     }
 }
+
+/* Theme transition ripple effect */
+::view-transition-old(root),
+::view-transition-new(root) {
+    animation: none;
+    mix-blend-mode: normal;
+}
+
+::view-transition-old(root) {
+    z-index: 1;
+}
+
+::view-transition-new(root) {
+    z-index: 2;
+}
+
+.dark::view-transition-old(root) {
+    z-index: 2;
+}
+
+.dark::view-transition-new(root) {
+    z-index: 1;
+}
