@@ -12,6 +12,7 @@ import {
 } from 'lucide-vue-next';
 import { router } from '@inertiajs/vue3';
 import { useChartDefaults } from '@/composables/useChartDefaults';
+import { useNumberAnimation } from '@/composables/useNumberAnimation';
 import { Chart as ChartJS, registerables } from 'chart.js';
 import { Line as LineChart } from 'vue-chartjs';
 
@@ -53,7 +54,7 @@ const currentMonth = computed(() => new Date(selectedDate.value));
 const fmtMonthYear = (d: Date) => d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
 const fmtYearMonth = (d: Date) => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
 
-watch(selectedDate, () => { router.get(route('dashboard'), { date: selectedDate.value }, { preserveState: true, preserveScroll: true }); });
+watch(selectedDate, () => { router.get(dashboard(), { date: selectedDate.value }, { preserveState: true, preserveScroll: true }); });
 
 // MoM changes
 const incomeChange = computed(() => props.dashboard.prevMonthIncome === 0 ? null : ((props.dashboard.totalIncome - props.dashboard.prevMonthIncome) / props.dashboard.prevMonthIncome) * 100);
@@ -73,11 +74,16 @@ const healthColor = computed(() => { if (healthScore.value >= 80) return 'oklch(
 
 const savingsRate = computed(() => props.dashboard.totalIncome === 0 ? 0 : ((props.dashboard.totalIncome - props.dashboard.totalExpense) / props.dashboard.totalIncome) * 100);
 
+const animatedIncome = useNumberAnimation(() => props.dashboard.totalIncome);
+const animatedExpense = useNumberAnimation(() => props.dashboard.totalExpense);
+const animatedNetIncome = useNumberAnimation(() => props.dashboard.netIncome);
+const animatedNetWorth = useNumberAnimation(() => props.dashboard.netWorth);
+
 const displayStats = computed(() => [
-    { label: 'Total Income', value: formatCurrency(props.dashboard.totalIncome), icon: Wallet, tint: 'stat-tint-income', change: incomeChange.value, changeInverted: false },
-    { label: 'Total Expenses', value: formatCurrency(props.dashboard.totalExpense), icon: TrendingDown, tint: 'stat-tint-expense', change: expenseChange.value, changeInverted: true },
-    { label: 'Net Income', value: formatCurrency(props.dashboard.netIncome), icon: DollarSign, tint: props.dashboard.netIncome >= 0 ? 'stat-tint-positive' : 'stat-tint-negative', change: null, changeInverted: false, colorClass: props.dashboard.netIncome >= 0 ? 'text-[--fin-gain]' : 'text-[--fin-loss]' },
-    { label: 'Net Worth', value: formatCurrency(props.dashboard.netWorth), icon: PieChart, tint: 'stat-tint-accent', change: null, changeInverted: false },
+    { label: 'Total Income', value: formatCurrency(animatedIncome.value), icon: Wallet, tint: 'stat-tint-income', change: incomeChange.value, changeInverted: false },
+    { label: 'Total Expenses', value: formatCurrency(animatedExpense.value), icon: TrendingDown, tint: 'stat-tint-expense', change: expenseChange.value, changeInverted: true },
+    { label: 'Net Income', value: formatCurrency(animatedNetIncome.value), icon: DollarSign, tint: props.dashboard.netIncome >= 0 ? 'stat-tint-positive' : 'stat-tint-negative', change: null, changeInverted: false, colorClass: props.dashboard.netIncome >= 0 ? 'text-[--fin-gain]' : 'text-[--fin-loss]' },
+    { label: 'Net Worth', value: formatCurrency(animatedNetWorth.value), icon: PieChart, tint: 'stat-tint-accent', change: null, changeInverted: false },
 ]);
 
 // Animated savings ring
@@ -140,77 +146,81 @@ const budgetUsedPct = computed(() => props.budget ? Math.min(100, (props.dashboa
 <template>
 <Head title="Dashboard" />
 <AppLayout :breadcrumbs="breadcrumbs">
-<div class="flex h-full flex-1 flex-col gap-6 overflow-x-auto p-6 sm:p-8 pb-20 md:pb-8">
+<div class="flex h-full flex-1 flex-col gap-5 md:gap-6 overflow-x-auto p-4 sm:p-8 pb-24 md:pb-8">
 
 <!-- Header + Controls -->
-<div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between animate-fade-up stagger-1">
+<div class="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between animate-fade-up stagger-1">
     <div>
-        <h1 class="text-3xl lg:text-4xl font-bold leading-tight tracking-tight">Finance Tracker</h1>
-        <p class="mt-2 text-sm text-muted-foreground font-sans">{{ greeting }}, {{ props.user.name }}. <span class="font-semibold text-foreground">{{ fmtMonthYear(currentMonth) }}</span></p>
+        <h1 class="text-4xl sm:text-4xl font-extrabold leading-tight tracking-tight text-foreground">Finance Tracker</h1>
+        <p class="mt-2 text-sm text-muted-foreground/80 font-medium font-sans">{{ greeting }}, OB. <span class="font-bold text-foreground">{{ fmtMonthYear(currentMonth) }}</span></p>
     </div>
-    <div class="flex flex-wrap items-center gap-2">
-        <input v-model="selectedDate" type="date" class="rounded-lg border border-border bg-card px-3 py-2 text-sm font-medium transition-all hover:border-border focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/10" />
-        <button @click="exportCsv" class="group flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-2 text-sm font-medium text-muted-foreground transition-all hover:text-foreground hover:bg-accent/50">
-            <Download class="h-3.5 w-3.5 transition-transform group-hover:-translate-y-0.5" /> Export
+    <div class="flex flex-wrap items-center gap-3">
+        <div class="relative">
+            <input v-model="selectedDate" type="date" class="rounded-2xl border border-border/50 bg-card/20 px-4 py-2.5 text-sm font-semibold transition-all hover:bg-card/40 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/50 [&::-webkit-calendar-picker-indicator]:opacity-40" />
+        </div>
+        <button @click="exportCsv" class="group flex items-center gap-2 rounded-2xl border border-border/50 bg-card/20 px-4 py-2.5 text-sm font-semibold text-muted-foreground transition-all hover:text-foreground hover:bg-card/40">
+            <Download class="h-4 w-4 transition-transform group-hover:-translate-y-0.5" /> Export
         </button>
     </div>
 </div>
 
 <!-- Quick Action Buttons -->
-<div class="flex flex-wrap gap-2 animate-fade-up stagger-2">
-    <button @click="showIncomeModal = true" class="group flex items-center gap-1.5 rounded-lg border border-border bg-card px-4 py-2 text-sm font-semibold transition-all hover:bg-accent/50 hover:shadow-md">
-        <Plus class="h-3.5 w-3.5 transition-transform group-hover:rotate-90" /> Income
+<div class="flex flex-wrap gap-2.5 animate-fade-up stagger-2 mt-2">
+    <button @click="showIncomeModal = true" class="group flex items-center gap-2 rounded-[20px] border border-border/60 bg-card/30 px-5 py-2.5 text-sm font-bold transition-all hover:bg-card active:scale-[0.98]">
+        <Plus class="h-4 w-4 text-muted-foreground transition-transform group-hover:rotate-90" /> Income
     </button>
-    <button @click="showExpenseModal = true" class="group flex items-center gap-1.5 rounded-lg border border-primary bg-primary/8 px-4 py-2 text-sm font-bold text-primary transition-all hover:bg-primary/12 hover:shadow-md">
-        <Plus class="h-3.5 w-3.5 transition-transform group-hover:rotate-90" /> Expense
+    <button @click="showExpenseModal = true" class="group flex items-center gap-2 rounded-[20px] border border-border/60 bg-card/30 px-5 py-2.5 text-sm font-bold transition-all hover:bg-card active:scale-[0.98]">
+        <Plus class="h-4 w-4 text-muted-foreground transition-transform group-hover:rotate-90" /> Expense
     </button>
-    <button @click="showBudgetModal = true" class="group flex items-center gap-1.5 rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium text-muted-foreground transition-all hover:text-foreground hover:bg-accent/50">
-        <Target class="h-3.5 w-3.5" /> Budget
+    <button @click="showBudgetModal = true" class="group flex items-center gap-2 rounded-[20px] border border-border/60 bg-card/30 px-5 py-2.5 text-sm font-bold text-muted-foreground transition-all hover:text-foreground hover:bg-card active:scale-[0.98]">
+        <Target class="h-4 w-4 opacity-70" /> Budget
     </button>
-    <button @click="showGoalModal = true" class="group flex items-center gap-1.5 rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium text-muted-foreground transition-all hover:text-foreground hover:bg-accent/50">
-        <Zap class="h-3.5 w-3.5" /> Goal
+    <button @click="showGoalModal = true" class="group flex items-center gap-2 rounded-[20px] border border-border/60 bg-card/30 px-5 py-2.5 text-sm font-bold text-muted-foreground transition-all hover:text-foreground hover:bg-card active:scale-[0.98]">
+        <Zap class="h-4 w-4 opacity-70" /> Goal
     </button>
-    <button @click="showRecurringModal = true" class="group flex items-center gap-1.5 rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium text-muted-foreground transition-all hover:text-foreground hover:bg-accent/50">
-        <CalendarClock class="h-3.5 w-3.5" /> Recurring
+    <button @click="showRecurringModal = true" class="group flex items-center gap-2 rounded-[20px] border border-border/60 bg-card/30 px-5 py-2.5 text-sm font-bold text-muted-foreground transition-all hover:text-foreground hover:bg-card active:scale-[0.98]">
+        <CalendarClock class="h-4 w-4 opacity-70" /> Recurring
     </button>
 </div>
 
 <!-- Stat Cards -->
-<div class="grid grid-cols-2 gap-3 md:grid-cols-4 lg:gap-4">
+<div class="grid grid-cols-2 gap-3 md:grid-cols-4 lg:gap-4 mt-2">
     <div v-for="(stat, idx) in displayStats" :key="stat.label"
-        :class="['group surface-card p-4 overflow-hidden relative hover:scale-[1.03] transition-all duration-300 hover:shadow-lg cursor-default animate-fade-up', `stagger-${idx+1}`, stat.tint]">
-        <div class="absolute top-0 right-0 w-20 h-20 opacity-[0.04] pointer-events-none group-hover:scale-110 transition-transform duration-500">
-            <component :is="stat.icon" class="size-20 -translate-y-3 translate-x-3" />
+        :class="['group p-4 sm:p-5 rounded-[24px] overflow-hidden relative border border-border/40 bg-card/20 hover:scale-[1.03] transition-all duration-300 cursor-default animate-fade-up', `stagger-${idx+1}`, stat.tint]">
+        <div class="absolute top-0 right-0 w-24 h-24 opacity-[0.03] pointer-events-none group-hover:scale-110 transition-transform duration-500">
+            <component :is="stat.icon" class="size-24 -translate-y-4 translate-x-4" />
         </div>
         <div class="flex items-center justify-between mb-2">
-            <p class="text-[10px] font-semibold tracking-[0.08em] uppercase text-muted-foreground font-sans">{{ stat.label }}</p>
+            <p class="text-[10px] sm:text-[11px] font-bold tracking-widest uppercase text-muted-foreground/80 font-sans">{{ stat.label }}</p>
             <span v-if="stat.change != null" :class="['inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[9px] font-bold',
                 stat.changeInverted ? (stat.change <= 0 ? 'bg-[--fin-gain]/12 text-[--fin-gain]' : 'bg-[--fin-loss]/12 text-[--fin-loss]') : (stat.change >= 0 ? 'bg-[--fin-gain]/12 text-[--fin-gain]' : 'bg-[--fin-loss]/12 text-[--fin-loss]')]">
                 <component :is="stat.changeInverted ? (stat.change <= 0 ? ArrowDownRight : ArrowUpRight) : (stat.change >= 0 ? ArrowUpRight : ArrowDownRight)" class="h-2.5 w-2.5" />
                 {{ Math.abs(stat.change).toFixed(1) }}%
             </span>
         </div>
-        <p :class="['text-xl lg:text-2xl font-bold font-mono tracking-tighter leading-none', stat.colorClass || 'text-foreground']">{{ stat.value }}</p>
+        <div class="pt-1.5">
+            <p :class="['text-2xl sm:text-3xl font-black font-display tracking-tight leading-none', stat.colorClass || 'text-foreground']">{{ stat.value }}</p>
+        </div>
     </div>
 </div>
 
 <!-- Transaction Chips + Income vs Expense Bar -->
-<div class="grid gap-3 md:grid-cols-2 animate-fade-up stagger-5">
-    <!-- Transaction Stats Chips -->
-    <div class="surface-card p-4 flex flex-wrap items-center gap-2">
-        <span class="inline-flex items-center gap-1.5 rounded-full bg-muted/50 px-3 py-1 text-[11px] font-semibold text-muted-foreground">
-            <Activity class="h-3 w-3" /> {{ transactionStats.total }} transactions
+<div class="grid gap-3 md:grid-cols-2 animate-fade-up stagger-5 mt-1">
+    <!-- Transaction Stats Chips (Pills layout) -->
+    <div class="p-5 rounded-[24px] border border-border/40 bg-card/20 flex flex-wrap items-center justify-center gap-2.5">
+        <span class="inline-flex items-center gap-1.5 rounded-full bg-card/40 border border-border/30 px-3.5 py-1.5 text-[12px] font-bold text-muted-foreground transition-all">
+            <Activity class="h-3.5 w-3.5" /> {{ transactionStats.total }} transactions
         </span>
-        <span class="inline-flex items-center gap-1.5 rounded-full bg-[--fin-gain]/8 px-3 py-1 text-[11px] font-semibold text-[--fin-gain]">
+        <span class="inline-flex items-center gap-1.5 rounded-full bg-card/40 border border-border/30 px-3.5 py-1.5 text-[12px] font-bold text-foreground">
             {{ transactionStats.incomeCount }} income
         </span>
-        <span class="inline-flex items-center gap-1.5 rounded-full bg-[--fin-loss]/8 px-3 py-1 text-[11px] font-semibold text-[--fin-loss]">
+        <span class="inline-flex items-center gap-1.5 rounded-full bg-card/40 border border-border/30 px-3.5 py-1.5 text-[12px] font-bold text-foreground">
             {{ transactionStats.expenseCount }} expenses
         </span>
-        <span v-if="transactionStats.avgExpense > 0" class="inline-flex items-center gap-1.5 rounded-full bg-muted/50 px-3 py-1 text-[11px] font-semibold text-muted-foreground">
+        <span v-if="transactionStats.avgExpense > 0" class="inline-flex items-center gap-1.5 rounded-full bg-card/40 border border-border/30 px-3.5 py-1.5 text-[12px] font-bold text-muted-foreground/80">
             Avg {{ formatCurrency(transactionStats.avgExpense) }}
         </span>
-        <span class="inline-flex items-center gap-1.5 rounded-full bg-muted/50 px-3 py-1 text-[11px] font-semibold text-muted-foreground">
+        <span class="inline-flex items-center gap-1.5 rounded-full bg-card/40 border border-border/30 px-3.5 py-1.5 text-[12px] font-bold text-muted-foreground/80">
             {{ transactionStats.daysNoSpending }} no-spend days
         </span>
     </div>
@@ -220,12 +230,12 @@ const budgetUsedPct = computed(() => props.budget ? Math.min(100, (props.dashboa
         <p class="text-[10px] font-semibold tracking-[0.08em] uppercase text-muted-foreground mb-2 font-sans">Income vs Expenses</p>
         <div class="flex h-3 rounded-full overflow-hidden bg-muted/30">
             <div class="bg-[--fin-gain] transition-all duration-700 rounded-l-full"
-                :style="{ width: (dashboard.totalIncome + dashboard.totalExpense > 0 ? (dashboard.totalIncome / (dashboard.totalIncome + dashboard.totalExpense)) * 100 : 50) + '%' }"></div>
+                :style="{ width: (props.dashboard.totalIncome + props.dashboard.totalExpense > 0 ? (props.dashboard.totalIncome / (props.dashboard.totalIncome + props.dashboard.totalExpense)) * 100 : 50) + '%' }"></div>
             <div class="bg-[--fin-loss] transition-all duration-700 rounded-r-full flex-1"></div>
         </div>
         <div class="flex justify-between mt-1.5 text-[10px] font-mono font-semibold">
-            <span class="text-[--fin-gain]">{{ formatCurrency(dashboard.totalIncome) }}</span>
-            <span class="text-[--fin-loss]">{{ formatCurrency(dashboard.totalExpense) }}</span>
+            <span class="text-[--fin-gain]">{{ formatCurrency(animatedIncome) }}</span>
+            <span class="text-[--fin-loss]">{{ formatCurrency(animatedExpense) }}</span>
         </div>
     </div>
 </div>
@@ -340,7 +350,7 @@ const budgetUsedPct = computed(() => props.budget ? Math.min(100, (props.dashboa
         <div class="h-full rounded-full transition-all duration-700" :class="budgetUsedPct > 100 ? 'bg-[--fin-loss]' : budgetUsedPct > 80 ? 'bg-amber-500' : 'bg-[--fin-gain]'" :style="{ width: Math.min(100, budgetUsedPct) + '%' }"></div>
     </div>
     <div class="flex justify-between mt-1.5 text-[10px] font-mono">
-        <span class="text-muted-foreground">{{ formatCurrency(dashboard.totalExpense) }} spent</span>
+        <span class="text-muted-foreground">{{ formatCurrency(animatedExpense) }} spent</span>
         <span class="text-foreground font-semibold">{{ formatCurrency(budget.monthly_limit) }} limit</span>
     </div>
 </div>
@@ -447,20 +457,24 @@ const budgetUsedPct = computed(() => props.budget ? Math.min(100, (props.dashboa
     <div class="surface-card p-4">
         <div class="mb-3 flex items-center gap-2"><div class="p-1 rounded bg-[--fin-gain]/10"><Wallet class="h-3.5 w-3.5 text-[--fin-gain]" /></div><h2 class="text-sm font-bold text-foreground">Income</h2><span class="text-[10px] text-muted-foreground ml-auto">{{ fmtYearMonth(currentMonth) }}</span></div>
         <div v-if="incomeEntries.length" class="divide-y divide-border/20">
-            <div v-for="e in incomeEntries" :key="e.id" class="entry-row group flex items-start justify-between py-2.5 first:pt-0">
-                <div><p class="text-xs font-semibold font-mono text-[--fin-gain]">+{{ formatCurrency(e.amount) }}</p><div class="flex gap-1.5 mt-1"><span class="text-[10px] text-muted-foreground">{{ e.date }}</span><span v-if="e.category" class="text-[9px] font-semibold bg-muted/50 px-1.5 py-0.5 rounded-full text-muted-foreground">{{ e.category }}</span></div></div>
-                <button @click="deleteEntry(e.id, 'income')" class="p-1 text-muted-foreground opacity-0 transition-all hover:text-destructive group-hover:opacity-100"><span class="text-xs">✕</span></button>
-            </div>
+            <TransitionGroup name="list-slide" appear>
+                <div v-for="e in incomeEntries" :key="e.id" class="entry-row group flex items-start justify-between py-2.5 first:pt-0">
+                    <div><p class="text-xs font-semibold font-mono text-[--fin-gain]">+{{ formatCurrency(e.amount) }}</p><div class="flex gap-1.5 mt-1"><span class="text-[10px] text-muted-foreground">{{ e.date }}</span><span v-if="e.category" class="text-[9px] font-semibold bg-muted/50 px-1.5 py-0.5 rounded-full text-muted-foreground">{{ e.category }}</span></div></div>
+                    <button @click="deleteEntry(e.id, 'income')" class="p-1 text-muted-foreground opacity-0 transition-all hover:text-destructive group-hover:opacity-100"><span class="text-xs">✕</span></button>
+                </div>
+            </TransitionGroup>
         </div>
         <div v-else class="py-6 text-center"><Wallet class="h-6 w-6 text-muted-foreground/20 mx-auto mb-1" /><p class="text-[10px] text-muted-foreground">No income</p></div>
     </div>
     <div class="surface-card p-4">
         <div class="mb-3 flex items-center gap-2"><div class="p-1 rounded bg-[--fin-loss]/10"><TrendingDown class="h-3.5 w-3.5 text-[--fin-loss]" /></div><h2 class="text-sm font-bold text-foreground">Expenses</h2><span class="text-[10px] text-muted-foreground ml-auto">{{ fmtYearMonth(currentMonth) }}</span></div>
         <div v-if="expenseEntries.length" class="divide-y divide-border/20">
-            <div v-for="e in expenseEntries" :key="e.id" class="entry-row group flex items-start justify-between py-2.5 first:pt-0">
-                <div><p class="text-xs font-semibold font-mono text-[--fin-loss]">-{{ formatCurrency(e.amount) }}</p><div class="flex gap-1.5 mt-1"><span class="text-[10px] text-muted-foreground">{{ e.date }}</span><span v-if="e.category" class="text-[9px] font-semibold bg-muted/50 px-1.5 py-0.5 rounded-full text-muted-foreground">{{ e.category }}</span></div></div>
-                <button @click="deleteEntry(e.id, 'expense')" class="p-1 text-muted-foreground opacity-0 transition-all hover:text-destructive group-hover:opacity-100"><span class="text-xs">✕</span></button>
-            </div>
+            <TransitionGroup name="list-slide" appear>
+                <div v-for="e in expenseEntries" :key="e.id" class="entry-row group flex items-start justify-between py-2.5 first:pt-0">
+                    <div><p class="text-xs font-semibold font-mono text-[--fin-loss]">-{{ formatCurrency(e.amount) }}</p><div class="flex gap-1.5 mt-1"><span class="text-[10px] text-muted-foreground">{{ e.date }}</span><span v-if="e.category" class="text-[9px] font-semibold bg-muted/50 px-1.5 py-0.5 rounded-full text-muted-foreground">{{ e.category }}</span></div></div>
+                    <button @click="deleteEntry(e.id, 'expense')" class="p-1 text-muted-foreground opacity-0 transition-all hover:text-destructive group-hover:opacity-100"><span class="text-xs">✕</span></button>
+                </div>
+            </TransitionGroup>
         </div>
         <div v-else class="py-6 text-center"><TrendingDown class="h-6 w-6 text-muted-foreground/20 mx-auto mb-1" /><p class="text-[10px] text-muted-foreground">No expenses</p></div>
     </div>

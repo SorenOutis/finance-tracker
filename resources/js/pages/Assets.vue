@@ -184,7 +184,7 @@ const statCards = computed(() => [
     <Head title="Assets" />
 
     <AppLayout :breadcrumbs="breadcrumbs">
-        <div class="flex h-full flex-1 flex-col gap-8 overflow-x-auto p-6 sm:p-8 pb-20 md:pb-8">
+        <div class="flex h-full flex-1 flex-col gap-5 md:gap-8 overflow-x-auto p-4 sm:p-8 pb-24 md:pb-8">
             <!-- Header -->
             <div class="animate-fade-up stagger-1">
                 <h1 class="text-3xl lg:text-4xl font-bold leading-tight tracking-tight">Assets & Liabilities</h1>
@@ -205,7 +205,7 @@ const statCards = computed(() => [
                 </div>
 
                 <!-- Net Worth with Ring -->
-                <div class="surface-card p-4 lg:p-5 overflow-hidden relative stat-tint-accent animate-fade-up stagger-3 hover:scale-[1.03] transition-all duration-300 hover:shadow-lg cursor-default group">
+                <div class="surface-card p-4 lg:p-5 overflow-hidden relative stat-tint-accent animate-fade-up stagger-3 hover:scale-[1.03] transition-all duration-300 hover:shadow-lg cursor-default group md:col-span-1 col-span-2">
                     <div class="flex items-center gap-4">
                         <div class="relative w-16 h-16 shrink-0">
                             <svg class="w-full h-full -rotate-90" viewBox="0 0 120 120">
@@ -223,10 +223,10 @@ const statCards = computed(() => [
                                 <Scale class="h-4 w-4 text-muted-foreground" />
                             </div>
                         </div>
-                        <div>
-                            <p class="text-[11px] font-semibold tracking-[0.08em] uppercase text-muted-foreground mb-1.5 font-sans">
+                        <div class="min-w-0 flex-1">
+                            <p class="text-[11px] font-semibold tracking-[0.08em] uppercase text-muted-foreground mb-1.5 font-sans truncate">
                                 Net Worth</p>
-                            <p :class="['text-2xl lg:text-3xl font-bold font-mono tracking-tighter leading-none', props.netWorth >= 0 ? 'text-[--fin-gain]' : 'text-[--fin-loss]']">
+                            <p :class="['text-2xl lg:text-3xl font-bold font-mono tracking-tighter leading-none truncate', props.netWorth >= 0 ? 'text-[--fin-gain]' : 'text-[--fin-loss]']">
                                 {{ formatCurrency(props.netWorth) }}</p>
                         </div>
                     </div>

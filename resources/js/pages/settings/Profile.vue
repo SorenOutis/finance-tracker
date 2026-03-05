@@ -46,7 +46,7 @@ const handleLogout = () => {
         <h1 class="sr-only">Profile settings</h1>
 
         <SettingsLayout>
-            <div class="flex flex-col space-y-6">
+            <div class="surface-card p-6 animate-fade-up stagger-1 flex flex-col space-y-6">
                 <Heading
                     variant="small"
                     title="Profile information"
@@ -134,7 +134,7 @@ const handleLogout = () => {
 
             <DeleteUser />
 
-            <div class="flex flex-col space-y-6">
+            <div class="surface-card p-6 animate-fade-up stagger-3 flex flex-col space-y-6 mt-6">
                 <Heading
                     variant="small"
                     title="Logout"

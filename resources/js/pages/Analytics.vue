@@ -104,7 +104,14 @@ const incomeExpensesChart = computed(() => {
                 label: 'Income',
                 data: props.trendData.map(d => d.income),
                 borderColor: chartColors.teal,
-                backgroundColor: chartColors.tealMuted,
+                backgroundColor: (context: any) => {
+                    const { ctx, chartArea } = context.chart;
+                    if (!chartArea) return chartColors.tealMuted;
+                    const gradient = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
+                    gradient.addColorStop(0, chartColors.tealMuted);
+                    gradient.addColorStop(1, 'oklch(0.6 0.118 184.704 / 0.01)');
+                    return gradient;
+                },
                 borderWidth: 3,
                 tension: 0.4,
                 fill: true,
@@ -118,7 +125,14 @@ const incomeExpensesChart = computed(() => {
                 label: 'Expenses',
                 data: props.trendData.map(d => d.expenses),
                 borderColor: chartColors.loss,
-                backgroundColor: chartColors.lossMuted,
+                backgroundColor: (context: any) => {
+                    const { ctx, chartArea } = context.chart;
+                    if (!chartArea) return chartColors.lossMuted;
+                    const gradient = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
+                    gradient.addColorStop(0, chartColors.lossMuted);
+                    gradient.addColorStop(1, 'oklch(0.62 0.22 18 / 0.01)');
+                    return gradient;
+                },
                 borderWidth: 3,
                 tension: 0.4,
                 fill: true,
@@ -198,7 +212,7 @@ const categoryBarColors = [
     <Head title="Analytics" />
 
     <AppLayout :breadcrumbs="breadcrumbs">
-        <div class="flex h-full flex-1 flex-col gap-8 overflow-x-auto p-6 sm:p-8 pb-20 md:pb-8">
+        <div class="flex h-full flex-1 flex-col gap-5 md:gap-8 overflow-x-auto p-4 sm:p-8 pb-24 md:pb-8">
             <!-- Header -->
             <div class="animate-fade-up stagger-1">
                 <h1 class="text-3xl lg:text-4xl font-bold leading-tight tracking-tight">Analytics</h1>

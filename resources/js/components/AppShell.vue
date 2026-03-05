@@ -2,6 +2,7 @@
 import { usePage } from '@inertiajs/vue3';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import MobileBottomNav from '@/components/MobileBottomNav.vue';
+import CommandPalette from '@/components/CommandPalette.vue';
 import type { AppShellVariant } from '@/types';
 
 type Props = {
@@ -22,4 +23,5 @@ const isOpen = usePage().props.sidebarOpen;
         <slot />
         <MobileBottomNav />
     </SidebarProvider>
+    <CommandPalette />
 </template>

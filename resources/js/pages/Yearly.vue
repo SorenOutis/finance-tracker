@@ -127,7 +127,7 @@ const maxAmount = computed(() => {
     <Head title="Yearly" />
 
     <AppLayout :breadcrumbs="breadcrumbs">
-        <div class="flex h-full flex-1 flex-col gap-8 overflow-x-auto p-6 sm:p-8 pb-20 md:pb-8">
+        <div class="flex h-full flex-1 flex-col gap-5 md:gap-8 overflow-x-auto p-4 sm:p-8 pb-24 md:pb-8">
             <!-- Header -->
             <div class="animate-fade-up stagger-1">
                 <div class="flex items-center gap-3">

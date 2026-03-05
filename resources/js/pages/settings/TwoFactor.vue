@@ -45,7 +45,7 @@ onUnmounted(() => {
         <h1 class="sr-only">Two-factor authentication settings</h1>
 
         <SettingsLayout>
-            <div class="space-y-6">
+            <div class="surface-card p-6 animate-fade-up flex flex-col space-y-6">
                 <Heading
                     variant="small"
                     title="Two-factor authentication"

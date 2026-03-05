@@ -70,6 +70,7 @@
   color utility to any element that depends on these defaults.
 */
 @layer base {
+
     *,
     ::after,
     ::before,
@@ -80,6 +81,7 @@
 }
 
 @layer utilities {
+
     body,
     html {
         --font-sans:
@@ -123,7 +125,7 @@
     --sidebar-accent-foreground: oklch(0.205 0 0);
     --sidebar-border: oklch(0.922 0 0);
     --sidebar-ring: oklch(0.708 0 0);
-    
+
     /* Gain/Loss indicators */
     --fin-gain: oklch(0.76 0.16 162);
     --fin-loss: oklch(0.62 0.22 18);
@@ -162,7 +164,7 @@
     --sidebar-accent-foreground: oklch(0.985 0 0);
     --sidebar-border: oklch(0.269 0 0);
     --sidebar-ring: oklch(0.439 0 0);
-    
+
     /* Gain/Loss dark mode */
     --fin-gain: oklch(0.76 0.16 162);
     --fin-loss: oklch(0.62 0.22 18);
@@ -172,68 +174,70 @@
     * {
         @apply border-border outline-ring/50;
     }
+
     body {
         @apply bg-background text-foreground;
     }
 }
 
 @layer utilities {
+
     /* Card Styling */
     .surface-card {
         @apply rounded-2xl border border-border/40 bg-card text-card-foreground;
         box-shadow: rgba(14, 63, 126, 0.04) 0px 0px 0px 1px,
-                    rgba(42, 51, 69, 0.04) 0px 1px 1px -0.5px,
-                    rgba(42, 51, 70, 0.04) 0px 3px 3px -1.5px,
-                    rgba(42, 51, 70, 0.04) 0px 6px 6px -3px,
-                    rgba(14, 63, 126, 0.04) 0px 12px 12px -6px,
-                    rgba(14, 63, 126, 0.04) 0px 24px 24px -12px;
+            rgba(42, 51, 69, 0.04) 0px 1px 1px -0.5px,
+            rgba(42, 51, 70, 0.04) 0px 3px 3px -1.5px,
+            rgba(42, 51, 70, 0.04) 0px 6px 6px -3px,
+            rgba(14, 63, 126, 0.04) 0px 12px 12px -6px,
+            rgba(14, 63, 126, 0.04) 0px 24px 24px -12px;
     }
-    
+
     .surface-elevated {
-        @apply rounded-xl border border-border/40 bg-card text-card-foreground backdrop-blur-md;
+        @apply rounded-xl border border-border/40 bg-card/90 text-card-foreground backdrop-blur-md;
         box-shadow: rgba(14, 63, 126, 0.04) 0px 0px 0px 1px,
-                    rgba(42, 51, 69, 0.04) 0px 1px 1px -0.5px,
-                    rgba(42, 51, 70, 0.04) 0px 3px 3px -1.5px,
-                    rgba(42, 51, 70, 0.04) 0px 6px 6px -3px;
+            rgba(42, 51, 69, 0.04) 0px 1px 1px -0.5px,
+            rgba(42, 51, 70, 0.04) 0px 3px 3px -1.5px,
+            rgba(42, 51, 70, 0.04) 0px 6px 6px -3px;
     }
-    
+
     /* Glowing elements */
     .glow-teal-sm {
         box-shadow: 0 0 12px 4px rgba(0, 200, 160, 0.1),
-                    0 0 24px 8px rgba(0, 200, 160, 0.05);
+            0 0 24px 8px rgba(0, 200, 160, 0.05);
     }
-    
+
     .glow-teal-md {
         box-shadow: 0 0 16px 6px rgba(0, 200, 160, 0.15),
-                    0 0 32px 12px rgba(0, 200, 160, 0.1);
+            0 0 32px 12px rgba(0, 200, 160, 0.1);
     }
-    
+
     /* Financial indicators */
     .text-fin-gain {
         @apply text-[--fin-gain];
     }
-    
+
     .text-fin-loss {
         @apply text-[--fin-loss];
     }
-    
+
     .bg-fin-gain\/10 {
         @apply bg-[rgb(from_var(--fin-gain)_r_g_b_/0.1)];
     }
-    
+
     .bg-fin-loss\/10 {
         @apply bg-[rgb(from_var(--fin-loss)_r_g_b_/0.1)];
     }
-    
+
     /* Typography */
     .font-display {
         @apply font-sans;
     }
-    
+
     .font-mono {
         @apply font-mono;
     }
-    
+
     /* Animations */
     .animate-pulse-subtle {
         animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
@@ -243,11 +247,26 @@
     .animate-fade-up {
         animation: fadeUp 0.5s ease-out both;
     }
-    .stagger-1 { animation-delay: 0ms; }
-    .stagger-2 { animation-delay: 80ms; }
-    .stagger-3 { animation-delay: 160ms; }
-    .stagger-4 { animation-delay: 240ms; }
-    .stagger-5 { animation-delay: 320ms; }
+
+    .stagger-1 {
+        animation-delay: 0ms;
+    }
+
+    .stagger-2 {
+        animation-delay: 80ms;
+    }
+
+    .stagger-3 {
+        animation-delay: 160ms;
+    }
+
+    .stagger-4 {
+        animation-delay: 240ms;
+    }
+
+    .stagger-5 {
+        animation-delay: 320ms;
+    }
 
     /* Category bar fill */
     .animate-bar-fill {
@@ -258,15 +277,19 @@
     .stat-tint-income {
         background: linear-gradient(135deg, oklch(0.76 0.16 162 / 0.06), transparent 60%);
     }
+
     .stat-tint-expense {
         background: linear-gradient(135deg, oklch(0.62 0.22 18 / 0.06), transparent 60%);
     }
+
     .stat-tint-positive {
         background: linear-gradient(135deg, oklch(0.76 0.16 162 / 0.04), transparent 60%);
     }
+
     .stat-tint-negative {
         background: linear-gradient(135deg, oklch(0.62 0.22 18 / 0.04), transparent 60%);
     }
+
     .stat-tint-accent {
         background: linear-gradient(135deg, oklch(0.6 0.118 184.704 / 0.06), transparent 60%);
     }
@@ -276,8 +299,25 @@
         @apply relative pl-4 transition-all duration-200;
         border-left: 3px solid transparent;
     }
+
     .entry-row:hover {
         border-left-color: var(--primary);
+    }
+
+    /* Vue Transition Group - list-slide */
+    .list-slide-enter-active,
+    .list-slide-leave-active {
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .list-slide-enter-from,
+    .list-slide-leave-to {
+        opacity: 0;
+        transform: translateX(-20px);
+    }
+
+    .list-slide-leave-active {
+        position: absolute;
     }
 }
 
@@ -286,6 +326,7 @@
         opacity: 0;
         transform: translateY(12px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
@@ -296,6 +337,7 @@
     from {
         transform: scaleX(0);
     }
+
     to {
         transform: scaleX(1);
     }

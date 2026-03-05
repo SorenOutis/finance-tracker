@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { Link, usePage } from '@inertiajs/vue3';
+import { Link } from '@inertiajs/vue3';
 import { LayoutGrid, BarChart3, LineChart, PiggyBank, Settings } from 'lucide-vue-next';
 import { dashboard, yearly, analytics, assets, settings } from '@/routes';
+import { useCurrentUrl } from '@/composables/useCurrentUrl';
 import type { NavItem } from '@/types';
 
-const page = usePage();
+const { isCurrentUrl } = useCurrentUrl();
 
 const navItems: NavItem[] = [
     {
@@ -33,29 +34,27 @@ const navItems: NavItem[] = [
         icon: Settings,
     },
 ];
-
-const isActive = (href: string) => {
-    return page.url === href || page.url.startsWith(href + '?');
-};
 </script>
 
 <template>
     <nav
-        class="fixed bottom-0 left-0 right-0 border-t border-border bg-card md:hidden"
+        class="fixed left-4 right-4 z-50 rounded-[2rem] border border-border/40 bg-background/80 shadow-2xl focus:outline-none backdrop-blur-xl supports-[backdrop-filter]:bg-background/60 shadow-black/20 dark:shadow-black/50 md:hidden"
+        style="bottom: calc(1rem + env(safe-area-inset-bottom));"
     >
-        <div class="flex items-center justify-around">
+        <div class="flex items-center justify-around px-2 pt-2 pb-2">
             <Link
                 v-for="item in navItems"
-                :key="item.href"
+                :key="item.title"
                 :href="item.href"
-                class="flex flex-1 flex-col items-center justify-center gap-1 py-3 px-2 text-xs font-medium transition-colors"
+                class="relative flex flex-1 flex-col items-center justify-center gap-1 py-1.5 px-1 text-[10px] font-medium transition-all"
                 :class="
-                    isActive(item.href)
+                    isCurrentUrl(item.href)
                         ? 'text-primary'
                         : 'text-muted-foreground hover:text-foreground'
                 "
             >
-                <component :is="item.icon" class="h-5 w-5" />
+                <div v-show="isCurrentUrl(item.href)" class="absolute -top-2 left-1/2 h-1 w-1 -translate-x-1/2 rounded-full bg-primary shadow-[0_0_8px_rgba(var(--primary),0.8)]" />
+                <component :is="item.icon" class="h-6 w-6 stroke-[1.5]" />
                 <span class="truncate">{{ item.title }}</span>
             </Link>
         </div>

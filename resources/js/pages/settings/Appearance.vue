@@ -22,7 +22,7 @@ const breadcrumbItems: BreadcrumbItem[] = [
         <h1 class="sr-only">Appearance settings</h1>
 
         <SettingsLayout>
-            <div class="space-y-6">
+            <div class="surface-card p-6 animate-fade-up flex flex-col space-y-6">
                 <Heading
                     variant="small"
                     title="Appearance settings"
