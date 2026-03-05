@@ -7,6 +7,8 @@ use App\Models\Expense;
 use App\Models\Budget;
 use App\Models\FinancialGoal;
 use App\Models\RecurringTransaction;
+use App\Models\Asset;
+use App\Models\Liability;
 use Inertia\Inertia;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -44,7 +46,10 @@ class DashboardController extends Controller
         $yearlyExpenses = Expense::where('user_id', $user->id)
             ->whereBetween('date', [$yearStart, $yearEnd])
             ->sum('amount');
-        $netWorth = $yearlyIncomes - $yearlyExpenses;
+
+        $totalAssets = Asset::where('user_id', $user->id)->sum('amount');
+        $totalLiabilities = Liability::where('user_id', $user->id)->sum('amount');
+        $netWorth = $totalAssets - $totalLiabilities;
 
         // Previous month data for MoM comparison
         $prevStart = $selectedDate->clone()->subMonth()->startOfMonth();

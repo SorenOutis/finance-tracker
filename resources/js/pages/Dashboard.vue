@@ -15,6 +15,14 @@ import { useChartDefaults } from '@/composables/useChartDefaults';
 import { useNumberAnimation } from '@/composables/useNumberAnimation';
 import { Chart as ChartJS, registerables } from 'chart.js';
 import { Line as LineChart } from 'vue-chartjs';
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogDescription,
+    DialogFooter
+} from '@/components/ui/dialog';
 
 ChartJS.register(...registerables);
 
@@ -118,6 +126,7 @@ const showIncomeModal = useStorage('dashboard-income-modal', false);
 const showExpenseModal = useStorage('dashboard-expense-modal', false);
 const showBudgetModal = ref(false);
 const showGoalModal = ref(false);
+const showWelcomeModal = useStorage('show-welcome-modal-v1', true, sessionStorage);
 const showRecurringModal = ref(false);
 
 // Forms
@@ -482,6 +491,56 @@ const budgetUsedPct = computed(() => props.budget ? Math.min(100, (props.dashboa
 
 </div>
 </AppLayout>
+
+<!-- Welcome Modal -->
+<Dialog v-model:open="showWelcomeModal">
+    <DialogContent class="sm:max-w-[440px] max-w-[95vw] p-0 overflow-hidden border-none bg-transparent shadow-none">
+        <div class="relative bg-card rounded-[32px] overflow-hidden border border-border/50 shadow-2xl animate-in zoom-in-95 duration-300">
+            <!-- Background Glow -->
+            <div class="absolute -top-24 -right-24 w-64 h-64 bg-primary/10 rounded-full blur-[80px]"></div>
+            <div class="absolute -bottom-24 -left-24 w-64 h-64 bg-secondary/10 rounded-full blur-[80px]"></div>
+
+            <div class="relative p-6 sm:p-8 flex flex-col items-center text-center">
+                <!-- Mascot Image -->
+                <div class="relative mb-4 sm:mb-6 group">
+                    <div class="absolute inset-0 bg-primary/20 rounded-full blur-2xl group-hover:bg-primary/30 transition-all duration-500 scale-110"></div>
+                    <div class="relative w-24 h-24 sm:w-32 sm:h-32 rounded-full border-4 border-card shadow-xl overflow-hidden bg-muted/30">
+                        <img src="/images/welcome_mascot.png" alt="Mascot" class="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-500" />
+                    </div>
+                    <div class="absolute -bottom-1 -right-1 sm:-bottom-2 sm:-right-2 bg-primary text-primary-foreground p-1.5 sm:p-2 rounded-2xl shadow-lg animate-bounce">
+                        <Zap class="w-3 h-3 sm:w-4 sm:h-4" />
+                    </div>
+                </div>
+
+                <DialogHeader class="space-y-2 sm:space-y-3">
+                    <DialogTitle class="text-2xl sm:text-3xl font-black tracking-tight font-display">
+                        Welcome Back, <span class="text-primary">{{ user.name.split(' ')[0] }}</span>!
+                    </DialogTitle>
+                    <DialogDescription class="text-sm sm:text-base text-muted-foreground font-medium leading-relaxed px-2 sm:px-4">
+                        We're excited to have you back! Your personal finance hub is ready. Let's make some smart moves today.
+                    </DialogDescription>
+                </DialogHeader>
+
+                <div class="mt-6 sm:mt-8 grid grid-cols-2 gap-2 sm:gap-3 w-full">
+                    <div class="p-3 sm:p-4 rounded-2xl bg-muted/30 border border-border/40 text-left">
+                        <p class="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1">Net Worth</p>
+                        <p class="text-base sm:text-lg font-bold font-mono text-foreground">{{ formatCurrency(dashboard.netWorth) }}</p>
+                    </div>
+                    <div class="p-3 sm:p-4 rounded-2xl bg-muted/30 border border-border/40 text-left">
+                        <p class="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1">Health Score</p>
+                        <p class="text-base sm:text-lg font-bold font-mono" :style="{ color: healthColor }">{{ healthScore }}</p>
+                    </div>
+                </div>
+
+                <DialogFooter class="mt-6 sm:mt-8 w-full sm:justify-center">
+                    <button @click="showWelcomeModal = false" class="w-full sm:w-auto px-8 sm:px-10 py-3 sm:py-4 rounded-[18px] sm:rounded-[20px] bg-primary text-primary-foreground font-bold text-sm sm:text-base shadow-lg shadow-primary/20 hover:shadow-primary/30 hover:scale-[1.02] active:scale-[0.98] transition-all">
+                        Get Started
+                    </button>
+                </DialogFooter>
+            </div>
+        </div>
+    </DialogContent>
+</Dialog>
 
 <!-- Add Income Modal -->
 <Teleport to="body">
