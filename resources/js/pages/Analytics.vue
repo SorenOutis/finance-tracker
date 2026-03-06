@@ -9,6 +9,8 @@ import { useChartDefaults } from '@/composables/useChartDefaults';
 import { Chart as ChartJS, registerables } from 'chart.js';
 import { Line as LineChart, Bar as BarChart, Doughnut as DoughnutChart } from 'vue-chartjs';
 import { TrendingUp, TrendingDown, BarChart3, PieChart, ArrowUpRight, ArrowDownRight } from 'lucide-vue-next';
+import { onMounted } from 'vue';
+import gsap from 'gsap';
 
 ChartJS.register(...registerables);
 
@@ -206,6 +208,39 @@ const categoryBarColors = [
     chartColors.slate,
     chartColors.loss,
 ];
+
+onMounted(() => {
+    // Animate category bars
+    gsap.from('.animate-bar-fill', {
+        scaleX: 0,
+        duration: 1.5,
+        stagger: 0.1,
+        ease: 'expo.out',
+        delay: 0.5
+    });
+
+    // Hover effect for stat cards and charts
+    gsap.utils.toArray<HTMLElement>('.surface-card, [class*="group surface-card"]').forEach((card) => {
+        card.addEventListener('mouseenter', () => {
+            gsap.to(card, {
+                y: -5,
+                scale: 1.01,
+                duration: 0.3,
+                ease: 'power2.out',
+                overwrite: 'auto'
+            });
+        });
+        card.addEventListener('mouseleave', () => {
+            gsap.to(card, {
+                y: 0,
+                scale: 1,
+                duration: 0.3,
+                ease: 'power2.out',
+                overwrite: 'auto'
+            });
+        });
+    });
+});
 </script>
 
 <template>

@@ -13,6 +13,7 @@ import {
 import { router } from '@inertiajs/vue3';
 import { useChartDefaults } from '@/composables/useChartDefaults';
 import { useNumberAnimation } from '@/composables/useNumberAnimation';
+import gsap from 'gsap';
 import { Chart as ChartJS, registerables } from 'chart.js';
 import { Line as LineChart } from 'vue-chartjs';
 import {
@@ -103,13 +104,42 @@ const animatedHS = ref(0);
 const healthOffset = computed(() => C - (Math.max(0, Math.min(100, animatedHS.value)) / 100) * C);
 
 onMounted(() => {
-    const animateVal = (target: number, setter: (v: number) => void) => {
-        const start = performance.now();
-        const run = (t: number) => { const p = Math.min((t - start) / 1200, 1); setter((1 - Math.pow(1 - p, 3)) * target); if (p < 1) requestAnimationFrame(run); };
-        requestAnimationFrame(run);
-    };
-    animateVal(Math.max(0, Math.min(100, savingsRate.value)), v => animatedSR.value = v);
-    animateVal(healthScore.value, v => animatedHS.value = v);
+    // Animate rings using GSAP
+    gsap.to(animatedSR, {
+        value: Math.max(0, Math.min(100, savingsRate.value)),
+        duration: 1.5,
+        ease: 'expo.out',
+        delay: 0.2
+    });
+
+    gsap.to(animatedHS, {
+        value: healthScore.value,
+        duration: 1.5,
+        ease: 'expo.out',
+        delay: 0.4
+    });
+
+    // Hover effect for stat cards
+    gsap.utils.toArray<HTMLElement>('.surface-card, [class*="group p-4 sm:p-5"]').forEach((card) => {
+        card.addEventListener('mouseenter', () => {
+            gsap.to(card, {
+                y: -5,
+                scale: 1.02,
+                duration: 0.3,
+                ease: 'power2.out',
+                overwrite: 'auto'
+            });
+        });
+        card.addEventListener('mouseleave', () => {
+            gsap.to(card, {
+                y: 0,
+                scale: 1,
+                duration: 0.3,
+                ease: 'power2.out',
+                overwrite: 'auto'
+            });
+        });
+    });
 });
 
 // Sparkline
