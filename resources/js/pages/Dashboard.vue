@@ -118,28 +118,6 @@ onMounted(() => {
         ease: 'expo.out',
         delay: 0.4
     });
-
-    // Hover effect for stat cards
-    gsap.utils.toArray<HTMLElement>('.surface-card, [class*="group p-4 sm:p-5"]').forEach((card) => {
-        card.addEventListener('mouseenter', () => {
-            gsap.to(card, {
-                y: -5,
-                scale: 1.02,
-                duration: 0.3,
-                ease: 'power2.out',
-                overwrite: 'auto'
-            });
-        });
-        card.addEventListener('mouseleave', () => {
-            gsap.to(card, {
-                y: 0,
-                scale: 1,
-                duration: 0.3,
-                ease: 'power2.out',
-                overwrite: 'auto'
-            });
-        });
-    });
 });
 
 // Sparkline
@@ -212,7 +190,7 @@ const budgetUsedPct = computed(() => props.budget ? Math.min(100, (props.dashboa
 <!-- Stat Cards -->
 <div class="grid grid-cols-2 gap-3 md:grid-cols-4 lg:gap-4 mt-2">
     <div v-for="(stat, idx) in displayStats" :key="stat.label"
-        :class="['group p-4 sm:p-5 rounded-[24px] overflow-hidden relative border border-border/40 bg-card/20 hover:scale-[1.03] transition-all duration-300 cursor-default animate-fade-up', `stagger-${idx+1}`, stat.tint]">
+        :class="['group p-4 sm:p-5 rounded-[24px] overflow-hidden relative border border-border/40 bg-card/20 premium-hover cursor-default animate-fade-up', `stagger-${idx+1}`, stat.tint]">
         <div class="absolute top-0 right-0 w-24 h-24 opacity-[0.03] pointer-events-none group-hover:scale-110 transition-transform duration-500">
             <component :is="stat.icon" class="size-24 -translate-y-4 translate-x-4" />
         </div>
@@ -252,7 +230,7 @@ const budgetUsedPct = computed(() => props.budget ? Math.min(100, (props.dashboa
     </div>
 
     <!-- Income vs Expense Comparison Bar -->
-    <div class="surface-card p-4">
+    <div class="surface-card premium-hover p-4">
         <p class="text-[10px] font-semibold tracking-[0.08em] uppercase text-muted-foreground mb-2 font-sans">Income vs Expenses</p>
         <div class="flex h-3 rounded-full overflow-hidden bg-muted/30">
             <div class="bg-[--fin-gain] transition-all duration-700 rounded-l-full"
@@ -362,7 +340,7 @@ const budgetUsedPct = computed(() => props.budget ? Math.min(100, (props.dashboa
 </div>
 
 <!-- Budget Tracker -->
-<div v-if="budget" class="surface-card p-4 animate-fade-up stagger-5">
+<div v-if="budget" class="surface-card premium-hover p-4 animate-fade-up stagger-5">
     <div class="flex items-center justify-between mb-2">
         <div class="flex items-center gap-1.5">
             <Target class="h-3.5 w-3.5 text-primary" />
@@ -382,7 +360,7 @@ const budgetUsedPct = computed(() => props.budget ? Math.min(100, (props.dashboa
 </div>
 
 <!-- Category Breakdown -->
-<div v-if="expensesByCategory?.length" class="surface-card p-4 animate-fade-up stagger-5">
+<div v-if="expensesByCategory?.length" class="surface-card premium-hover p-4 animate-fade-up stagger-5">
     <h2 class="text-sm font-bold text-foreground font-display tracking-tight">Expense Breakdown</h2>
     <p class="text-[10px] text-muted-foreground font-sans mb-4">Where your money goes</p>
     <div class="space-y-3">
@@ -462,7 +440,7 @@ const budgetUsedPct = computed(() => props.budget ? Math.min(100, (props.dashboa
 </div>
 
 <!-- Recent Activity Timeline -->
-<div v-if="recentActivity?.length" class="surface-card p-4 animate-fade-up stagger-5">
+<div v-if="recentActivity?.length" class="surface-card premium-hover p-4 animate-fade-up stagger-5">
     <div class="flex items-center gap-1.5 mb-3"><Activity class="h-3.5 w-3.5 text-primary" /><h2 class="text-sm font-bold text-foreground font-display tracking-tight">Recent Activity</h2></div>
     <div class="space-y-0 divide-y divide-border/20">
         <div v-for="item in recentActivity" :key="`${item.type}-${item.id}`" class="flex items-center justify-between py-2.5 first:pt-0 last:pb-0">
@@ -480,7 +458,7 @@ const budgetUsedPct = computed(() => props.budget ? Math.min(100, (props.dashboa
 
 <!-- Income & Expense Entry Lists -->
 <div class="grid grid-cols-2 gap-3 animate-fade-up stagger-5">
-    <div class="surface-card p-4">
+    <div class="surface-card premium-hover p-4">
         <div class="mb-3 flex items-center gap-2"><div class="p-1 rounded bg-[--fin-gain]/10"><Wallet class="h-3.5 w-3.5 text-[--fin-gain]" /></div><h2 class="text-sm font-bold text-foreground">Income</h2><span class="text-[10px] text-muted-foreground ml-auto">{{ fmtYearMonth(currentMonth) }}</span></div>
         <div v-if="incomeEntries.length" class="divide-y divide-border/20">
             <TransitionGroup name="list-slide" appear>
@@ -492,7 +470,7 @@ const budgetUsedPct = computed(() => props.budget ? Math.min(100, (props.dashboa
         </div>
         <div v-else class="py-6 text-center"><Wallet class="h-6 w-6 text-muted-foreground/20 mx-auto mb-1" /><p class="text-[10px] text-muted-foreground">No income</p></div>
     </div>
-    <div class="surface-card p-4">
+    <div class="surface-card premium-hover p-4">
         <div class="mb-3 flex items-center gap-2"><div class="p-1 rounded bg-[--fin-loss]/10"><TrendingDown class="h-3.5 w-3.5 text-[--fin-loss]" /></div><h2 class="text-sm font-bold text-foreground">Expenses</h2><span class="text-[10px] text-muted-foreground ml-auto">{{ fmtYearMonth(currentMonth) }}</span></div>
         <div v-if="expenseEntries.length" class="divide-y divide-border/20">
             <TransitionGroup name="list-slide" appear>
@@ -541,7 +519,7 @@ const budgetUsedPct = computed(() => props.budget ? Math.min(100, (props.dashboa
                 <div class="mt-6 sm:mt-8 grid grid-cols-2 gap-2 sm:gap-3 w-full">
                     <div class="p-3 sm:p-4 rounded-2xl bg-muted/30 border border-border/40 text-left">
                         <p class="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1">Net Worth</p>
-                        <p class="text-base sm:text-lg font-bold font-mono text-foreground">{{ formatCurrency(dashboard.netWorth) }}</p>
+                        <p class="text-base sm:text-lg font-bold font-mono text-foreground">{{ formatCurrency(props.dashboard.netWorth) }}</p>
                     </div>
                     <div class="p-3 sm:p-4 rounded-2xl bg-muted/30 border border-border/40 text-left">
                         <p class="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1">Health Score</p>

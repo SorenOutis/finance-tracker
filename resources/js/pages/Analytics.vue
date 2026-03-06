@@ -218,28 +218,6 @@ onMounted(() => {
         ease: 'expo.out',
         delay: 0.5
     });
-
-    // Hover effect for stat cards and charts
-    gsap.utils.toArray<HTMLElement>('.surface-card, [class*="group surface-card"]').forEach((card) => {
-        card.addEventListener('mouseenter', () => {
-            gsap.to(card, {
-                y: -5,
-                scale: 1.01,
-                duration: 0.3,
-                ease: 'power2.out',
-                overwrite: 'auto'
-            });
-        });
-        card.addEventListener('mouseleave', () => {
-            gsap.to(card, {
-                y: 0,
-                scale: 1,
-                duration: 0.3,
-                ease: 'power2.out',
-                overwrite: 'auto'
-            });
-        });
-    });
 });
 </script>
 
@@ -257,7 +235,7 @@ onMounted(() => {
             <!-- Summary Stats Row -->
             <div class="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-6">
                 <div v-for="(stat, idx) in summaryStats" :key="stat.label"
-                    :class="['group surface-card p-4 lg:p-5 overflow-hidden relative hover:scale-[1.03] transition-all duration-300 hover:shadow-lg cursor-default animate-fade-up', `stagger-${idx + 1}`, stat.tint]">
+                    :class="['group surface-card p-4 lg:p-5 overflow-hidden relative premium-hover cursor-default animate-fade-up', `stagger-${idx + 1}`, stat.tint]">
                     <div class="absolute top-0 right-0 w-20 h-20 opacity-[0.04] pointer-events-none transition-transform duration-500 group-hover:scale-110">
                         <component :is="stat.icon" class="size-20 -translate-y-3 translate-x-3" />
                     </div>
@@ -274,7 +252,7 @@ onMounted(() => {
             </div>
             <!-- Best/Worst Month Callout -->
             <div v-if="bestMonth || worstMonth" class="grid grid-cols-2 gap-3 animate-fade-up stagger-5">
-                <div v-if="bestMonth" class="surface-card p-4 lg:p-5 flex items-center gap-4">
+                <div v-if="bestMonth" class="surface-card premium-hover p-4 lg:p-5 flex items-center gap-4">
                     <div class="p-2.5 rounded-xl bg-[--fin-gain]/10 shrink-0">
                         <TrendingUp class="h-5 w-5 text-[--fin-gain]" />
                     </div>
@@ -284,7 +262,7 @@ onMounted(() => {
                         <p class="text-sm font-mono text-[--fin-gain]">+{{ formatCurrency(bestMonth.net) }}</p>
                     </div>
                 </div>
-                <div v-if="worstMonth" class="surface-card p-4 lg:p-5 flex items-center gap-4">
+                <div v-if="worstMonth" class="surface-card premium-hover p-4 lg:p-5 flex items-center gap-4">
                     <div class="p-2.5 rounded-xl bg-[--fin-loss]/10 shrink-0">
                         <TrendingDown class="h-5 w-5 text-[--fin-loss]" />
                     </div>
@@ -299,7 +277,7 @@ onMounted(() => {
             </div>
 
             <!-- Income vs Expenses Trend -->
-            <div class="surface-card p-5 lg:p-6 animate-fade-up stagger-5">
+            <div class="surface-card premium-hover p-5 lg:p-6 animate-fade-up stagger-5">
                 <div class="flex items-center gap-2 mb-1">
                     <div class="p-1.5 rounded-lg bg-primary/8">
                         <TrendingUp class="h-4 w-4 text-primary" />
@@ -324,7 +302,7 @@ onMounted(() => {
             </div>
 
             <!-- Monthly Net Income -->
-            <div class="surface-card p-5 lg:p-6 animate-fade-up stagger-5">
+            <div class="surface-card premium-hover p-5 lg:p-6 animate-fade-up stagger-5">
                 <div class="flex items-center gap-2 mb-1">
                     <div class="p-1.5 rounded-lg bg-primary/8">
                         <BarChart3 class="h-4 w-4 text-primary" />
@@ -350,7 +328,7 @@ onMounted(() => {
             <!-- Expenses by Category -->
             <div class="grid gap-6 md:grid-cols-2 animate-fade-up stagger-5">
                 <!-- Doughnut Chart -->
-                <div class="surface-card p-5 lg:p-6">
+                <div class="surface-card premium-hover p-5 lg:p-6">
                     <div class="flex items-start justify-between">
                         <div>
                             <div class="flex items-center gap-2 mb-1">

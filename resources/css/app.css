@@ -193,6 +193,18 @@
             rgba(14, 63, 126, 0.04) 0px 24px 24px -12px;
     }
 
+    .premium-hover {
+        @apply transition-all duration-300 ease-out;
+    }
+
+    .premium-hover:hover {
+        @apply -translate-y-1 scale-[1.02];
+        box-shadow: rgba(14, 63, 126, 0.08) 0px 0px 0px 1px,
+            rgba(42, 51, 69, 0.08) 0px 2px 4px -1px,
+            rgba(42, 51, 70, 0.08) 0px 6px 12px -2px,
+            rgba(42, 51, 70, 0.08) 12px 24px -4px;
+    }
+
     .surface-elevated {
         @apply rounded-xl border border-border/40 bg-card/90 text-card-foreground backdrop-blur-md;
         box-shadow: rgba(14, 63, 126, 0.04) 0px 0px 0px 1px,

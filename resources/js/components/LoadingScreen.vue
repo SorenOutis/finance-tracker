@@ -50,17 +50,15 @@ onMounted(() => {
         transformOrigin: "left center",
     });
 
-    // Reveal characters synced with progress
+    // Reveal characters synced with progress after a small initial delay
     chars.forEach((char, index) => {
         tl.to(char, {
             opacity: 1,
             y: 0,
             duration: 0.3,
             ease: "back.out(1.7)",
-        }, index * (3 / characters.length)); // Syncing with total duration
+        }, (index * (2.5 / characters.length)) + 0.5); // 0.5s delay, slightly faster reveal
     });
-
-    // Final ripple and exit handled in onComplete
 });
 </script>
 
@@ -79,11 +77,12 @@ onMounted(() => {
                     v-for="(char, index) in characters" 
                     :key="index" 
                     class="char inline-block"
-                    :class="{ 'opacity-0': true }"
+                    style="opacity: 0"
                 >
                     {{ char }}
                 </span>
             </div>
+
 
             <!-- Loading Bar -->
             <div class="relative w-64 md:w-80 h-1 bg-white/10 rounded-full overflow-hidden">
