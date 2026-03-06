@@ -89,6 +89,14 @@ onBeforeUnmount(() => {
                 <span class="md:hidden font-display font-semibold text-foreground tracking-tight text-[17px] -ml-1">{{ breadcrumbs[breadcrumbs.length - 1]?.title }}</span>
             </template>
         </div>
+
+        <!-- Center Logo Placeholder -->
+        <div class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none opacity-0 md:opacity-100 transition-opacity">
+            <span id="header-logo" class="text-lg font-black tracking-tighter text-foreground font-display select-none">
+                KOAMISHIN.ORG
+            </span>
+        </div>
+
         
         <!-- Date/Time & Theme Toggle -->
         <div class="flex items-center gap-2 sm:gap-4">
