@@ -212,7 +212,7 @@ const categoryBarColors = [
     <Head title="Analytics" />
 
     <AppLayout :breadcrumbs="breadcrumbs">
-        <div class="flex h-full flex-1 flex-col gap-5 md:gap-8 overflow-x-auto p-4 sm:p-8 pb-24 md:pb-8">
+        <div class="flex h-full flex-1 flex-col gap-5 md:gap-8 p-4 sm:p-8 pb-28 md:pb-12">
             <!-- Header -->
             <div class="animate-fade-up stagger-1">
                 <h1 class="text-3xl lg:text-4xl font-bold leading-tight tracking-tight">Analytics</h1>
@@ -220,7 +220,7 @@ const categoryBarColors = [
             </div>
 
             <!-- Summary Stats Row -->
-            <div class="grid grid-cols-2 gap-4 md:grid-cols-4 lg:gap-6">
+            <div class="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-6">
                 <div v-for="(stat, idx) in summaryStats" :key="stat.label"
                     :class="['group surface-card p-4 lg:p-5 overflow-hidden relative hover:scale-[1.03] transition-all duration-300 hover:shadow-lg cursor-default animate-fade-up', `stagger-${idx + 1}`, stat.tint]">
                     <div class="absolute top-0 right-0 w-20 h-20 opacity-[0.04] pointer-events-none transition-transform duration-500 group-hover:scale-110">
@@ -273,12 +273,12 @@ const categoryBarColors = [
                 </div>
                 <p class="mt-0.5 text-[11px] text-muted-foreground font-sans ml-9">Monthly comparison of income and expenses</p>
 
-                <div v-if="props.trendData && props.trendData.length > 0" class="relative mt-6" style="height: 400px; position: relative;">
+                <div v-if="props.trendData && props.trendData.length > 0" class="relative mt-6 h-[300px] sm:h-[400px] w-full overflow-hidden">
                     <LineChart
                         :key="JSON.stringify(incomeExpensesChart)"
                         :data="incomeExpensesChart"
                         :options="lineChartOptions"
-                        style="position: relative; height: 100%;"
+                        class="w-full h-full"
                     />
                 </div>
                 <div v-else class="mt-6 flex h-96 flex-col items-center justify-center">
@@ -298,12 +298,12 @@ const categoryBarColors = [
                 </div>
                 <p class="mt-0.5 text-[11px] text-muted-foreground font-sans ml-9">Your earnings after expenses each month</p>
 
-                <div v-if="props.trendData && props.trendData.length > 0" class="relative mt-6" style="height: 400px; position: relative;">
+                <div v-if="props.trendData && props.trendData.length > 0" class="relative mt-6 h-[300px] sm:h-[400px] w-full overflow-hidden">
                     <BarChart
                         :key="JSON.stringify(netIncomeChart)"
                         :data="netIncomeChart"
                         :options="barChartOptions"
-                        style="position: relative; height: 100%;"
+                        class="w-full h-full"
                     />
                 </div>
                 <div v-else class="mt-6 flex h-96 flex-col items-center justify-center">
@@ -328,12 +328,12 @@ const categoryBarColors = [
                         </div>
                     </div>
 
-                    <div v-if="props.categoryData && props.categoryData.length > 0 && props.categoryData[0].amount > 0" class="relative mt-6" style="height: 300px; position: relative;">
+                    <div v-if="props.categoryData && props.categoryData.length > 0 && props.categoryData[0].amount > 0" class="relative mt-6 h-[250px] sm:h-[300px] w-full overflow-hidden">
                         <DoughnutChart
                             :key="JSON.stringify(categoryChart)"
                             :data="categoryChart"
                             :options="doughnutChartOptions"
-                            style="position: relative; height: 100%;"
+                            class="w-full h-full"
                         />
                     </div>
                     <div v-else class="mt-6 flex h-72 flex-col items-center justify-center">

@@ -167,7 +167,7 @@ export function useChartDefaults() {
             position: 'bottom' as const,
             labels: {
               usePointStyle: true,
-              padding: 15,
+              padding: 10,
               font: {
                 size: 12,
                 weight: 'bold',

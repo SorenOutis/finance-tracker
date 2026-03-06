@@ -38,8 +38,8 @@ const navItems: NavItem[] = [
 
 <template>
     <nav
-        class="fixed left-4 right-4 z-50 rounded-[2rem] border border-border/40 bg-background/80 shadow-2xl focus:outline-none backdrop-blur-xl supports-[backdrop-filter]:bg-background/60 shadow-black/20 dark:shadow-black/50 md:hidden"
-        style="bottom: calc(1rem + env(safe-area-inset-bottom));"
+        class="fixed left-6 right-6 z-50 rounded-[2.5rem] border border-white/20 dark:border-white/10 bg-background/70 shadow-[0_20px_50px_rgba(0,0,0,0.3)] dark:shadow-[0_20px_50px_rgba(0,0,0,0.6)] focus:outline-none backdrop-blur-2xl supports-[backdrop-filter]:bg-background/40 md:hidden"
+        style="bottom: calc(1.5rem + env(safe-area-inset-bottom));"
     >
         <div class="flex items-center justify-around px-2 pt-2 pb-2">
             <Link
