@@ -90,14 +90,6 @@ onBeforeUnmount(() => {
             </template>
         </div>
 
-        <!-- Center Logo Placeholder -->
-        <div 
-            class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none opacity-0 md:opacity-100 transition-opacity duration-700 delay-1000"
-        >
-            <span id="header-logo" class="text-lg font-black tracking-tighter text-foreground font-display select-none">
-                KOAMISHIN.ORG
-            </span>
-        </div>
 
         
         <!-- Date/Time & Theme Toggle -->
