@@ -8,7 +8,8 @@ import { useStorage } from '@vueuse/core';
 import { formatCurrency } from '@/utils/currency';
 import {
     Wallet, TrendingDown, TrendingUp, DollarSign, PieChart, Plus, ArrowUpRight, ArrowDownRight,
-    Target, CalendarClock, Download, Flame, Activity, Clock, Zap, AlertCircle, Trash2, X
+    Target, CalendarClock, Download, Flame, Activity, Clock, Zap, AlertCircle, Trash2, X,
+    CreditCard, Smartphone, Landmark, Coins, Bitcoin, MoreHorizontal
 } from 'lucide-vue-next';
 import { router } from '@inertiajs/vue3';
 import { useChartDefaults } from '@/composables/useChartDefaults';
@@ -41,6 +42,7 @@ interface YtdData { income: number; expense: number; net: number; dayOfYear: num
 interface GoalItem { id: number; name: string; target_amount: number; current_amount: number; deadline?: string; color: string; }
 interface RecurringItem { id: number; name: string; amount: number; type: string; category?: string; frequency: string; next_due_date: string; }
 interface BillItem { id: number; name: string; amount: number; next_due_date: string; days_until: number; frequency: string; }
+interface AccountItem { id: number; name: string; type: string; color: string | null; balance: number; last4: string | null; holder_name: string | null; month_income: number; month_expense: number; }
 
 interface Props {
     user: User; dashboard: DashboardData; incomeEntries: Entry[]; expenseEntries: Entry[];
@@ -49,6 +51,7 @@ interface Props {
     transactionStats: TransactionStats; recentActivity: ActivityItem[]; savingsStreak: number;
     ytd: YtdData; budget: { monthly_limit: number } | null; financialGoals: GoalItem[];
     recurringTransactions: RecurringItem[]; upcomingBills: BillItem[];
+    accounts: AccountItem[];
 }
 
 const props = defineProps<Props>();
@@ -139,8 +142,14 @@ const showRecurringModal = ref(false);
 const showQuickAddModal = ref(false);
 
 // Forms
-const incomeForm = useForm({ amount: '', date: getYYYYMMDD(new Date()), category: '', description: '' });
-const expenseForm = useForm({ amount: '', date: getYYYYMMDD(new Date()), category: '', description: '' });
+const incomeForm = useForm({ amount: '', date: getYYYYMMDD(new Date()), category: '', description: '', account_id: '' as string | number });
+const expenseForm = useForm({ amount: '', date: getYYYYMMDD(new Date()), category: '', description: '', account_id: '' as string | number });
+
+// Wallet card helpers
+const walletDefColors: Record<string, string> = { gcash: '#007DFE', maya: '#00B274', paypal: '#003087', bank: '#1E3A5F', cash: '#6B7280', credit_card: '#18181B', crypto: '#F7931A', other: '#6366F1' };
+const walletGradient = (type: string, color: string | null) => { const b = color || walletDefColors[type] || '#6366F1'; return `linear-gradient(135deg, ${b} 0%, ${b}CC 50%, ${b}99 100%)`; };
+const walletIcon = (type: string) => ({ gcash: Smartphone, maya: Smartphone, paypal: Wallet, bank: Landmark, cash: Coins, credit_card: CreditCard, crypto: Bitcoin }[type] || MoreHorizontal);
+const walletLabel = (type: string) => ({ gcash: 'GCash', maya: 'Maya', paypal: 'PayPal', bank: 'Bank', cash: 'Cash', credit_card: 'Credit Card', crypto: 'Crypto' }[type] || type);
 const budgetForm = useForm({ monthly_limit: props.budget?.monthly_limit?.toString() || '' });
 const goalForm = useForm({ name: '', target_amount: '', current_amount: '', deadline: '', color: '#14b8a6' });
 const recurringForm = useForm({ name: '', amount: '', type: 'expense' as string, category: '', description: '', frequency: 'monthly' as string, next_due_date: getYYYYMMDD(new Date()) });
@@ -170,7 +179,7 @@ const budgetUsedPct = computed(() => props.budget ? Math.min(100, (props.dashboa
 <div class="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between animate-fade-up stagger-1">
     <div>
         <h1 class="text-4xl sm:text-4xl font-extrabold leading-tight tracking-tight text-foreground">Finance Tracker</h1>
-        <p class="mt-2 text-sm text-muted-foreground/80 font-medium font-sans">{{ greeting }}, OB. <span class="font-bold text-foreground">{{ fmtMonthYear(currentMonth) }}</span></p>
+        <p class="mt-2 text-sm text-muted-foreground/80 font-medium font-sans">{{ greeting }}, {{ user.name.split(' ')[0] }}. <span class="font-bold text-foreground">{{ fmtMonthYear(currentMonth) }}</span></p>
     </div>
     <div class="flex flex-wrap items-center gap-2 sm:gap-3">
         <div class="relative flex-1 sm:flex-initial">
@@ -205,6 +214,49 @@ const budgetUsedPct = computed(() => props.budget ? Math.min(100, (props.dashboa
         <div class="pt-1.5">
             <p :class="['text-2xl sm:text-3xl font-black font-display tracking-tight leading-none', stat.colorClass || 'text-foreground']">{{ stat.value }}</p>
         </div>
+    </div>
+</div>
+
+<!-- Wallet Cards Strip -->
+<div v-if="accounts?.length" class="animate-fade-up stagger-3 mt-1">
+    <div class="flex items-center justify-between mb-2">
+        <p class="text-[10px] font-bold tracking-widest uppercase text-muted-foreground/80 font-sans">My Wallets</p>
+        <a href="/wallets" class="text-[10px] font-semibold text-primary hover:underline">View all</a>
+    </div>
+    <div class="flex gap-3 overflow-x-auto snap-x snap-mandatory pb-2 scrollbar-hide">
+        <div v-for="account in accounts" :key="account.id"
+            class="group relative flex-shrink-0 w-[220px] sm:w-[260px] snap-start overflow-hidden rounded-[18px] p-4 sm:p-5 text-white shadow-lg transition-all duration-300 hover:shadow-xl hover:-translate-y-0.5 cursor-default"
+            :style="{ background: walletGradient(account.type, account.color) }">
+            <!-- Card pattern -->
+            <div class="absolute inset-0 opacity-[0.06] pointer-events-none">
+                <div class="absolute top-2 right-2 w-20 h-20 border-2 border-white rounded-full"></div>
+                <div class="absolute -bottom-6 -left-6 w-28 h-28 border-2 border-white rounded-full"></div>
+            </div>
+            <div class="relative z-10">
+                <div class="flex items-center gap-1.5 mb-3">
+                    <div class="p-1 rounded-md bg-white/20"><component :is="walletIcon(account.type)" class="h-3 w-3" /></div>
+                    <span class="text-[9px] font-bold uppercase tracking-wider opacity-90">{{ walletLabel(account.type) }}</span>
+                </div>
+                <p class="text-lg sm:text-xl font-black font-mono tracking-tight leading-none">{{ formatCurrency(account.balance) }}</p>
+                <div class="flex items-end justify-between mt-3">
+                    <p class="text-[10px] font-semibold opacity-80">{{ account.name }}</p>
+                    <p v-if="account.last4" class="text-[10px] font-mono font-bold tracking-widest opacity-70">•••• {{ account.last4 }}</p>
+                </div>
+                <div class="flex items-center gap-1.5 mt-2.5 pt-2 border-t border-white/15">
+                    <span class="inline-flex items-center gap-0.5 rounded-full bg-white/15 px-1.5 py-0.5 text-[9px] font-bold">
+                        <ArrowDownRight class="h-2 w-2" /> {{ formatCurrency(account.month_income) }}
+                    </span>
+                    <span class="inline-flex items-center gap-0.5 rounded-full bg-white/15 px-1.5 py-0.5 text-[9px] font-bold">
+                        <ArrowUpRight class="h-2 w-2" /> {{ formatCurrency(account.month_expense) }}
+                    </span>
+                </div>
+            </div>
+        </div>
+        <!-- Add wallet card -->
+        <a href="/wallets" class="flex-shrink-0 w-[120px] snap-start flex flex-col items-center justify-center rounded-[18px] border-2 border-dashed border-border/40 bg-card/10 text-muted-foreground hover:border-primary/50 hover:text-primary transition-all cursor-pointer">
+            <Plus class="h-5 w-5 mb-1" />
+            <span class="text-[10px] font-bold">Add Wallet</span>
+        </a>
     </div>
 </div>
 
@@ -549,6 +601,7 @@ const budgetUsedPct = computed(() => props.budget ? Math.min(100, (props.dashboa
             <div><label class="block text-sm font-semibold text-muted-foreground">Date</label><input v-model="incomeForm.date" type="date" class="mt-1 w-full rounded-lg border border-border bg-card px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/10" /></div>
             <div><label class="block text-sm font-semibold text-muted-foreground">Category</label><input v-model="incomeForm.category" type="text" placeholder="e.g., Salary" class="mt-1 w-full rounded-lg border border-border bg-card px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/10" /></div>
             <div><label class="block text-sm font-semibold text-muted-foreground">Description</label><input v-model="incomeForm.description" type="text" placeholder="Optional" class="mt-1 w-full rounded-lg border border-border bg-card px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/10" /></div>
+            <div v-if="accounts?.length"><label class="block text-sm font-semibold text-muted-foreground">Wallet</label><select v-model="incomeForm.account_id" class="mt-1 w-full rounded-lg border border-border bg-card px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/10"><option value="">No wallet</option><option v-for="a in accounts" :key="a.id" :value="a.id">{{ a.name }} ({{ walletLabel(a.type) }})</option></select></div>
         </div>
         <div class="flex gap-2 mt-5"><button @click="showIncomeModal = false" class="flex-1 rounded-lg border border-border px-4 py-2.5 text-sm font-semibold text-muted-foreground hover:bg-accent/50">Cancel</button><button @click="addIncome" class="flex-1 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90">Add</button></div>
     </div></Transition>
@@ -567,6 +620,7 @@ const budgetUsedPct = computed(() => props.budget ? Math.min(100, (props.dashboa
             <div><label class="block text-sm font-semibold text-muted-foreground">Date</label><input v-model="expenseForm.date" type="date" class="mt-1 w-full rounded-lg border border-border bg-card px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/10" /></div>
             <div><label class="block text-sm font-semibold text-muted-foreground">Category</label><input v-model="expenseForm.category" type="text" placeholder="e.g., Food" class="mt-1 w-full rounded-lg border border-border bg-card px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/10" /></div>
             <div><label class="block text-sm font-semibold text-muted-foreground">Description</label><input v-model="expenseForm.description" type="text" placeholder="Optional" class="mt-1 w-full rounded-lg border border-border bg-card px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/10" /></div>
+            <div v-if="accounts?.length"><label class="block text-sm font-semibold text-muted-foreground">Wallet</label><select v-model="expenseForm.account_id" class="mt-1 w-full rounded-lg border border-border bg-card px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/10"><option value="">No wallet</option><option v-for="a in accounts" :key="a.id" :value="a.id">{{ a.name }} ({{ walletLabel(a.type) }})</option></select></div>
         </div>
         <div class="flex gap-2 mt-5"><button @click="showExpenseModal = false" class="flex-1 rounded-lg border border-border px-4 py-2.5 text-sm font-semibold text-muted-foreground hover:bg-accent/50">Cancel</button><button @click="addExpense" class="flex-1 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90">Add</button></div>
     </div></Transition>

@@ -13,11 +13,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('analytics', \App\Http\Controllers\AnalyticsController::class)->name('analytics');
     Route::get('assets', \App\Http\Controllers\AssetsController::class)->name('assets');
     Route::get('settings', \App\Http\Controllers\SettingsController::class)->name('settings');
+    Route::get('wallets', \App\Http\Controllers\WalletsController::class)->name('wallets');
 
     Route::resource('incomes', \App\Http\Controllers\IncomeController::class)->only(['store', 'destroy']);
     Route::resource('expenses', \App\Http\Controllers\ExpenseController::class)->only(['store', 'destroy']);
     Route::resource('assets', \App\Http\Controllers\AssetController::class)->only(['store', 'destroy', 'update']);
     Route::resource('liabilities', \App\Http\Controllers\LiabilityController::class)->only(['store', 'destroy', 'update']);
+
+    // Accounts (Wallets)
+    Route::post('accounts', [\App\Http\Controllers\AccountController::class, 'store'])->name('accounts.store');
+    Route::patch('accounts/{account}', [\App\Http\Controllers\AccountController::class, 'update'])->name('accounts.update');
+    Route::delete('accounts/{account}', [\App\Http\Controllers\AccountController::class, 'destroy'])->name('accounts.destroy');
 
     // Budget
     Route::post('budgets', [\App\Http\Controllers\BudgetController::class, 'store'])->name('budgets.store');

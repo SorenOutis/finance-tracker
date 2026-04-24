@@ -9,6 +9,7 @@ use App\Models\FinancialGoal;
 use App\Models\RecurringTransaction;
 use App\Models\Asset;
 use App\Models\Liability;
+use App\Models\Account;
 use Inertia\Inertia;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -170,6 +171,36 @@ class DashboardController extends Controller
             ->where('next_due_date', '<=', Carbon::today()->addDays(30))
             ->values();
 
+        // Accounts (wallets)
+        $accounts = Account::where('user_id', $user->id)
+            ->where('is_archived', false)
+            ->orderBy('created_at', 'asc')
+            ->get()
+            ->map(function ($account) use ($startOfMonth, $endOfMonth) {
+                $totalIn = $account->incomes()->sum('amount');
+                $totalOut = $account->expenses()->sum('amount');
+                $balance = (float) $account->initial_balance + $totalIn - $totalOut;
+
+                $monthIn = $account->incomes()
+                    ->whereBetween('date', [$startOfMonth, $endOfMonth])
+                    ->sum('amount');
+                $monthOut = $account->expenses()
+                    ->whereBetween('date', [$startOfMonth, $endOfMonth])
+                    ->sum('amount');
+
+                return [
+                    'id' => $account->id,
+                    'name' => $account->name,
+                    'type' => $account->type,
+                    'color' => $account->color,
+                    'balance' => $balance,
+                    'last4' => $account->last4,
+                    'holder_name' => $account->holder_name,
+                    'month_income' => (float) $monthIn,
+                    'month_expense' => (float) $monthOut,
+                ];
+            });
+
         return Inertia::render('Dashboard', [
             'user' => $user,
             'dashboard' => [
@@ -243,6 +274,7 @@ class DashboardController extends Controller
                 'days_until' => Carbon::today()->diffInDays($bill->next_due_date),
                 'frequency' => $bill->frequency,
             ])->values(),
+            'accounts' => $accounts->values(),
         ]);
     }
 }

@@ -14,6 +14,7 @@ class IncomeController extends Controller
             'date' => 'required|date',
             'category' => 'nullable|string',
             'description' => 'nullable|string',
+            'account_id' => 'nullable|exists:accounts,id',
         ]);
 
         Income::create([

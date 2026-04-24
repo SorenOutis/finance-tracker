@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
-import { BookOpen, FolderGit2, LayoutGrid, BarChart3, LineChart, PiggyBank, Settings } from 'lucide-vue-next';
+import { BookOpen, FolderGit2, LayoutGrid, BarChart3, LineChart, PiggyBank, Settings, CreditCard } from 'lucide-vue-next';
 import AppLogo from '@/components/AppLogo.vue';
 import NavFooter from '@/components/NavFooter.vue';
 import NavMain from '@/components/NavMain.vue';
@@ -32,6 +32,11 @@ const mainNavItems: NavItem[] = [
         title: 'Dashboard',
         href: dashboard(),
         icon: LayoutGrid,
+    },
+    {
+        title: 'Wallets',
+        href: '/wallets',
+        icon: CreditCard,
     },
     {
         title: 'Assets',

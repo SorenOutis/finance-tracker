@@ -14,6 +14,7 @@ class ExpenseController extends Controller
             'date' => 'required|date',
             'category' => 'nullable|string',
             'description' => 'nullable|string',
+            'account_id' => 'nullable|exists:accounts,id',
         ]);
 
         Expense::create([
