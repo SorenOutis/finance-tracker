@@ -149,6 +149,7 @@ const expenseForm = useForm({ amount: '', date: getYYYYMMDD(new Date()), categor
 // Wallet card helpers
 const walletDefColors: Record<string, string> = { gcash: '#007DFE', maya: '#00B274', paypal: '#003087', bank: '#1E3A5F', cash: '#6B7280', credit_card: '#18181B', crypto: '#F7931A', other: '#6366F1' };
 const walletGradient = (type: string, color: string | null) => { const b = color || walletDefColors[type] || '#6366F1'; return `linear-gradient(135deg, ${b} 0%, ${b}CC 50%, ${b}99 100%)`; };
+const simpleGradient = (color: string | null, def: string) => { const b = color || def; return `linear-gradient(135deg, ${b} 0%, ${b}CC 50%, ${b}99 100%)`; };
 const walletIcon = (type: string) => ({ gcash: Smartphone, maya: Smartphone, paypal: Wallet, bank: Landmark, cash: Coins, credit_card: CreditCard, crypto: Bitcoin }[type] || MoreHorizontal);
 const walletLabel = (type: string) => ({ gcash: 'GCash', maya: 'Maya', paypal: 'PayPal', bank: 'Bank', cash: 'Cash', credit_card: 'Credit Card', crypto: 'Crypto' }[type] || type);
 const budgetForm = useForm({ monthly_limit: props.budget?.monthly_limit?.toString() || '' });

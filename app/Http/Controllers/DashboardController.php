@@ -33,8 +33,29 @@ class DashboardController extends Controller
             ->orderBy('date', 'desc')
             ->get();
 
-        $totalIncome = $incomes->sum('amount');
-        $totalExpenses = $expenses->sum('amount');
+        // Recurring monthly totals
+        $recurringIncomesTotal = RecurringTransaction::where('user_id', $user->id)
+            ->where('type', 'income')
+            ->where('is_active', true)
+            ->get()
+            ->sum(function ($rt) {
+                if ($rt->frequency === 'weekly') return $rt->amount * 4;
+                if ($rt->frequency === 'yearly') return $rt->amount / 12;
+                return $rt->amount;
+            });
+
+        $recurringExpensesTotal = RecurringTransaction::where('user_id', $user->id)
+            ->where('type', 'expense')
+            ->where('is_active', true)
+            ->get()
+            ->sum(function ($rt) {
+                if ($rt->frequency === 'weekly') return $rt->amount * 4;
+                if ($rt->frequency === 'yearly') return $rt->amount / 12;
+                return $rt->amount;
+            });
+
+        $totalIncome = (float) $incomes->sum('amount') + (float) $recurringIncomesTotal;
+        $totalExpenses = (float) $expenses->sum('amount') + (float) $recurringExpensesTotal;
         $netIncome = $totalIncome - $totalExpenses;
 
         // Yearly data
@@ -55,8 +76,8 @@ class DashboardController extends Controller
         // Previous month data for MoM comparison
         $prevStart = $selectedDate->clone()->subMonth()->startOfMonth();
         $prevEnd = $selectedDate->clone()->subMonth()->endOfMonth();
-        $prevMonthIncome = Income::where('user_id', $user->id)->whereBetween('date', [$prevStart, $prevEnd])->sum('amount');
-        $prevMonthExpense = Expense::where('user_id', $user->id)->whereBetween('date', [$prevStart, $prevEnd])->sum('amount');
+        $prevMonthIncome = (float) Income::where('user_id', $user->id)->whereBetween('date', [$prevStart, $prevEnd])->sum('amount') + (float) $recurringIncomesTotal;
+        $prevMonthExpense = (float) Expense::where('user_id', $user->id)->whereBetween('date', [$prevStart, $prevEnd])->sum('amount') + (float) $recurringExpensesTotal;
 
         // Daily spending for sparkline
         $daysInMonth = $startOfMonth->daysInMonth;
