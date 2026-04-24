@@ -11,11 +11,24 @@ class RecurringTransactionController extends Controller
     public function index()
     {
         $bills = RecurringTransaction::where('user_id', auth()->id())
+            ->where('type', 'expense')
             ->orderBy('next_due_date', 'asc')
             ->get();
 
         return Inertia::render('Bills', [
             'bills' => $bills,
+        ]);
+    }
+
+    public function incomes()
+    {
+        $incomes = RecurringTransaction::where('user_id', auth()->id())
+            ->where('type', 'income')
+            ->orderBy('next_due_date', 'asc')
+            ->get();
+
+        return Inertia::render('Incomes', [
+            'incomes' => $incomes,
         ]);
     }
 
@@ -29,11 +42,12 @@ class RecurringTransactionController extends Controller
             'description' => 'nullable|string|max:500',
             'frequency' => 'required|in:weekly,monthly,yearly',
             'next_due_date' => 'required|date',
+            'color' => 'nullable|string|max:50',
         ]);
 
         RecurringTransaction::create([
             'user_id' => auth()->id(),
-            ...$request->only(['name', 'amount', 'type', 'category', 'description', 'frequency', 'next_due_date']),
+            ...$request->only(['name', 'amount', 'type', 'category', 'description', 'frequency', 'next_due_date', 'color']),
         ]);
 
         return back();
@@ -50,9 +64,10 @@ class RecurringTransactionController extends Controller
             'frequency' => 'required|in:weekly,monthly,yearly',
             'next_due_date' => 'required|date',
             'is_active' => 'required|boolean',
+            'color' => 'nullable|string|max:50',
         ]);
 
-        $recurring_transaction->update($request->only(['name', 'amount', 'type', 'category', 'description', 'frequency', 'next_due_date', 'is_active']));
+        $recurring_transaction->update($request->only(['name', 'amount', 'type', 'category', 'description', 'frequency', 'next_due_date', 'is_active', 'color']));
 
         return back();
     }

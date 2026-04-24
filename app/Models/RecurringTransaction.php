@@ -17,6 +17,7 @@ class RecurringTransaction extends Model
         'frequency',
         'next_due_date',
         'is_active',
+        'color',
     ];
 
     protected $casts = [

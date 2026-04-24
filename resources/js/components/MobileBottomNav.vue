@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
-import { LayoutGrid, LineChart, CalendarClock, Settings, CreditCard } from 'lucide-vue-next';
-import { dashboard, analytics, settings } from '@/routes';
+import { LayoutGrid, LineChart, CalendarClock, CreditCard, Wallet } from 'lucide-vue-next';
+import { dashboard, analytics } from '@/routes';
 import { useCurrentUrl } from '@/composables/useCurrentUrl';
 import type { NavItem } from '@/types';
 
@@ -29,9 +29,9 @@ const navItems: NavItem[] = [
         icon: CalendarClock,
     },
     {
-        title: 'Settings',
-        href: settings(),
-        icon: Settings,
+        title: 'Income',
+        href: '/incomes',
+        icon: Wallet,
     },
 ];
 </script>

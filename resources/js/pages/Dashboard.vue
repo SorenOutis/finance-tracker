@@ -40,8 +40,9 @@ interface TransactionStats { total: number; incomeCount: number; expenseCount: n
 interface ActivityItem { id: number; type: string; amount: number; category?: string; description?: string; date: string; timestamp: number; }
 interface YtdData { income: number; expense: number; net: number; dayOfYear: number; daysInYear: number; }
 interface GoalItem { id: number; name: string; target_amount: number; current_amount: number; deadline?: string; color: string; }
-interface RecurringItem { id: number; name: string; amount: number; type: string; category?: string; frequency: string; next_due_date: string; }
-interface BillItem { id: number; name: string; amount: number; next_due_date: string; days_until: number; frequency: string; }
+interface RecurringItem { id: number; name: string; amount: number; type: string; category?: string; frequency: string; next_due_date: string; color: string | null; }
+interface BillItem { id: number; name: string; amount: number; next_due_date: string; days_until: number; frequency: string; color: string | null; }
+interface RecurringIncome { id: number; name: string; amount: number; frequency: string; next_due_date: string; color: string | null; }
 interface AccountItem { id: number; name: string; type: string; color: string | null; balance: number; last4: string | null; holder_name: string | null; month_income: number; month_expense: number; }
 
 interface Props {
@@ -50,7 +51,7 @@ interface Props {
     topExpense: { amount: number; category: string; description?: string; date: string } | null;
     transactionStats: TransactionStats; recentActivity: ActivityItem[]; savingsStreak: number;
     ytd: YtdData; budget: { monthly_limit: number } | null; financialGoals: GoalItem[];
-    recurringTransactions: RecurringItem[]; upcomingBills: BillItem[];
+    recurringIncomes: RecurringIncome[]; upcomingBills: BillItem[];
     accounts: AccountItem[];
 }
 
@@ -263,6 +264,42 @@ const formatDate = (dateStr: string) => {
     </div>
 </div>
 
+<!-- Incomes Cards Strip -->
+<div v-if="recurringIncomes?.length" class="animate-fade-up stagger-3 mt-2">
+    <div class="flex items-center justify-between mb-2">
+        <p class="text-[10px] font-bold tracking-widest uppercase text-muted-foreground/80 font-sans">Monthly Incomes</p>
+        <a href="/incomes" class="text-[10px] font-semibold text-primary hover:underline">View all</a>
+    </div>
+    <div class="flex gap-3 overflow-x-auto snap-x snap-mandatory pb-2 scrollbar-hide">
+        <div v-for="income in recurringIncomes" :key="income.id"
+            class="group relative flex-shrink-0 w-[200px] sm:w-[240px] snap-start overflow-hidden rounded-[18px] border border-border/60 bg-card p-4 transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5 cursor-default premium-hover shadow-sm"
+            :style="income.color ? { borderLeft: `4px solid ${income.color}` } : {}">
+            
+            <div class="relative z-10">
+                <div class="flex items-center justify-between mb-3">
+                    <div class="flex items-center gap-1.5">
+                        <div class="p-1.5 rounded-lg" :style="income.color ? { backgroundColor: `${income.color}15`, color: income.color } : { backgroundColor: 'oklch(0.76 0.16 162 / 0.1)', color: 'oklch(0.76 0.16 162)' }"><Wallet class="h-3 w-3" /></div>
+                        <span class="text-[9px] font-bold uppercase tracking-wider text-muted-foreground/80 truncate max-w-[80px]">{{ income.name }}</span>
+                    </div>
+                    <span class="text-[8px] font-black px-1.5 py-0.5 rounded-full bg-primary/10 text-primary uppercase">Active</span>
+                </div>
+                
+                <p class="text-lg font-black font-mono tracking-tight leading-none text-[--fin-gain]">+{{ formatCurrency(income.amount) }}</p>
+                
+                <div class="flex items-center justify-between mt-3 pt-2 border-t border-border/10">
+                    <p class="text-[9px] font-bold text-muted-foreground uppercase">{{ income.frequency }}</p>
+                    <p class="text-[9px] font-mono font-bold text-foreground opacity-60">{{ formatDate(income.next_due_date) }}</p>
+                </div>
+            </div>
+        </div>
+        <!-- Add income card -->
+        <a href="/incomes" class="flex-shrink-0 w-[120px] snap-start flex flex-col items-center justify-center rounded-[18px] border-2 border-dashed border-border/60 bg-card text-muted-foreground hover:border-primary/50 hover:text-primary transition-all cursor-pointer shadow-sm">
+            <Plus class="h-5 w-5 mb-1" />
+            <span class="text-[10px] font-bold">Add Income</span>
+        </a>
+    </div>
+</div>
+
 <!-- Bills Cards Strip -->
 <div v-if="upcomingBills?.length" class="animate-fade-up stagger-4 mt-2">
     <div class="flex items-center justify-between mb-2">
@@ -271,12 +308,13 @@ const formatDate = (dateStr: string) => {
     </div>
     <div class="flex gap-3 overflow-x-auto snap-x snap-mandatory pb-2 scrollbar-hide">
         <div v-for="bill in upcomingBills" :key="bill.id"
-            class="group relative flex-shrink-0 w-[200px] sm:w-[240px] snap-start overflow-hidden rounded-[18px] border border-border/60 bg-card p-4 transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5 cursor-default premium-hover shadow-sm">
+            class="group relative flex-shrink-0 w-[200px] sm:w-[240px] snap-start overflow-hidden rounded-[18px] border border-border/60 bg-card p-4 transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5 cursor-default premium-hover shadow-sm"
+            :style="bill.color ? { borderLeft: `4px solid ${bill.color}` } : {}">
             
             <div class="relative z-10">
                 <div class="flex items-center justify-between mb-3">
                     <div class="flex items-center gap-1.5">
-                        <div class="p-1.5 rounded-lg bg-[--fin-loss]/10 text-[--fin-loss]"><CalendarClock class="h-3 w-3" /></div>
+                        <div class="p-1.5 rounded-lg" :style="bill.color ? { backgroundColor: `${bill.color}15`, color: bill.color } : { backgroundColor: 'oklch(0.62 0.22 18 / 0.1)', color: 'oklch(0.62 0.22 18)' }"><CalendarClock class="h-3 w-3" /></div>
                         <span class="text-[9px] font-bold uppercase tracking-wider text-muted-foreground/80 truncate max-w-[80px]">{{ bill.name }}</span>
                     </div>
                     <span class="text-[8px] font-black px-1.5 py-0.5 rounded-full bg-amber-500/10 text-amber-600 uppercase">{{ bill.days_until === 0 ? 'Today' : `In ${bill.days_until}d` }}</span>

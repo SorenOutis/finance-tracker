@@ -21,6 +21,7 @@ interface BillItem {
     frequency: 'weekly' | 'monthly' | 'yearly';
     next_due_date: string;
     is_active: boolean;
+    color: string | null;
 }
 
 interface Props {
@@ -44,6 +45,7 @@ const billForm = useForm({
     description: '',
     frequency: 'monthly',
     next_due_date: getYYYYMMDD(new Date()),
+    color: '#3b82f6',
 });
 
 const editForm = useForm({
@@ -55,6 +57,7 @@ const editForm = useForm({
     frequency: 'monthly',
     next_due_date: '',
     is_active: true,
+    color: '#3b82f6',
 });
 
 const frequencies = [
@@ -83,6 +86,7 @@ const openEdit = (bill: BillItem) => {
     editForm.frequency = bill.frequency;
     editForm.next_due_date = bill.next_due_date;
     editForm.is_active = bill.is_active;
+    editForm.color = bill.color || '#3b82f6';
     showEditModal.value = true;
 };
 
@@ -174,11 +178,12 @@ const formatDate = (dateStr: string) => {
 <!-- Bills Grid -->
 <div v-if="bills.length" class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 animate-fade-up stagger-3">
     <div v-for="bill in bills" :key="bill.id"
-        class="group relative overflow-hidden rounded-[24px] border border-border/60 bg-card p-5 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 premium-hover shadow-sm">
+        class="group relative overflow-hidden rounded-[24px] border border-border/60 bg-card p-5 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 premium-hover shadow-sm"
+        :style="bill.color ? { borderLeft: `4px solid ${bill.color}` } : {}">
         
         <div class="flex items-start justify-between mb-4">
             <div class="flex items-center gap-3">
-                <div class="p-2.5 rounded-xl" :class="bill.type === 'income' ? 'bg-[--fin-gain]/10 text-[--fin-gain]' : 'bg-[--fin-loss]/10 text-[--fin-loss]'">
+                <div class="p-2.5 rounded-xl" :style="bill.color ? { backgroundColor: `${bill.color}15`, color: bill.color } : {}" :class="!bill.color ? (bill.type === 'income' ? 'bg-[--fin-gain]/10 text-[--fin-gain]' : 'bg-[--fin-loss]/10 text-[--fin-loss]') : ''">
                     <component :is="bill.type === 'income' ? Wallet : CalendarClock" class="h-5 w-5" />
                 </div>
                 <div>
@@ -278,6 +283,13 @@ const formatDate = (dateStr: string) => {
                 <label class="block text-sm font-semibold text-muted-foreground">Category</label>
                 <input v-model="billForm.category" type="text" placeholder="e.g., Entertainment" class="mt-1 w-full rounded-lg border border-border bg-card px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/10" />
             </div>
+            <div>
+                <label class="block text-sm font-semibold text-muted-foreground">Card Color</label>
+                <div class="flex items-center gap-3 mt-1">
+                    <input v-model="billForm.color" type="color" class="h-9 w-16 rounded border border-border bg-card p-1 cursor-pointer" />
+                    <span class="text-xs font-mono text-muted-foreground">{{ billForm.color }}</span>
+                </div>
+            </div>
         </div>
 
         <div class="flex gap-2 mt-6">
@@ -330,6 +342,13 @@ const formatDate = (dateStr: string) => {
             <div>
                 <label class="block text-sm font-semibold text-muted-foreground">Category</label>
                 <input v-model="editForm.category" type="text" class="mt-1 w-full rounded-lg border border-border bg-card px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/10" />
+            </div>
+            <div>
+                <label class="block text-sm font-semibold text-muted-foreground">Card Color</label>
+                <div class="flex items-center gap-3 mt-1">
+                    <input v-model="editForm.color" type="color" class="h-9 w-16 rounded border border-border bg-card p-1 cursor-pointer" />
+                    <span class="text-xs font-mono text-muted-foreground">{{ editForm.color }}</span>
+                </div>
             </div>
             <div class="flex items-center gap-2 pt-2">
                 <input v-model="editForm.is_active" type="checkbox" id="is_active" class="rounded border-border bg-card text-primary focus:ring-primary/10" />

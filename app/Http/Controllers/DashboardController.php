@@ -169,17 +169,40 @@ class DashboardController extends Controller
         // Financial goals
         $financialGoals = FinancialGoal::where('user_id', $user->id)->orderBy('created_at', 'desc')->get();
 
-        // Recurring transactions & upcoming bills
-        $recurringTransactions = RecurringTransaction::where('user_id', $user->id)
-            ->where('is_active', true)
-            ->orderBy('next_due_date', 'asc')
-            ->get();
-
-        $upcomingBills = $recurringTransactions
+        $now = Carbon::today();
+        // Upcoming bills (next 30 days)
+        $upcomingBills = RecurringTransaction::where('user_id', $user->id)
             ->where('type', 'expense')
-            ->where('next_due_date', '>=', Carbon::today())
-            ->where('next_due_date', '<=', Carbon::today()->addDays(30))
-            ->values();
+            ->where('is_active', true)
+            ->whereBetween('next_due_date', [$now->toDateString(), $now->copy()->addDays(30)->toDateString()])
+            ->get()
+            ->map(function ($bill) use ($now) {
+                return [
+                    'id' => $bill->id,
+                    'name' => $bill->name,
+                    'amount' => (float) $bill->amount,
+                    'frequency' => $bill->frequency,
+                    'next_due_date' => $bill->next_due_date->toDateString(),
+                    'days_until' => $now->diffInDays($bill->next_due_date, false),
+                    'color' => $bill->color,
+                ];
+            });
+
+        // Recurring Incomes
+        $recurringIncomes = RecurringTransaction::where('user_id', $user->id)
+            ->where('type', 'income')
+            ->where('is_active', true)
+            ->get()
+            ->map(function ($income) {
+                return [
+                    'id' => $income->id,
+                    'name' => $income->name,
+                    'amount' => (float) $income->amount,
+                    'frequency' => $income->frequency,
+                    'next_due_date' => $income->next_due_date->toDateString(),
+                    'color' => $income->color,
+                ];
+            });
 
         // Accounts (wallets)
         $accounts = Account::where('user_id', $user->id)
@@ -268,23 +291,8 @@ class DashboardController extends Controller
                 'deadline' => $goal->deadline?->format('Y-m-d'),
                 'color' => $goal->color,
             ]),
-            'recurringTransactions' => $recurringTransactions->map(fn ($rt) => [
-                'id' => $rt->id,
-                'name' => $rt->name,
-                'amount' => (float) $rt->amount,
-                'type' => $rt->type,
-                'category' => $rt->category,
-                'frequency' => $rt->frequency,
-                'next_due_date' => $rt->next_due_date->format('Y-m-d'),
-            ]),
-            'upcomingBills' => $upcomingBills->map(fn ($bill) => [
-                'id' => $bill->id,
-                'name' => $bill->name,
-                'amount' => (float) $bill->amount,
-                'next_due_date' => $bill->next_due_date->format('Y-m-d'),
-                'days_until' => Carbon::today()->diffInDays($bill->next_due_date),
-                'frequency' => $bill->frequency,
-            ])->values(),
+            'recurringIncomes' => $recurringIncomes,
+            'upcomingBills' => $upcomingBills->values(),
             'accounts' => $accounts->values(),
         ]);
     }

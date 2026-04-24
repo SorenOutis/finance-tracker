@@ -15,6 +15,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('settings', \App\Http\Controllers\SettingsController::class)->name('settings');
     Route::get('wallets', \App\Http\Controllers\WalletsController::class)->name('wallets');
     Route::get('bills', [\App\Http\Controllers\RecurringTransactionController::class, 'index'])->name('bills');
+    Route::get('incomes', [\App\Http\Controllers\RecurringTransactionController::class, 'incomes'])->name('incomes');
 
     Route::resource('incomes', \App\Http\Controllers\IncomeController::class)->only(['store', 'destroy']);
     Route::resource('expenses', \App\Http\Controllers\ExpenseController::class)->only(['store', 'destroy']);

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
-import { BookOpen, FolderGit2, LayoutGrid, LineChart, CalendarClock, Settings, CreditCard } from 'lucide-vue-next';
+import { BookOpen, FolderGit2, LayoutGrid, LineChart, CalendarClock, CreditCard, Wallet } from 'lucide-vue-next';
 import AppLogo from '@/components/AppLogo.vue';
 import NavFooter from '@/components/NavFooter.vue';
 import NavMain from '@/components/NavMain.vue';
@@ -14,7 +14,7 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
-import { dashboard, analytics, settings } from '@/routes';
+import { dashboard, analytics } from '@/routes';
 import type { NavItem } from '@/types';
 
 const mainNavItems: NavItem[] = [
@@ -39,9 +39,9 @@ const mainNavItems: NavItem[] = [
         icon: CalendarClock,
     },
     {
-        title: 'Settings',
-        href: settings(),
-        icon: Settings,
+        title: 'Income',
+        href: '/incomes',
+        icon: Wallet,
     },
 ];
 
