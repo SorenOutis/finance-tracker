@@ -80,6 +80,7 @@ const stopDrawing = () => {
     }
     
     form.password = pattern.value.join('');
+    submit();
 };
 
 const updateCurrentPos = (e: MouseEvent | TouchEvent) => {
@@ -127,6 +128,9 @@ const updatePin = (index: number, val: string) => {
     }
     
     form.password = pin.value.join('');
+    if (form.password.length === 6) {
+        submit();
+    }
 };
 
 const handleBackspace = (index: number) => {
@@ -146,6 +150,13 @@ const submit = () => {
         },
         onError: () => {
             sessionStorage.setItem('has-seen-loading', 'true');
+            if (authMethod.value === 'pin') {
+                pin.value = ['', '', '', '', '', ''];
+                document.getElementById('pin-0')?.focus();
+            } else {
+                pattern.value = [];
+                patternError.value = 'Invalid pattern. Please try again.';
+            }
         },
         onFinish: () => form.reset('password'),
     });
@@ -161,13 +172,13 @@ const submit = () => {
         <Head title="Log in" />
 
         <div class="w-full max-w-[400px] z-10">
-            <div class="w-20 h-20 bg-primary/10 rounded-[24px] flex items-center justify-center mb-8 mx-auto animate-bounce-slow">
-                <Sparkles class="w-10 h-10 text-primary" />
+            <div :class="isEmailHidden ? 'mb-4 w-16 h-16 rounded-[20px]' : 'mb-8 w-20 h-20 rounded-[24px]'" class="bg-primary/10 flex items-center justify-center mx-auto animate-bounce-slow transition-all duration-500">
+                <Sparkles :class="isEmailHidden ? 'w-8 h-8' : 'w-10 h-10'" class="text-primary transition-all duration-500" />
             </div>
             
-            <h1 class="text-4xl font-black tracking-tight mb-2">Welcome Back</h1>
-            <p class="text-muted-foreground mb-12">
-                {{ isEmailHidden ? 'Enter your PIN to verify your identity.' : 'Enter your email and PIN to access your account.' }}
+            <h1 :class="isEmailHidden ? 'text-3xl' : 'text-4xl'" class="font-black tracking-tight mb-2 transition-all duration-500">Welcome Back</h1>
+            <p class="text-muted-foreground transition-all duration-500" :class="isEmailHidden ? 'mb-6 text-xs' : 'mb-12 text-sm'">
+                {{ isEmailHidden ? 'Verify your identity to continue.' : 'Enter your email and PIN to access your account.' }}
             </p>
 
             <div v-if="status" class="mb-8 p-4 rounded-xl bg-green-500/10 text-green-600 text-sm font-bold">
@@ -248,16 +259,18 @@ const submit = () => {
                     <InputError :message="form.errors.password" class="mt-2 text-center" />
                 </div>
 
-                <div class="flex flex-col gap-4 mt-4">
-                    <Button @click="submit" :disabled="(authMethod === 'pin' ? form.password.length !== 6 : form.password.length < 3) || !form.email || form.processing" size="lg" class="w-full h-14 rounded-2xl text-lg font-bold">
-                        <Spinner v-if="form.processing" class="mr-2" />
-                        Log In
-                        <ArrowRight v-if="!form.processing" class="ml-2 w-5 h-5" />
-                    </Button>
+                <div v-if="form.processing" class="flex flex-col items-center gap-3 mt-6 animate-in fade-in zoom-in duration-500">
+                    <div class="relative">
+                        <div class="w-12 h-12 rounded-full border-4 border-primary/20 border-t-primary animate-spin"></div>
+                        <div class="absolute inset-0 flex items-center justify-center">
+                            <Sparkles class="w-4 h-4 text-primary animate-pulse" />
+                        </div>
+                    </div>
+                    <p class="text-[10px] font-black uppercase tracking-[0.2em] text-primary animate-pulse">Authenticating</p>
                 </div>
             </div>
 
-            <div class="mt-12 text-sm text-muted-foreground">
+            <div :class="isEmailHidden ? 'mt-8' : 'mt-12'" class="text-sm text-muted-foreground transition-all duration-500">
                 Don't have an account? 
                 <TextLink :href="register()" class="text-primary font-bold hover:underline">Sign up</TextLink>
             </div>
