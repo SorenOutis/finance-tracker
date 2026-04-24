@@ -28,7 +28,28 @@ const breadcrumbs: BreadcrumbItem[] = [{ title: 'Wallets', href: '/wallets' }];
 
 const showAddModal = ref(false);
 const showEditModal = ref(false);
+const showIncomeModal = ref(false);
+const showExpenseModal = ref(false);
 const editingAccount = ref<AccountItem | null>(null);
+const selectedAccountForTransaction = ref<AccountItem | null>(null);
+
+const getYYYYMMDD = (d: Date) => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+
+const incomeForm = useForm({
+    amount: '',
+    date: getYYYYMMDD(new Date()),
+    category: '',
+    description: '',
+    account_id: '' as string | number,
+});
+
+const expenseForm = useForm({
+    amount: '',
+    date: getYYYYMMDD(new Date()),
+    category: '',
+    description: '',
+    account_id: '' as string | number,
+});
 
 const accountForm = useForm({
     name: '',
@@ -126,6 +147,40 @@ const deleteAccount = (id: number) => {
         router.delete(`/accounts/${id}`, { preserveScroll: true });
     }
 };
+
+const openIncomeModal = (account: AccountItem) => {
+    selectedAccountForTransaction.value = account;
+    incomeForm.account_id = account.id;
+    showIncomeModal.value = true;
+};
+
+const openExpenseModal = (account: AccountItem) => {
+    selectedAccountForTransaction.value = account;
+    expenseForm.account_id = account.id;
+    showExpenseModal.value = true;
+};
+
+const addIncome = () => {
+    if (!incomeForm.amount) return;
+    incomeForm.post('/incomes', {
+        onSuccess: () => {
+            incomeForm.reset();
+            incomeForm.date = getYYYYMMDD(new Date());
+            showIncomeModal.value = false;
+        }
+    });
+};
+
+const addExpense = () => {
+    if (!expenseForm.amount) return;
+    expenseForm.post('/expenses', {
+        onSuccess: () => {
+            expenseForm.reset();
+            expenseForm.date = getYYYYMMDD(new Date());
+            showExpenseModal.value = false;
+        }
+    });
+};
 </script>
 
 <template>
@@ -217,13 +272,23 @@ const deleteAccount = (id: number) => {
             </div>
 
             <!-- Monthly in/out chips -->
-            <div class="flex items-center gap-2 mt-4 pt-3 border-t border-white/15">
-                <span class="inline-flex items-center gap-1 rounded-full bg-white/15 px-2.5 py-1 text-[10px] font-bold">
-                    <ArrowDownRight class="h-2.5 w-2.5" /> {{ formatCurrency(account.month_income) }}
-                </span>
-                <span class="inline-flex items-center gap-1 rounded-full bg-white/15 px-2.5 py-1 text-[10px] font-bold">
-                    <ArrowUpRight class="h-2.5 w-2.5" /> {{ formatCurrency(account.month_expense) }}
-                </span>
+            <div class="flex items-center justify-between mt-4 pt-3 border-t border-white/15">
+                <div class="flex items-center gap-2">
+                    <span class="inline-flex items-center gap-1 rounded-full bg-white/15 px-2.5 py-1 text-[10px] font-bold">
+                        <ArrowDownRight class="h-2.5 w-2.5" /> {{ formatCurrency(account.month_income) }}
+                    </span>
+                    <span class="inline-flex items-center gap-1 rounded-full bg-white/15 px-2.5 py-1 text-[10px] font-bold">
+                        <ArrowUpRight class="h-2.5 w-2.5" /> {{ formatCurrency(account.month_expense) }}
+                    </span>
+                </div>
+                <div class="flex items-center gap-1">
+                    <button @click="openIncomeModal(account)" class="p-1.5 rounded-lg bg-white/20 hover:bg-[--fin-gain] transition-colors" title="Add Income">
+                        <ArrowDownRight class="h-3 w-3" />
+                    </button>
+                    <button @click="openExpenseModal(account)" class="p-1.5 rounded-lg bg-white/20 hover:bg-[--fin-loss] transition-colors" title="Add Expense">
+                        <ArrowUpRight class="h-3 w-3" />
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -399,6 +464,80 @@ const deleteAccount = (id: number) => {
                     <button @click="updateAccount" class="flex-1 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90">Save</button>
                 </div>
             </div>
+        </div>
+    </DialogContent>
+</Dialog>
+
+<!-- Add Income Modal -->
+<Dialog v-model:open="showIncomeModal">
+    <DialogContent class="sm:max-w-[440px] max-w-[95vw] p-6 rounded-[32px] border border-border/50 bg-card shadow-2xl">
+        <DialogHeader class="mb-5">
+            <div class="flex items-center gap-2">
+                <div class="p-1.5 rounded-lg bg-[--fin-gain]/10">
+                    <Wallet class="h-4 w-4 text-[--fin-gain]" />
+                </div>
+                <DialogTitle class="text-xl font-black tracking-tight font-display">Add Income</DialogTitle>
+            </div>
+            <DialogDescription class="text-xs text-muted-foreground">Log income to {{ selectedAccountForTransaction?.name }}</DialogDescription>
+        </DialogHeader>
+        <div class="space-y-4">
+            <div>
+                <label class="block text-sm font-semibold text-muted-foreground">Amount</label>
+                <input v-model="incomeForm.amount" type="number" placeholder="0.00" class="mt-1 w-full rounded-lg border border-border bg-card px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/10" />
+            </div>
+            <div>
+                <label class="block text-sm font-semibold text-muted-foreground">Date</label>
+                <input v-model="incomeForm.date" type="date" class="mt-1 w-full rounded-lg border border-border bg-card px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/10" />
+            </div>
+            <div>
+                <label class="block text-sm font-semibold text-muted-foreground">Category</label>
+                <input v-model="incomeForm.category" type="text" placeholder="e.g., Salary" class="mt-1 w-full rounded-lg border border-border bg-card px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/10" />
+            </div>
+            <div>
+                <label class="block text-sm font-semibold text-muted-foreground">Description</label>
+                <input v-model="incomeForm.description" type="text" placeholder="Optional" class="mt-1 w-full rounded-lg border border-border bg-card px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/10" />
+            </div>
+        </div>
+        <div class="flex gap-2 mt-6">
+            <button @click="showIncomeModal = false" class="flex-1 rounded-lg border border-border px-4 py-2.5 text-sm font-semibold text-muted-foreground hover:bg-accent/50">Cancel</button>
+            <button @click="addIncome" class="flex-1 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90">Add Income</button>
+        </div>
+    </DialogContent>
+</Dialog>
+
+<!-- Add Expense Modal -->
+<Dialog v-model:open="showExpenseModal">
+    <DialogContent class="sm:max-w-[440px] max-w-[95vw] p-6 rounded-[32px] border border-border/50 bg-card shadow-2xl">
+        <DialogHeader class="mb-5">
+            <div class="flex items-center gap-2">
+                <div class="p-1.5 rounded-lg bg-[--fin-loss]/10">
+                    <ArrowUpRight class="h-4 w-4 text-[--fin-loss]" />
+                </div>
+                <DialogTitle class="text-xl font-black tracking-tight font-display">Add Expense</DialogTitle>
+            </div>
+            <DialogDescription class="text-xs text-muted-foreground">Log expense from {{ selectedAccountForTransaction?.name }}</DialogDescription>
+        </DialogHeader>
+        <div class="space-y-4">
+            <div>
+                <label class="block text-sm font-semibold text-muted-foreground">Amount</label>
+                <input v-model="expenseForm.amount" type="number" placeholder="0.00" class="mt-1 w-full rounded-lg border border-border bg-card px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/10" />
+            </div>
+            <div>
+                <label class="block text-sm font-semibold text-muted-foreground">Date</label>
+                <input v-model="expenseForm.date" type="date" class="mt-1 w-full rounded-lg border border-border bg-card px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/10" />
+            </div>
+            <div>
+                <label class="block text-sm font-semibold text-muted-foreground">Category</label>
+                <input v-model="expenseForm.category" type="text" placeholder="e.g., Food" class="mt-1 w-full rounded-lg border border-border bg-card px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/10" />
+            </div>
+            <div>
+                <label class="block text-sm font-semibold text-muted-foreground">Description</label>
+                <input v-model="expenseForm.description" type="text" placeholder="Optional" class="mt-1 w-full rounded-lg border border-border bg-card px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/10" />
+            </div>
+        </div>
+        <div class="flex gap-2 mt-6">
+            <button @click="showExpenseModal = false" class="flex-1 rounded-lg border border-border px-4 py-2.5 text-sm font-semibold text-muted-foreground hover:bg-accent/50">Cancel</button>
+            <button @click="addExpense" class="flex-1 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90">Add Expense</button>
         </div>
     </DialogContent>
 </Dialog>

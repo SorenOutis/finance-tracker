@@ -176,43 +176,33 @@ const budgetUsedPct = computed(() => props.budget ? Math.min(100, (props.dashboa
 <div class="flex h-full flex-1 flex-col gap-5 md:gap-6 overflow-x-auto p-4 sm:p-8 pb-24 md:pb-8">
 
 <!-- Header + Controls -->
-<div class="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between animate-fade-up stagger-1">
+<div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between animate-fade-up stagger-1 mb-2">
     <div>
-        <h1 class="text-4xl sm:text-4xl font-extrabold leading-tight tracking-tight text-foreground">Finance Tracker</h1>
-        <p class="mt-2 text-sm text-muted-foreground/80 font-medium font-sans">{{ greeting }}, {{ user.name.split(' ')[0] }}. <span class="font-bold text-foreground">{{ fmtMonthYear(currentMonth) }}</span></p>
+        <h1 class="text-3xl font-black leading-tight tracking-tight text-foreground">Dashboard</h1>
+        <p class="text-xs text-muted-foreground/80 font-medium font-sans">{{ greeting }}, {{ user.name.split(' ')[0] }}. <span class="font-bold text-foreground">{{ fmtMonthYear(currentMonth) }}</span></p>
     </div>
     <div class="flex flex-wrap items-center gap-2 sm:gap-3">
-        <div class="relative flex-1 sm:flex-initial">
-            <input v-model="selectedDate" type="date" class="w-full sm:w-auto rounded-2xl border border-border/50 bg-card/20 px-4 py-2.5 text-sm font-semibold transition-all hover:bg-card/40 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/50 [&::-webkit-calendar-picker-indicator]:opacity-40" />
-        </div>
-        <div class="flex items-center gap-2 flex-shrink-0">
-            <button @click="exportCsv" class="group flex items-center gap-2 rounded-2xl border border-border/50 bg-card/20 px-4 py-2.5 text-sm font-semibold text-muted-foreground transition-all hover:text-foreground hover:bg-card/40">
-                <Download class="h-4 w-4 transition-transform group-hover:-translate-y-0.5" /> Export
-            </button>
-            <button @click="showQuickAddModal = true" class="group flex items-center gap-2 rounded-2xl bg-primary px-4 py-2.5 text-sm font-bold text-primary-foreground transition-all hover:bg-primary/90 shadow-lg shadow-primary/20 active:scale-[0.98]">
-                <Plus class="h-4 w-4 transition-transform group-hover:rotate-90" /> Add
-            </button>
-        </div>
+        <!-- Removed calendar, export, and add buttons as per user request -->
     </div>
 </div>
 
 <!-- Stat Cards -->
-<div class="grid grid-cols-2 gap-3 md:grid-cols-4 lg:gap-4 mt-2">
+<div class="grid grid-cols-2 gap-3 md:grid-cols-4 lg:gap-4">
     <div v-for="(stat, idx) in displayStats" :key="stat.label"
-        :class="['group p-4 sm:p-5 rounded-[24px] overflow-hidden relative border border-border/40 bg-card/20 premium-hover cursor-default animate-fade-up', `stagger-${idx+1}`, stat.tint]">
-        <div class="absolute top-0 right-0 w-24 h-24 opacity-[0.03] pointer-events-none group-hover:scale-110 transition-transform duration-500">
-            <component :is="stat.icon" class="size-24 -translate-y-4 translate-x-4" />
+        :class="['group p-4 rounded-[20px] overflow-hidden relative border border-border/40 bg-card/20 premium-hover cursor-default animate-fade-up', `stagger-${idx+1}`, stat.tint]">
+        <div class="absolute top-0 right-0 w-20 h-20 opacity-[0.03] pointer-events-none group-hover:scale-110 transition-transform duration-500">
+            <component :is="stat.icon" class="size-20 -translate-y-4 translate-x-4" />
         </div>
-        <div class="flex items-center justify-between mb-2">
-            <p class="text-[10px] sm:text-[11px] font-bold tracking-widest uppercase text-muted-foreground/80 font-sans">{{ stat.label }}</p>
-            <span v-if="stat.change != null" :class="['inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[9px] font-bold',
+        <div class="flex items-center justify-between mb-1.5">
+            <p class="text-[9px] font-bold tracking-widest uppercase text-muted-foreground/80 font-sans">{{ stat.label }}</p>
+            <span v-if="stat.change != null" :class="['inline-flex items-center gap-0.5 rounded-full px-1.2 py-0.3 text-[8px] font-bold',
                 stat.changeInverted ? (stat.change <= 0 ? 'bg-[--fin-gain]/12 text-[--fin-gain]' : 'bg-[--fin-loss]/12 text-[--fin-loss]') : (stat.change >= 0 ? 'bg-[--fin-gain]/12 text-[--fin-gain]' : 'bg-[--fin-loss]/12 text-[--fin-loss]')]">
-                <component :is="stat.changeInverted ? (stat.change <= 0 ? ArrowDownRight : ArrowUpRight) : (stat.change >= 0 ? ArrowUpRight : ArrowDownRight)" class="h-2.5 w-2.5" />
+                <component :is="stat.changeInverted ? (stat.change <= 0 ? ArrowDownRight : ArrowUpRight) : (stat.change >= 0 ? ArrowUpRight : ArrowDownRight)" class="h-2 w-2" />
                 {{ Math.abs(stat.change).toFixed(1) }}%
             </span>
         </div>
-        <div class="pt-1.5">
-            <p :class="['text-2xl sm:text-3xl font-black font-display tracking-tight leading-none', stat.colorClass || 'text-foreground']">{{ stat.value }}</p>
+        <div class="pt-1">
+            <p :class="['text-xl sm:text-2xl font-black font-display tracking-tight leading-none', stat.colorClass || 'text-foreground']">{{ stat.value }}</p>
         </div>
     </div>
 </div>
@@ -263,33 +253,30 @@ const budgetUsedPct = computed(() => props.budget ? Math.min(100, (props.dashboa
 <!-- Transaction Chips + Income vs Expense Bar -->
 <div class="grid gap-3 md:grid-cols-2 animate-fade-up stagger-5 mt-1">
     <!-- Transaction Stats Chips (Pills layout) -->
-    <div class="p-5 rounded-[24px] border border-border/40 bg-card/20 flex flex-wrap items-center justify-center gap-2.5">
-        <span class="inline-flex items-center gap-1.5 rounded-full bg-card/40 border border-border/30 px-3.5 py-1.5 text-[12px] font-bold text-muted-foreground transition-all">
-            <Activity class="h-3.5 w-3.5" /> {{ transactionStats.total }} transactions
+    <div class="p-4 rounded-[20px] border border-border/40 bg-card/20 flex flex-wrap items-center justify-center gap-2">
+        <span class="inline-flex items-center gap-1.5 rounded-full bg-card/40 border border-border/30 px-3 py-1 text-[11px] font-bold text-muted-foreground transition-all">
+            <Activity class="h-3 w-3" /> {{ transactionStats.total }} transactions
         </span>
-        <span class="inline-flex items-center gap-1.5 rounded-full bg-card/40 border border-border/30 px-3.5 py-1.5 text-[12px] font-bold text-foreground">
+        <span class="inline-flex items-center gap-1.5 rounded-full bg-card/40 border border-border/30 px-3 py-1 text-[11px] font-bold text-foreground">
             {{ transactionStats.incomeCount }} income
         </span>
-        <span class="inline-flex items-center gap-1.5 rounded-full bg-card/40 border border-border/30 px-3.5 py-1.5 text-[12px] font-bold text-foreground">
+        <span class="inline-flex items-center gap-1.5 rounded-full bg-card/40 border border-border/30 px-3 py-1 text-[11px] font-bold text-foreground">
             {{ transactionStats.expenseCount }} expenses
         </span>
-        <span v-if="transactionStats.avgExpense > 0" class="inline-flex items-center gap-1.5 rounded-full bg-card/40 border border-border/30 px-3.5 py-1.5 text-[12px] font-bold text-muted-foreground/80">
+        <span v-if="transactionStats.avgExpense > 0" class="inline-flex items-center gap-1.5 rounded-full bg-card/40 border border-border/30 px-3 py-1 text-[11px] font-bold text-muted-foreground/80">
             Avg {{ formatCurrency(transactionStats.avgExpense) }}
-        </span>
-        <span class="inline-flex items-center gap-1.5 rounded-full bg-card/40 border border-border/30 px-3.5 py-1.5 text-[12px] font-bold text-muted-foreground/80">
-            {{ transactionStats.daysNoSpending }} no-spend days
         </span>
     </div>
 
     <!-- Income vs Expense Comparison Bar -->
-    <div class="surface-card premium-hover p-4">
-        <p class="text-[10px] font-semibold tracking-[0.08em] uppercase text-muted-foreground mb-2 font-sans">Income vs Expenses</p>
-        <div class="flex h-3 rounded-full overflow-hidden bg-muted/30">
+    <div class="surface-card p-4 rounded-[20px]">
+        <p class="text-[9px] font-semibold tracking-[0.08em] uppercase text-muted-foreground mb-2 font-sans">Income vs Expenses</p>
+        <div class="flex h-2 rounded-full overflow-hidden bg-muted/30">
             <div class="bg-[--fin-gain] transition-all duration-700 rounded-l-full"
                 :style="{ width: (props.dashboard.totalIncome + props.dashboard.totalExpense > 0 ? (props.dashboard.totalIncome / (props.dashboard.totalIncome + props.dashboard.totalExpense)) * 100 : 50) + '%' }"></div>
             <div class="bg-[--fin-loss] transition-all duration-700 rounded-r-full flex-1"></div>
         </div>
-        <div class="flex justify-between mt-1.5 text-[10px] font-mono font-semibold">
+        <div class="flex justify-between mt-1 text-[9px] font-mono font-semibold">
             <span class="text-[--fin-gain]">{{ formatCurrency(animatedIncome) }}</span>
             <span class="text-[--fin-loss]">{{ formatCurrency(animatedExpense) }}</span>
         </div>
