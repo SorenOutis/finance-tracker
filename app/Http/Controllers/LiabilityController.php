@@ -41,7 +41,7 @@ class LiabilityController extends Controller
         }
 
         $liability->update([
-            'checked' => !$liability->checked,
+            'checked' => ! $liability->checked,
         ]);
 
         return redirect()->back();

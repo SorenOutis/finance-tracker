@@ -45,6 +45,7 @@ class FinancialGoalController extends Controller
     public function destroy(FinancialGoal $financial_goal)
     {
         $financial_goal->delete();
+
         return back();
     }
 }

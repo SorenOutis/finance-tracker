@@ -35,9 +35,9 @@ class ExpenseController extends Controller
         if ($expense->user_id !== auth()->id()) {
             abort(403);
         }
-        
+
         $expense->delete();
-        
+
         return redirect()->back();
     }
 }

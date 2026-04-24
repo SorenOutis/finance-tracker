@@ -30,6 +30,7 @@ class RecurringTransactionController extends Controller
     public function destroy(RecurringTransaction $recurring_transaction)
     {
         $recurring_transaction->delete();
+
         return back();
     }
 }

@@ -2,17 +2,17 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Income;
-use App\Models\Expense;
-use App\Models\Budget;
-use App\Models\FinancialGoal;
-use App\Models\RecurringTransaction;
-use App\Models\Asset;
-use App\Models\Liability;
 use App\Models\Account;
-use Inertia\Inertia;
+use App\Models\Asset;
+use App\Models\Budget;
+use App\Models\Expense;
+use App\Models\FinancialGoal;
+use App\Models\Income;
+use App\Models\Liability;
+use App\Models\RecurringTransaction;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 
 class DashboardController extends Controller
 {
@@ -63,6 +63,7 @@ class DashboardController extends Controller
         $dailySpending = [];
         $expensesByDay = $expenses->groupBy(function ($e) {
             $date = $e->date instanceof Carbon ? $e->date : Carbon::parse($e->date);
+
             return (int) $date->format('d');
         });
         for ($d = 1; $d <= $daysInMonth; $d++) {
@@ -77,6 +78,7 @@ class DashboardController extends Controller
             return $e->category ?: 'Uncategorized';
         })->map(function ($group, $category) use ($totalExpenses) {
             $amount = $group->sum('amount');
+
             return [
                 'category' => $category,
                 'amount' => (float) $amount,
@@ -151,7 +153,7 @@ class DashboardController extends Controller
         $ytdExpense = Expense::where('user_id', $user->id)->whereBetween('date', [$yearStart, $selectedDate->clone()->endOfDay()])->sum('amount');
 
         // Days with no spending this month
-        $daysNoSpending = collect($dailySpending)->filter(fn($d) => $d['amount'] == 0 && $d['day'] <= min($selectedDate->day, $daysInMonth))->count();
+        $daysNoSpending = collect($dailySpending)->filter(fn ($d) => $d['amount'] == 0 && $d['day'] <= min($selectedDate->day, $daysInMonth))->count();
 
         // Budget
         $budget = Budget::where('user_id', $user->id)->first();
@@ -211,7 +213,7 @@ class DashboardController extends Controller
                 'prevMonthIncome' => (float) $prevMonthIncome,
                 'prevMonthExpense' => (float) $prevMonthExpense,
             ],
-            'incomeEntries' => $incomes->map(fn($income) => [
+            'incomeEntries' => $incomes->map(fn ($income) => [
                 'id' => $income->id,
                 'amount' => (float) $income->amount,
                 'date' => $income->date instanceof Carbon
@@ -220,7 +222,7 @@ class DashboardController extends Controller
                 'category' => $income->category,
                 'description' => $income->description,
             ]),
-            'expenseEntries' => $expenses->map(fn($expense) => [
+            'expenseEntries' => $expenses->map(fn ($expense) => [
                 'id' => $expense->id,
                 'amount' => (float) $expense->amount,
                 'date' => $expense->date instanceof Carbon
@@ -249,7 +251,7 @@ class DashboardController extends Controller
                 'daysInYear' => $selectedDate->isLeapYear() ? 366 : 365,
             ],
             'budget' => $budget ? ['monthly_limit' => (float) $budget->monthly_limit] : null,
-            'financialGoals' => $financialGoals->map(fn($goal) => [
+            'financialGoals' => $financialGoals->map(fn ($goal) => [
                 'id' => $goal->id,
                 'name' => $goal->name,
                 'target_amount' => (float) $goal->target_amount,
@@ -257,7 +259,7 @@ class DashboardController extends Controller
                 'deadline' => $goal->deadline?->format('Y-m-d'),
                 'color' => $goal->color,
             ]),
-            'recurringTransactions' => $recurringTransactions->map(fn($rt) => [
+            'recurringTransactions' => $recurringTransactions->map(fn ($rt) => [
                 'id' => $rt->id,
                 'name' => $rt->name,
                 'amount' => (float) $rt->amount,
@@ -266,7 +268,7 @@ class DashboardController extends Controller
                 'frequency' => $rt->frequency,
                 'next_due_date' => $rt->next_due_date->format('Y-m-d'),
             ]),
-            'upcomingBills' => $upcomingBills->map(fn($bill) => [
+            'upcomingBills' => $upcomingBills->map(fn ($bill) => [
                 'id' => $bill->id,
                 'name' => $bill->name,
                 'amount' => (float) $bill->amount,

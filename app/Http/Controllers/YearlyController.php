@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Income;
 use App\Models\Expense;
-use Inertia\Inertia;
+use App\Models\Income;
 use Carbon\Carbon;
+use Inertia\Inertia;
 
 class YearlyController extends Controller
 {
@@ -35,16 +35,18 @@ class YearlyController extends Controller
             $monthEnd = $currentYear->clone()->month($month)->endOfMonth();
 
             $monthIncome = $incomes->filter(function ($income) use ($monthStart, $monthEnd) {
-                $date = $income->date instanceof \Carbon\Carbon 
-                    ? $income->date 
+                $date = $income->date instanceof \Carbon\Carbon
+                    ? $income->date
                     : \Carbon\Carbon::parse($income->date);
+
                 return $date >= $monthStart && $date <= $monthEnd;
             })->sum('amount');
 
             $monthExpenses = $expenses->filter(function ($expense) use ($monthStart, $monthEnd) {
-                $date = $expense->date instanceof \Carbon\Carbon 
-                    ? $expense->date 
+                $date = $expense->date instanceof \Carbon\Carbon
+                    ? $expense->date
                     : \Carbon\Carbon::parse($expense->date);
+
                 return $date >= $monthStart && $date <= $monthEnd;
             })->sum('amount');
 

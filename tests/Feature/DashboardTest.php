@@ -2,15 +2,12 @@
 
 namespace Tests\Feature;
 
-use App\Models\User;
-use App\Models\Income;
 use App\Models\Expense;
-use App\Models\Budget;
-use App\Models\FinancialGoal;
-use App\Models\RecurringTransaction;
+use App\Models\Income;
+use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
-use Carbon\Carbon;
 
 class DashboardTest extends TestCase
 {

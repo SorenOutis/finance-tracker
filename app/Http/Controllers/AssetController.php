@@ -41,7 +41,7 @@ class AssetController extends Controller
         }
 
         $asset->update([
-            'checked' => !$asset->checked,
+            'checked' => ! $asset->checked,
         ]);
 
         return redirect()->back();

@@ -35,9 +35,9 @@ class IncomeController extends Controller
         if ($income->user_id !== auth()->id()) {
             abort(403);
         }
-        
+
         $income->delete();
-        
+
         return redirect()->back();
     }
 }

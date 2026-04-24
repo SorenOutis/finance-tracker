@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Income;
 use App\Models\Expense;
-use Illuminate\Http\Request;
+use App\Models\Income;
 use Carbon\Carbon;
+use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ExportController extends Controller
@@ -16,7 +16,7 @@ class ExportController extends Controller
         $month = $request->query('month'); // e.g., "2026-03"
 
         if ($month) {
-            $date = Carbon::parse($month . '-01');
+            $date = Carbon::parse($month.'-01');
             $start = $date->clone()->startOfMonth();
             $end = $date->clone()->endOfMonth();
         } else {
@@ -34,7 +34,7 @@ class ExportController extends Controller
             ->orderBy('date', 'asc')
             ->get();
 
-        $filename = 'finance-export-' . $start->format('Y-m') . '.csv';
+        $filename = 'finance-export-'.$start->format('Y-m').'.csv';
 
         return response()->streamDownload(function () use ($incomes, $expenses) {
             $handle = fopen('php://output', 'w');

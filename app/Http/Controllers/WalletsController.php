@@ -3,10 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Account;
-use App\Models\Income;
-use App\Models\Expense;
-use Inertia\Inertia;
 use Carbon\Carbon;
+use Inertia\Inertia;
 
 class WalletsController extends Controller
 {
