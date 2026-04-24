@@ -167,6 +167,9 @@ const submit = () => {
         onStart: () => {
             sessionStorage.setItem('has-seen-loading', 'false');
         },
+        onSuccess: () => {
+            localStorage.setItem('remembered-email', form.email);
+        },
         onError: () => {
             sessionStorage.setItem('has-seen-loading', 'true');
         },
@@ -283,7 +286,6 @@ const submit = () => {
                 <div v-if="authMethod === 'pin'">
                     <h2 class="text-3xl font-black tracking-tight mb-2">Create PIN</h2>
                     <p class="text-muted-foreground mb-8">Set a 6-digit PIN to secure your data.</p>
-
                     <div class="space-y-8">
                         <div>
                             <Label class="text-xs font-bold uppercase tracking-widest text-muted-foreground ml-1 block mb-3">New PIN</Label>
