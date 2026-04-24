@@ -232,15 +232,19 @@ const formatDate = (dateStr: string) => {
                 <div class="absolute -bottom-6 -left-6 w-28 h-28 border-2 border-white rounded-full"></div>
             </div>
             <div class="relative z-10">
-                <div class="flex items-center gap-1.5 mb-3">
-                    <div class="p-1 rounded-md bg-white/20"><component :is="walletIcon(account.type)" class="h-3 w-3" /></div>
-                    <span class="text-[9px] font-bold uppercase tracking-wider opacity-90">{{ walletLabel(account.type) }}</span>
+                <div class="mb-4">
+                    <p class="text-[8px] font-bold uppercase tracking-wider opacity-60 mb-0.5">{{ account.holder_name || 'Account' }}</p>
+                    <h3 class="text-sm font-black tracking-tight leading-none">{{ account.name }}</h3>
                 </div>
-                <p class="text-lg sm:text-xl font-black font-mono tracking-tight leading-none">{{ formatCurrency(account.balance) }}</p>
-                <div class="flex items-end justify-between mt-3">
-                    <p class="text-[10px] font-semibold opacity-80">{{ account.name }}</p>
-                    <p v-if="account.last4" class="text-[10px] font-mono font-bold tracking-widest opacity-70">•••• {{ account.last4 }}</p>
+                
+                <p class="text-lg sm:text-xl font-black font-mono tracking-tight leading-none mb-3">{{ formatCurrency(account.balance) }}</p>
+                
+                <div class="flex items-center gap-1.5 opacity-90 mb-3">
+                    <div class="p-1 rounded-md bg-white/20"><component :is="walletIcon(account.type)" class="h-2.5 w-2.5" /></div>
+                    <span class="text-[8px] font-bold uppercase tracking-wider">{{ walletLabel(account.type) }}</span>
+                    <span v-if="account.last4" class="text-[8px] font-mono opacity-70 ml-1.5">•••• {{ account.last4 }}</span>
                 </div>
+
                 <div class="flex items-center gap-1.5 mt-2.5 pt-2 border-t border-white/15">
                     <span class="inline-flex items-center gap-0.5 rounded-full bg-white/15 px-1.5 py-0.5 text-[9px] font-bold">
                         <ArrowDownRight class="h-2 w-2" /> {{ formatCurrency(account.month_income) }}

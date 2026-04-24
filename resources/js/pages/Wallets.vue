@@ -28,9 +28,11 @@ const breadcrumbs: BreadcrumbItem[] = [{ title: 'Wallets', href: '/wallets' }];
 
 const showAddModal = ref(false);
 const showEditModal = ref(false);
+const showDeleteModal = ref(false);
 const showIncomeModal = ref(false);
 const showExpenseModal = ref(false);
 const editingAccount = ref<AccountItem | null>(null);
+const accountToDelete = ref<AccountItem | null>(null);
 const selectedAccountForTransaction = ref<AccountItem | null>(null);
 
 const getYYYYMMDD = (d: Date) => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
@@ -142,10 +144,20 @@ const updateAccount = () => {
     });
 };
 
-const deleteAccount = (id: number) => {
-    if (confirm('Delete this wallet? Transactions linked to it will be unlinked.')) {
-        router.delete(`/accounts/${id}`, { preserveScroll: true });
-    }
+const deleteAccount = (account: AccountItem) => {
+    accountToDelete.value = account;
+    showDeleteModal.value = true;
+};
+
+const confirmDelete = () => {
+    if (!accountToDelete.value) return;
+    router.delete(`/accounts/${accountToDelete.value.id}`, {
+        preserveScroll: true,
+        onSuccess: () => {
+            showDeleteModal.value = false;
+            accountToDelete.value = null;
+        }
+    });
 };
 
 const openIncomeModal = (account: AccountItem) => {
@@ -220,23 +232,25 @@ const addExpense = () => {
         </div>
 
         <!-- Card actions -->
-        <div class="absolute top-3 right-3 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-            <button @click="openEdit(account)" class="p-1.5 rounded-lg bg-white/20 backdrop-blur-sm hover:bg-white/30 transition-colors">
-                <Pencil class="h-3 w-3" />
+        <div class="absolute top-4 right-4 flex items-center gap-1.5 z-20 opacity-0 group-hover:opacity-100 transition-all">
+            <button @click.stop="openEdit(account)" class="p-2 rounded-xl bg-white/20 backdrop-blur-md hover:bg-white/30 text-white transition-all shadow-lg active:scale-95" title="Edit Wallet">
+                <Pencil class="h-4 w-4" />
             </button>
-            <button @click="deleteAccount(account.id)" class="p-1.5 rounded-lg bg-white/20 backdrop-blur-sm hover:bg-red-500/60 transition-colors">
-                <Trash2 class="h-3 w-3" />
+            <button @click.stop="deleteAccount(account)" class="p-2 rounded-xl bg-white/20 backdrop-blur-md hover:bg-red-500/60 text-white transition-all shadow-lg active:scale-95" title="Delete Wallet">
+                <Trash2 class="h-4 w-4" />
             </button>
         </div>
 
         <!-- Card content -->
         <div class="relative z-10">
-            <!-- Type badge -->
-            <div class="flex items-center gap-2 mb-5">
-                <div class="p-1.5 rounded-lg bg-white/20 backdrop-blur-sm">
-                    <component :is="getTypeIcon(account.type)" class="h-4 w-4" />
+            <!-- Name Header -->
+            <div class="flex items-center justify-between mb-6">
+                <div>
+                    <p class="text-[10px] font-semibold uppercase tracking-wider opacity-60 mb-0.5">
+                        {{ account.holder_name || 'Account Holder' }}
+                    </p>
+                    <h3 class="text-lg sm:text-xl font-black tracking-tight leading-none">{{ account.name }}</h3>
                 </div>
-                <span class="text-xs font-bold uppercase tracking-wider opacity-90">{{ getTypeLabel(account.type) }}</span>
             </div>
 
             <!-- Balance -->
@@ -244,10 +258,19 @@ const addExpense = () => {
                 {{ formatCurrency(account.balance) }}
             </p>
 
+            <!-- Type badge (below balance) -->
+            <div class="flex items-center gap-1.5 mt-4 mb-1 opacity-90">
+                <div class="p-1 rounded-md bg-white/20">
+                    <component :is="getTypeIcon(account.type)" class="h-3 w-3" />
+                </div>
+                <span class="text-[10px] font-bold uppercase tracking-wider">{{ getTypeLabel(account.type) }}</span>
+                <span v-if="account.last4" class="text-[10px] font-mono opacity-70 ml-2">•••• {{ account.last4 }}</span>
+            </div>
+
             <!-- Credit limit indicator -->
-            <div v-if="account.credit_limit" class="mt-2">
-                <div class="flex justify-between text-[10px] font-semibold opacity-80 mb-1">
-                    <span>Used</span>
+            <div v-if="account.credit_limit" class="mt-4">
+                <div class="flex justify-between text-[10px] font-semibold opacity-80 mb-1.5">
+                    <span>Credit Usage</span>
                     <span>{{ formatCurrency(account.credit_limit) }} limit</span>
                 </div>
                 <div class="h-1.5 rounded-full bg-white/20 overflow-hidden">
@@ -256,23 +279,8 @@ const addExpense = () => {
                 </div>
             </div>
 
-            <!-- Bottom row: name + last4 -->
-            <div class="flex items-end justify-between mt-5">
-                <div>
-                    <p class="text-[10px] font-semibold uppercase tracking-wider opacity-60 mb-0.5">
-                        {{ account.holder_name || 'Account Holder' }}
-                    </p>
-                    <p class="text-sm font-bold">{{ account.name }}</p>
-                </div>
-                <div v-if="account.last4" class="text-right">
-                    <p class="text-xs font-mono font-bold tracking-widest opacity-80">
-                        •••• {{ account.last4 }}
-                    </p>
-                </div>
-            </div>
-
             <!-- Monthly in/out chips -->
-            <div class="flex items-center justify-between mt-4 pt-3 border-t border-white/15">
+            <div class="flex items-center justify-between mt-5 pt-4 border-t border-white/15">
                 <div class="flex items-center gap-2">
                     <span class="inline-flex items-center gap-1 rounded-full bg-white/15 px-2.5 py-1 text-[10px] font-bold">
                         <ArrowDownRight class="h-2.5 w-2.5" /> {{ formatCurrency(account.month_income) }}
@@ -464,6 +472,33 @@ const addExpense = () => {
                     <button @click="updateAccount" class="flex-1 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90">Save</button>
                 </div>
             </div>
+        </div>
+    </DialogContent>
+</Dialog>
+
+<!-- Delete Wallet Confirmation Modal -->
+<Dialog v-model:open="showDeleteModal">
+    <DialogContent class="sm:max-w-[400px] max-w-[90vw] p-6 rounded-[32px] border border-border/50 bg-card shadow-2xl">
+        <DialogHeader class="mb-5">
+            <div class="flex items-center gap-3 mb-2">
+                <div class="p-2 rounded-xl bg-destructive/10 text-destructive">
+                    <Trash2 class="h-5 w-5" />
+                </div>
+                <DialogTitle class="text-xl font-black tracking-tight font-display text-foreground">Delete Wallet?</DialogTitle>
+            </div>
+            <DialogDescription class="text-sm text-muted-foreground leading-relaxed">
+                Are you sure you want to delete <span class="font-bold text-foreground">{{ accountToDelete?.name }}</span>? 
+                This will unlink all transactions associated with this wallet. This action cannot be undone.
+            </DialogDescription>
+        </DialogHeader>
+
+        <div class="flex gap-3 mt-6">
+            <button @click="showDeleteModal = false" class="flex-1 rounded-2xl border border-border px-4 py-3 text-sm font-bold text-muted-foreground hover:bg-accent/50 transition-all active:scale-[0.98]">
+                Cancel
+            </button>
+            <button @click="confirmDelete" class="flex-1 rounded-2xl bg-destructive px-4 py-3 text-sm font-bold text-destructive-foreground hover:bg-destructive/90 shadow-lg shadow-destructive/20 transition-all active:scale-[0.98]">
+                Delete Wallet
+            </button>
         </div>
     </DialogContent>
 </Dialog>

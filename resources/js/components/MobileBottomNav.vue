@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
-import { LayoutGrid, BarChart3, LineChart, CalendarClock, Settings, CreditCard } from 'lucide-vue-next';
-import { dashboard, yearly, analytics, assets, settings } from '@/routes';
+import { LayoutGrid, LineChart, CalendarClock, Settings, CreditCard } from 'lucide-vue-next';
+import { dashboard, analytics, settings } from '@/routes';
 import { useCurrentUrl } from '@/composables/useCurrentUrl';
 import type { NavItem } from '@/types';
 
@@ -9,24 +9,19 @@ const { isCurrentUrl } = useCurrentUrl();
 
 const navItems: NavItem[] = [
     {
-        title: 'Yearly',
-        href: yearly(),
-        icon: BarChart3,
-    },
-    {
         title: 'Analytics',
         href: analytics(),
         icon: LineChart,
     },
     {
-        title: 'Dashboard',
-        href: dashboard(),
-        icon: LayoutGrid,
-    },
-    {
         title: 'Wallets',
         href: '/wallets',
         icon: CreditCard,
+    },
+    {
+        title: 'Dashboard',
+        href: dashboard(),
+        icon: LayoutGrid,
     },
     {
         title: 'Bills',

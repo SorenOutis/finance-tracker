@@ -1,14 +1,14 @@
 <script setup lang="ts">
-import { Head } from '@inertiajs/vue3';
+import { Head, Link } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { analytics } from '@/routes';
+import { analytics, yearly } from '@/routes';
 import type { BreadcrumbItem } from '@/types';
 import { computed } from 'vue';
 import { formatCurrency } from '@/utils/currency';
 import { useChartDefaults } from '@/composables/useChartDefaults';
 import { Chart as ChartJS, registerables } from 'chart.js';
 import { Line as LineChart, Bar as BarChart, Doughnut as DoughnutChart } from 'vue-chartjs';
-import { TrendingUp, TrendingDown, BarChart3, PieChart, ArrowUpRight, ArrowDownRight } from 'lucide-vue-next';
+import { TrendingUp, TrendingDown, BarChart3, PieChart, ArrowUpRight, ArrowDownRight, ArrowRight } from 'lucide-vue-next';
 import { onMounted } from 'vue';
 import gsap from 'gsap';
 
@@ -227,9 +227,15 @@ onMounted(() => {
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="flex h-full flex-1 flex-col gap-5 md:gap-8 p-4 sm:p-8 pb-28 md:pb-12">
             <!-- Header -->
-            <div class="animate-fade-up stagger-1">
-                <h1 class="text-3xl lg:text-4xl font-bold leading-tight tracking-tight">Analytics</h1>
-                <p class="mt-2 text-sm text-muted-foreground font-sans">Track your financial trends and insights for the year</p>
+            <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between animate-fade-up stagger-1">
+                <div>
+                    <h1 class="text-3xl lg:text-4xl font-bold leading-tight tracking-tight">Analytics</h1>
+                    <p class="mt-2 text-sm text-muted-foreground font-sans">Track your financial trends and insights for the year</p>
+                </div>
+                <Link :href="yearly().url" class="group flex items-center gap-2 rounded-2xl bg-card border border-border/50 px-4 py-2.5 text-sm font-bold text-foreground transition-all hover:bg-muted active:scale-[0.98] w-fit shadow-sm">
+                    Check Yearly Report
+                    <ArrowRight class="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                </Link>
             </div>
 
             <!-- Summary Stats Row -->

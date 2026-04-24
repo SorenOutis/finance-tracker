@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
-import { BookOpen, FolderGit2, LayoutGrid, BarChart3, LineChart, PiggyBank, Settings, CreditCard } from 'lucide-vue-next';
+import { BookOpen, FolderGit2, LayoutGrid, LineChart, CalendarClock, Settings, CreditCard } from 'lucide-vue-next';
 import AppLogo from '@/components/AppLogo.vue';
 import NavFooter from '@/components/NavFooter.vue';
 import NavMain from '@/components/NavMain.vue';
@@ -14,24 +14,14 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
-import { dashboard, yearly, analytics, assets, settings } from '@/routes';
+import { dashboard, analytics, settings } from '@/routes';
 import type { NavItem } from '@/types';
 
 const mainNavItems: NavItem[] = [
     {
-        title: 'Yearly',
-        href: yearly(),
-        icon: BarChart3,
-    },
-    {
         title: 'Analytics',
         href: analytics(),
         icon: LineChart,
-    },
-    {
-        title: 'Dashboard',
-        href: dashboard(),
-        icon: LayoutGrid,
     },
     {
         title: 'Wallets',
@@ -39,9 +29,14 @@ const mainNavItems: NavItem[] = [
         icon: CreditCard,
     },
     {
-        title: 'Assets',
-        href: assets(),
-        icon: PiggyBank,
+        title: 'Dashboard',
+        href: dashboard(),
+        icon: LayoutGrid,
+    },
+    {
+        title: 'Bills',
+        href: '/bills',
+        icon: CalendarClock,
     },
     {
         title: 'Settings',
