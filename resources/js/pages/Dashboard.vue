@@ -32,7 +32,7 @@ interface Entry { id: number; amount: number; date: string; category?: string; d
 interface User { name: string; email: string; }
 interface DashboardData {
     totalIncome: number; totalExpense: number; netIncome: number; netWorth: number;
-    prevMonthIncome: number; prevMonthExpense: number;
+    totalBalance: number; prevMonthIncome: number; prevMonthExpense: number;
 }
 interface DailySpendingItem { day: number; amount: number; }
 interface CategoryBreakdownItem { category: string; amount: number; percentage: number; }
@@ -89,13 +89,13 @@ const savingsRate = computed(() => props.dashboard.totalIncome === 0 ? 0 : ((pro
 const animatedIncome = useNumberAnimation(() => props.dashboard.totalIncome);
 const animatedExpense = useNumberAnimation(() => props.dashboard.totalExpense);
 const animatedNetIncome = useNumberAnimation(() => props.dashboard.netIncome);
-const animatedNetWorth = useNumberAnimation(() => props.dashboard.netWorth);
+const animatedTotalBalance = useNumberAnimation(() => props.dashboard.totalBalance);
 
 const displayStats = computed(() => [
-    { label: 'Total Income', value: formatCurrency(animatedIncome.value), icon: Wallet, tint: 'stat-tint-income', change: incomeChange.value, changeInverted: false },
-    { label: 'Total Expenses', value: formatCurrency(animatedExpense.value), icon: TrendingDown, tint: 'stat-tint-expense', change: expenseChange.value, changeInverted: true },
-    { label: 'Net Income', value: formatCurrency(animatedNetIncome.value), icon: DollarSign, tint: props.dashboard.netIncome >= 0 ? 'stat-tint-positive' : 'stat-tint-negative', change: null, changeInverted: false, colorClass: props.dashboard.netIncome >= 0 ? 'text-[--fin-gain]' : 'text-[--fin-loss]' },
-    { label: 'Net Worth', value: formatCurrency(animatedNetWorth.value), icon: PieChart, tint: 'stat-tint-accent', change: null, changeInverted: false },
+    { label: 'Monthly Income', value: formatCurrency(animatedIncome.value), icon: Wallet, tint: 'stat-tint-income', change: incomeChange.value, changeInverted: false },
+    { label: 'Monthly Expenses', value: formatCurrency(animatedExpense.value), icon: TrendingDown, tint: 'stat-tint-expense', change: expenseChange.value, changeInverted: true },
+    { label: 'Monthly Net', value: formatCurrency(animatedNetIncome.value), icon: DollarSign, tint: props.dashboard.netIncome >= 0 ? 'stat-tint-positive' : 'stat-tint-negative', change: null, changeInverted: false, colorClass: props.dashboard.netIncome >= 0 ? 'text-[--fin-gain]' : 'text-[--fin-loss]' },
+    { label: 'Total Balance', value: formatCurrency(animatedTotalBalance.value), icon: PieChart, tint: 'stat-tint-accent', change: null, changeInverted: false },
 ]);
 
 // Animated savings ring
@@ -557,8 +557,8 @@ const budgetUsedPct = computed(() => props.budget ? Math.min(100, (props.dashboa
 
                 <div class="mt-6 sm:mt-8 grid grid-cols-2 gap-2 sm:gap-3 w-full">
                     <div class="p-3 sm:p-4 rounded-2xl bg-muted/30 border border-border/40 text-left">
-                        <p class="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1">Net Worth</p>
-                        <p class="text-base sm:text-lg font-bold font-mono text-foreground">{{ formatCurrency(props.dashboard.netWorth) }}</p>
+                        <p class="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1">Total Balance</p>
+                        <p class="text-base sm:text-lg font-bold font-mono text-foreground">{{ formatCurrency(props.dashboard.totalBalance) }}</p>
                     </div>
                     <div class="p-3 sm:p-4 rounded-2xl bg-muted/30 border border-border/40 text-left">
                         <p class="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1">Health Score</p>

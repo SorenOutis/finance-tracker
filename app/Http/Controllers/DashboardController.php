@@ -152,6 +152,14 @@ class DashboardController extends Controller
         $ytdIncome = Income::where('user_id', $user->id)->whereBetween('date', [$yearStart, $selectedDate->clone()->endOfDay()])->sum('amount');
         $ytdExpense = Expense::where('user_id', $user->id)->whereBetween('date', [$yearStart, $selectedDate->clone()->endOfDay()])->sum('amount');
 
+        // Total Wallet Balance
+        $totalAccountBalance = Account::where('user_id', $user->id)
+            ->where('is_archived', false)
+            ->get()
+            ->sum(function ($account) {
+                return (float) $account->initial_balance + $account->incomes()->sum('amount') - $account->expenses()->sum('amount');
+            });
+
         // Days with no spending this month
         $daysNoSpending = collect($dailySpending)->filter(fn ($d) => $d['amount'] == 0 && $d['day'] <= min($selectedDate->day, $daysInMonth))->count();
 
@@ -210,6 +218,7 @@ class DashboardController extends Controller
                 'totalExpense' => $totalExpenses,
                 'netIncome' => $netIncome,
                 'netWorth' => $netWorth,
+                'totalBalance' => (float) $totalAccountBalance,
                 'prevMonthIncome' => (float) $prevMonthIncome,
                 'prevMonthExpense' => (float) $prevMonthExpense,
             ],
