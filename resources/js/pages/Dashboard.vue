@@ -273,23 +273,23 @@ const formatDate = (dateStr: string) => {
     </div>
     <div class="flex gap-3 overflow-x-auto snap-x snap-mandatory pb-2 scrollbar-hide">
         <div v-for="income in recurringIncomes" :key="income.id"
-            class="group relative flex-shrink-0 w-[200px] sm:w-[240px] snap-start overflow-hidden rounded-[18px] border border-border/60 bg-card p-4 transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5 cursor-default premium-hover shadow-sm"
-            :style="income.color ? { borderLeft: `4px solid ${income.color}` } : {}">
+            class="group relative flex-shrink-0 w-[200px] sm:w-[240px] snap-start overflow-hidden rounded-[18px] p-4 transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5 cursor-default text-white shadow-md"
+            :style="{ background: simpleGradient(income.color, '#10b981') }">
             
             <div class="relative z-10">
                 <div class="flex items-center justify-between mb-3">
                     <div class="flex items-center gap-1.5">
-                        <div class="p-1.5 rounded-lg" :style="income.color ? { backgroundColor: `${income.color}15`, color: income.color } : { backgroundColor: 'oklch(0.76 0.16 162 / 0.1)', color: 'oklch(0.76 0.16 162)' }"><Wallet class="h-3 w-3" /></div>
-                        <span class="text-[9px] font-bold uppercase tracking-wider text-muted-foreground/80 truncate max-w-[80px]">{{ income.name }}</span>
+                        <div class="p-1.5 rounded-lg bg-white/20"><Wallet class="h-3 w-3" /></div>
+                        <span class="text-[9px] font-bold uppercase tracking-wider opacity-90 truncate max-w-[80px]">{{ income.name }}</span>
                     </div>
-                    <span class="text-[8px] font-black px-1.5 py-0.5 rounded-full bg-primary/10 text-primary uppercase">Active</span>
+                    <span class="text-[8px] font-black px-1.5 py-0.5 rounded-full bg-white/20 uppercase">Active</span>
                 </div>
                 
-                <p class="text-lg font-black font-mono tracking-tight leading-none text-[--fin-gain]">+{{ formatCurrency(income.amount) }}</p>
+                <p class="text-lg font-black font-mono tracking-tight leading-none">+{{ formatCurrency(income.amount) }}</p>
                 
-                <div class="flex items-center justify-between mt-3 pt-2 border-t border-border/10">
-                    <p class="text-[9px] font-bold text-muted-foreground uppercase">{{ income.frequency }}</p>
-                    <p class="text-[9px] font-mono font-bold text-foreground opacity-60">{{ formatDate(income.next_due_date) }}</p>
+                <div class="flex items-center justify-between mt-3 pt-2 border-t border-white/10">
+                    <p class="text-[9px] font-bold opacity-80 uppercase">{{ income.frequency }}</p>
+                    <p class="text-[9px] font-mono font-bold opacity-70">{{ formatDate(income.next_due_date) }}</p>
                 </div>
             </div>
         </div>
@@ -309,23 +309,23 @@ const formatDate = (dateStr: string) => {
     </div>
     <div class="flex gap-3 overflow-x-auto snap-x snap-mandatory pb-2 scrollbar-hide">
         <div v-for="bill in upcomingBills" :key="bill.id"
-            class="group relative flex-shrink-0 w-[200px] sm:w-[240px] snap-start overflow-hidden rounded-[18px] border border-border/60 bg-card p-4 transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5 cursor-default premium-hover shadow-sm"
-            :style="bill.color ? { borderLeft: `4px solid ${bill.color}` } : {}">
+            class="group relative flex-shrink-0 w-[200px] sm:w-[240px] snap-start overflow-hidden rounded-[18px] p-4 transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5 cursor-default text-white shadow-md"
+            :style="{ background: simpleGradient(bill.color, '#ef4444') }">
             
             <div class="relative z-10">
                 <div class="flex items-center justify-between mb-3">
                     <div class="flex items-center gap-1.5">
-                        <div class="p-1.5 rounded-lg" :style="bill.color ? { backgroundColor: `${bill.color}15`, color: bill.color } : { backgroundColor: 'oklch(0.62 0.22 18 / 0.1)', color: 'oklch(0.62 0.22 18)' }"><CalendarClock class="h-3 w-3" /></div>
-                        <span class="text-[9px] font-bold uppercase tracking-wider text-muted-foreground/80 truncate max-w-[80px]">{{ bill.name }}</span>
+                        <div class="p-1.5 rounded-lg bg-white/20"><CalendarClock class="h-3 w-3" /></div>
+                        <span class="text-[9px] font-bold uppercase tracking-wider opacity-90 truncate max-w-[80px]">{{ bill.name }}</span>
                     </div>
-                    <span class="text-[8px] font-black px-1.5 py-0.5 rounded-full bg-amber-500/10 text-amber-600 uppercase">{{ bill.days_until === 0 ? 'Today' : `In ${bill.days_until}d` }}</span>
+                    <span class="text-[8px] font-black px-1.5 py-0.5 rounded-full bg-white/20 uppercase">{{ bill.days_until === 0 ? 'Today' : `In ${bill.days_until}d` }}</span>
                 </div>
                 
-                <p class="text-lg font-black font-mono tracking-tight leading-none text-foreground">{{ formatCurrency(bill.amount) }}</p>
+                <p class="text-lg font-black font-mono tracking-tight leading-none">{{ formatCurrency(bill.amount) }}</p>
                 
-                <div class="flex items-center justify-between mt-3 pt-2 border-t border-border/10">
-                    <p class="text-[9px] font-bold text-muted-foreground uppercase">{{ bill.frequency }}</p>
-                    <p class="text-[9px] font-mono font-bold text-foreground opacity-60">{{ formatDate(bill.next_due_date) }}</p>
+                <div class="flex items-center justify-between mt-3 pt-2 border-t border-white/10">
+                    <p class="text-[9px] font-bold opacity-80 uppercase">{{ bill.frequency }}</p>
+                    <p class="text-[9px] font-mono font-bold opacity-70">{{ formatDate(bill.next_due_date) }}</p>
                 </div>
             </div>
         </div>

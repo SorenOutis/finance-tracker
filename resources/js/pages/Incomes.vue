@@ -124,6 +124,11 @@ const formatDate = (dateStr: string) => {
         year: 'numeric' 
     });
 };
+
+const simpleGradient = (color: string | null, def: string) => { 
+    const b = color || def; 
+    return `linear-gradient(135deg, ${b} 0%, ${b}CC 50%, ${b}99 100%)`; 
+};
 </script>
 
 <template>
@@ -161,45 +166,45 @@ const formatDate = (dateStr: string) => {
 <!-- Incomes Grid -->
 <div v-if="incomes.length" class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 animate-fade-up stagger-3">
     <div v-for="income in incomes" :key="income.id"
-        class="group relative overflow-hidden rounded-[24px] border border-border/60 bg-card p-5 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 premium-hover shadow-sm"
-        :style="income.color ? { borderLeft: `4px solid ${income.color}` } : {}">
+        class="group relative overflow-hidden rounded-[24px] p-5 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 text-white shadow-lg"
+        :style="{ background: simpleGradient(income.color, '#10b981') }">
         
         <div class="flex items-start justify-between mb-4">
             <div class="flex items-center gap-3">
-                <div class="p-2.5 rounded-xl" :style="income.color ? { backgroundColor: `${income.color}15`, color: income.color } : {}" :class="!income.color ? 'bg-[--fin-gain]/10 text-[--fin-gain]' : ''">
+                <div class="p-2.5 rounded-xl bg-white/20">
                     <Wallet class="h-5 w-5" />
                 </div>
                 <div>
-                    <h3 class="font-bold text-foreground">{{ income.name }}</h3>
-                    <p class="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/60">{{ income.category || 'No Category' }}</p>
+                    <h3 class="font-bold">{{ income.name }}</h3>
+                    <p class="text-[10px] font-bold uppercase tracking-wider opacity-70">{{ income.category || 'No Category' }}</p>
                 </div>
             </div>
             <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                <button @click="openEdit(income)" class="p-1.5 rounded-lg hover:bg-muted transition-colors">
-                    <Pencil class="h-3.5 w-3.5 text-muted-foreground" />
+                <button @click="openEdit(income)" class="p-1.5 rounded-lg hover:bg-white/20 transition-colors">
+                    <Pencil class="h-3.5 w-3.5" />
                 </button>
-                <button @click="deleteIncome(income.id)" class="p-1.5 rounded-lg hover:bg-destructive/10 transition-colors">
-                    <Trash2 class="h-3.5 w-3.5 text-destructive" />
+                <button @click="deleteIncome(income.id)" class="p-1.5 rounded-lg hover:bg-red-500/40 transition-colors">
+                    <Trash2 class="h-3.5 w-3.5" />
                 </button>
             </div>
         </div>
 
         <div class="space-y-4">
             <div class="flex items-baseline gap-1">
-                <span class="text-2xl font-black font-mono text-[--fin-gain]">
+                <span class="text-2xl font-black font-mono">
                     +{{ formatCurrency(income.amount) }}
                 </span>
-                <span class="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">/ {{ income.frequency }}</span>
+                <span class="text-[10px] font-bold opacity-70 uppercase tracking-widest">/ {{ income.frequency }}</span>
             </div>
 
-            <div class="flex items-center justify-between pt-4 border-t border-border/10">
+            <div class="flex items-center justify-between pt-4 border-t border-white/10">
                 <div class="flex flex-col">
-                    <span class="text-[9px] font-bold uppercase tracking-wider text-muted-foreground mb-0.5">Next Payout</span>
-                    <span class="text-xs font-bold text-foreground flex items-center gap-1.5">
+                    <span class="text-[9px] font-bold uppercase tracking-wider opacity-70 mb-0.5">Next Payout</span>
+                    <span class="text-xs font-bold flex items-center gap-1.5">
                         <Clock class="h-3 w-3" /> {{ formatDate(income.next_due_date) }}
                     </span>
                 </div>
-                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold" :class="getStatusColor(income)">
+                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold bg-white/20">
                     {{ getStatusLabel(income) }}
                 </span>
             </div>
