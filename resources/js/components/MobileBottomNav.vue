@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
-import { LayoutGrid, BarChart3, LineChart, PiggyBank, Settings, CreditCard } from 'lucide-vue-next';
+import { LayoutGrid, BarChart3, LineChart, CalendarClock, Settings, CreditCard } from 'lucide-vue-next';
 import { dashboard, yearly, analytics, assets, settings } from '@/routes';
 import { useCurrentUrl } from '@/composables/useCurrentUrl';
 import type { NavItem } from '@/types';
@@ -29,9 +29,9 @@ const navItems: NavItem[] = [
         icon: CreditCard,
     },
     {
-        title: 'Assets',
-        href: assets(),
-        icon: PiggyBank,
+        title: 'Bills',
+        href: '/bills',
+        icon: CalendarClock,
     },
     {
         title: 'Settings',

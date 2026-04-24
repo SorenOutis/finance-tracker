@@ -168,6 +168,15 @@ const exportCsv = () => { window.location.href = `/export/csv?month=${fmtYearMon
 const greeting = computed(() => { const h = new Date().getHours(); return h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening'; });
 const yearProgress = computed(() => Math.round((props.ytd.dayOfYear / props.ytd.daysInYear) * 100));
 const budgetUsedPct = computed(() => props.budget ? Math.min(100, (props.dashboard.totalExpense / props.budget.monthly_limit) * 100) : 0);
+
+const formatDate = (dateStr: string) => {
+    if (!dateStr) return '';
+    return new Date(dateStr).toLocaleDateString('en-US', { 
+        month: 'short', 
+        day: 'numeric', 
+        year: 'numeric' 
+    });
+};
 </script>
 
 <template>
@@ -246,6 +255,41 @@ const budgetUsedPct = computed(() => props.budget ? Math.min(100, (props.dashboa
         <a href="/wallets" class="flex-shrink-0 w-[120px] snap-start flex flex-col items-center justify-center rounded-[18px] border-2 border-dashed border-border/40 bg-card/10 text-muted-foreground hover:border-primary/50 hover:text-primary transition-all cursor-pointer">
             <Plus class="h-5 w-5 mb-1" />
             <span class="text-[10px] font-bold">Add Wallet</span>
+        </a>
+    </div>
+</div>
+
+<!-- Bills Cards Strip -->
+<div v-if="upcomingBills?.length" class="animate-fade-up stagger-4 mt-2">
+    <div class="flex items-center justify-between mb-2">
+        <p class="text-[10px] font-bold tracking-widest uppercase text-muted-foreground/80 font-sans">My Bills</p>
+        <a href="/bills" class="text-[10px] font-semibold text-primary hover:underline">View all</a>
+    </div>
+    <div class="flex gap-3 overflow-x-auto snap-x snap-mandatory pb-2 scrollbar-hide">
+        <div v-for="bill in upcomingBills" :key="bill.id"
+            class="group relative flex-shrink-0 w-[200px] sm:w-[240px] snap-start overflow-hidden rounded-[18px] border border-border/60 bg-card p-4 transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5 cursor-default premium-hover shadow-sm">
+            
+            <div class="relative z-10">
+                <div class="flex items-center justify-between mb-3">
+                    <div class="flex items-center gap-1.5">
+                        <div class="p-1.5 rounded-lg bg-[--fin-loss]/10 text-[--fin-loss]"><CalendarClock class="h-3 w-3" /></div>
+                        <span class="text-[9px] font-bold uppercase tracking-wider text-muted-foreground/80 truncate max-w-[80px]">{{ bill.name }}</span>
+                    </div>
+                    <span class="text-[8px] font-black px-1.5 py-0.5 rounded-full bg-amber-500/10 text-amber-600 uppercase">{{ bill.days_until === 0 ? 'Today' : `In ${bill.days_until}d` }}</span>
+                </div>
+                
+                <p class="text-lg font-black font-mono tracking-tight leading-none text-foreground">{{ formatCurrency(bill.amount) }}</p>
+                
+                <div class="flex items-center justify-between mt-3 pt-2 border-t border-border/10">
+                    <p class="text-[9px] font-bold text-muted-foreground uppercase">{{ bill.frequency }}</p>
+                    <p class="text-[9px] font-mono font-bold text-foreground opacity-60">{{ formatDate(bill.next_due_date) }}</p>
+                </div>
+            </div>
+        </div>
+        <!-- Add bill card -->
+        <a href="/bills" class="flex-shrink-0 w-[120px] snap-start flex flex-col items-center justify-center rounded-[18px] border-2 border-dashed border-border/60 bg-card text-muted-foreground hover:border-primary/50 hover:text-primary transition-all cursor-pointer shadow-sm">
+            <Plus class="h-5 w-5 mb-1" />
+            <span class="text-[10px] font-bold">Add Bill</span>
         </a>
     </div>
 </div>
@@ -439,47 +483,8 @@ const budgetUsedPct = computed(() => props.budget ? Math.min(100, (props.dashboa
     </div>
 </div>
 
-<!-- Upcoming Bills + Recurring -->
-<div class="grid grid-cols-2 gap-3 animate-fade-up stagger-5">
-    <!-- Upcoming Bills -->
-    <div class="surface-card p-4">
-        <div class="flex items-center gap-1.5 mb-3">
-            <Clock class="h-3.5 w-3.5 text-amber-500" />
-            <h2 class="text-sm font-bold text-foreground font-display tracking-tight">Upcoming Bills</h2>
-        </div>
-        <div v-if="upcomingBills?.length" class="space-y-2">
-            <div v-for="bill in upcomingBills" :key="bill.id" class="flex items-center justify-between p-2 rounded-lg bg-muted/20">
-                <div>
-                    <p class="text-xs font-semibold text-foreground">{{ bill.name }}</p>
-                    <p class="text-[10px] text-muted-foreground">{{ bill.days_until === 0 ? 'Due today' : `In ${bill.days_until} day${bill.days_until !== 1 ? 's' : ''}` }}</p>
-                </div>
-                <span class="text-xs font-bold font-mono text-[--fin-loss]">{{ formatCurrency(bill.amount) }}</span>
-            </div>
-        </div>
-        <div v-else class="flex flex-col items-center py-6"><Clock class="h-6 w-6 text-muted-foreground/20 mb-1" /><p class="text-[10px] text-muted-foreground">No upcoming bills</p></div>
-    </div>
-
-    <!-- Recurring Transactions -->
-    <div class="surface-card p-4">
-        <h2 class="text-sm font-bold text-foreground font-display tracking-tight mb-3">Recurring</h2>
-        <div v-if="recurringTransactions?.length" class="space-y-2">
-            <div v-for="rt in recurringTransactions" :key="rt.id" class="group flex items-center justify-between p-2 rounded-lg bg-muted/20">
-                <div>
-                    <p class="text-xs font-semibold text-foreground">{{ rt.name }}</p>
-                    <p class="text-[10px] text-muted-foreground capitalize">{{ rt.frequency }} · {{ rt.next_due_date }}</p>
-                </div>
-                <div class="flex items-center gap-2">
-                    <span :class="['text-xs font-bold font-mono', rt.type === 'income' ? 'text-[--fin-gain]' : 'text-[--fin-loss]']">{{ rt.type === 'income' ? '+' : '-' }}{{ formatCurrency(rt.amount) }}</span>
-                    <button @click="deleteRecurring(rt.id)" class="p-1 rounded text-muted-foreground opacity-0 transition-all hover:bg-destructive/10 hover:text-destructive group-hover:opacity-100"><Trash2 class="h-3 w-3" /></button>
-                </div>
-            </div>
-        </div>
-        <div v-else class="flex flex-col items-center py-6"><CalendarClock class="h-6 w-6 text-muted-foreground/20 mb-1" /><p class="text-[10px] text-muted-foreground">No recurring items</p></div>
-    </div>
-</div>
-
 <!-- Recent Activity Timeline -->
-<div v-if="recentActivity?.length" class="surface-card premium-hover p-4 animate-fade-up stagger-5">
+<div v-if="recentActivity?.length" class="surface-card premium-hover p-4 animate-fade-up stagger-5 mt-1">
     <div class="flex items-center gap-1.5 mb-3"><Activity class="h-3.5 w-3.5 text-primary" /><h2 class="text-sm font-bold text-foreground font-display tracking-tight">Recent Activity</h2></div>
     <div class="space-y-0 divide-y divide-border/20">
         <div v-for="item in recentActivity" :key="`${item.type}-${item.id}`" class="flex items-center justify-between py-2.5 first:pt-0 last:pb-0">

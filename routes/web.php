@@ -14,6 +14,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('assets', \App\Http\Controllers\AssetsController::class)->name('assets');
     Route::get('settings', \App\Http\Controllers\SettingsController::class)->name('settings');
     Route::get('wallets', \App\Http\Controllers\WalletsController::class)->name('wallets');
+    Route::get('bills', [\App\Http\Controllers\RecurringTransactionController::class, 'index'])->name('bills');
 
     Route::resource('incomes', \App\Http\Controllers\IncomeController::class)->only(['store', 'destroy']);
     Route::resource('expenses', \App\Http\Controllers\ExpenseController::class)->only(['store', 'destroy']);
@@ -35,6 +36,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Recurring Transactions
     Route::post('recurring-transactions', [\App\Http\Controllers\RecurringTransactionController::class, 'store'])->name('recurring-transactions.store');
+    Route::patch('recurring-transactions/{recurring_transaction}', [\App\Http\Controllers\RecurringTransactionController::class, 'update'])->name('recurring-transactions.update');
     Route::delete('recurring-transactions/{recurring_transaction}', [\App\Http\Controllers\RecurringTransactionController::class, 'destroy'])->name('recurring-transactions.destroy');
 
     // Export
