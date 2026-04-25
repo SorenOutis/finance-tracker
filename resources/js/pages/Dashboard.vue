@@ -9,7 +9,7 @@ import { formatCurrency } from '@/utils/currency';
 import {
     Wallet, TrendingDown, TrendingUp, DollarSign, PieChart, Plus, ArrowUpRight, ArrowDownRight,
     Target, CalendarClock, Download, Flame, Activity, Clock, Zap, AlertCircle, Trash2, X,
-    CreditCard, Smartphone, Landmark, Coins, Bitcoin, MoreHorizontal
+    CreditCard, Smartphone, Landmark, Coins, Bitcoin, MoreHorizontal, Sun, SunDim, Moon
 } from 'lucide-vue-next';
 import { router } from '@inertiajs/vue3';
 import { useChartDefaults } from '@/composables/useChartDefaults';
@@ -84,6 +84,12 @@ const healthScore = computed(() => {
 });
 const healthLabel = computed(() => { if (healthScore.value >= 80) return 'Excellent'; if (healthScore.value >= 60) return 'Good'; if (healthScore.value >= 40) return 'Fair'; return 'Needs Work'; });
 const healthColor = computed(() => { if (healthScore.value >= 80) return 'oklch(0.76 0.16 162)'; if (healthScore.value >= 60) return 'oklch(0.68 0.14 245)'; if (healthScore.value >= 40) return 'oklch(0.76 0.14 75)'; return 'oklch(0.62 0.22 18)'; });
+const healthSummary = computed(() => {
+    if (healthScore.value >= 80) return "You're doing amazing! Your financial habits are top-notch.";
+    if (healthScore.value >= 60) return "Good job! You're on the right track with your finances.";
+    if (healthScore.value >= 40) return "Not bad, but there's room for improvement in your spending.";
+    return "Time to review your budget. Small changes can make a big difference.";
+});
 
 const savingsRate = computed(() => props.dashboard.totalIncome === 0 ? 0 : ((props.dashboard.totalIncome - props.dashboard.totalExpense) / props.dashboard.totalIncome) * 100);
 
@@ -280,6 +286,19 @@ const deleteEntry = (id: number, type: 'income' | 'expense') => { router.delete(
 const exportCsv = () => { window.location.href = `/export/csv?month=${fmtYearMonth(currentMonth.value)}`; };
 
 const greeting = computed(() => { const h = new Date().getHours(); return h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening'; });
+const greetingIcon = computed(() => { const h = new Date().getHours(); return h < 12 ? Sun : h < 17 ? SunDim : Moon; });
+
+const financialTips = [
+    "Save 20% of your income for long-term goals.",
+    "Track every expense to understand your spending habits.",
+    "Build an emergency fund covering 3-6 months of expenses.",
+    "Pay off high-interest debt as quickly as possible.",
+    "Invest early and often to benefit from compound interest.",
+    "Review your budget monthly to stay on track.",
+    "Avoid impulse purchases by waiting 24 hours before buying.",
+];
+const randomTip = computed(() => financialTips[Math.floor(Math.random() * financialTips.length)]);
+
 const yearProgress = computed(() => Math.round((props.ytd.dayOfYear / props.ytd.daysInYear) * 100));
 const budgetUsedPct = computed(() => props.budget ? Math.min(100, (props.dashboard.totalExpense / props.budget.monthly_limit) * 100) : 0);
 
@@ -393,14 +412,45 @@ const formatDate = (dateStr: string) => {
     </Transition>
 </Teleport>
 
-<!-- Header + Controls -->
-<div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between animate-fade-up stagger-1 mb-2">
-    <div>
-        <h1 class="text-3xl font-black leading-tight tracking-tight text-foreground">Dashboard</h1>
-        <p class="text-xs text-muted-foreground/80 font-medium font-sans">{{ greeting }}, {{ user.name.split(' ')[0] }}. <span class="font-bold text-foreground">{{ fmtMonthYear(currentMonth) }}</span></p>
-    </div>
-    <div class="flex flex-wrap items-center gap-2 sm:gap-3">
-        <!-- Removed calendar, export, and add buttons as per user request -->
+<!-- Welcome Hero Section -->
+<div :class="['relative overflow-hidden rounded-[24px] bg-card border border-border/50 p-4 sm:p-5 mb-1.5 sm:mb-2 animate-fade-up stagger-1', highlightClass(1)]">
+    <!-- Background abstract shapes -->
+    <div class="absolute -top-12 -right-12 w-32 h-32 bg-primary/5 rounded-full blur-2xl"></div>
+    <div class="absolute -bottom-12 -left-12 w-32 h-32 bg-secondary/5 rounded-full blur-2xl"></div>
+
+    <div class="relative flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div class="flex-1">
+            <div class="flex items-center gap-2 mb-1">
+                <div class="p-1 rounded-lg bg-amber-500/10 text-amber-500">
+                    <component :is="greetingIcon" class="w-3.5 h-3.5" />
+                </div>
+                <span class="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/80 font-sans">{{ greeting }}</span>
+            </div>
+            <h1 class="text-xl sm:text-2xl font-black tracking-tight text-foreground font-display">
+                Hi, <span class="text-primary">{{ user.name.split(' ')[0] }}</span>!
+            </h1>
+            <p class="mt-1 text-[11px] sm:text-xs text-muted-foreground font-medium max-w-xl leading-relaxed">
+                Your <span class="text-foreground font-bold">{{ fmtMonthYear(currentMonth) }}</span> overview: 
+                you've saved <span class="text-[--fin-gain] font-bold">{{ animatedSR.toFixed(0) }}%</span> of your income.
+            </p>
+        </div>
+
+        <!-- Integrated Tip/Insight - Smaller & Horizontal -->
+        <div class="flex-shrink-0 w-full sm:w-auto sm:max-w-[240px]">
+            <div class="group relative p-2.5 rounded-xl bg-muted/30 border border-border/40 hover:bg-card hover:border-primary/30 transition-all cursor-default overflow-hidden">
+                <div class="relative z-10 flex items-center gap-2">
+                    <div class="p-1.5 rounded-lg bg-primary/10 text-primary shrink-0">
+                        <Zap class="w-3 h-3" />
+                    </div>
+                    <div>
+                        <p class="text-[9px] font-bold uppercase tracking-wider text-primary">Tip</p>
+                        <p class="text-[10px] font-semibold text-foreground leading-tight line-clamp-2">
+                            {{ randomTip }}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -607,6 +657,7 @@ const formatDate = (dateStr: string) => {
             </div>
         </div>
         <p class="mt-1.5 text-[8px] sm:text-[10px] font-semibold text-center font-sans" :style="{ color: healthColor }">{{ healthLabel }}</p>
+        <p class="mt-1 text-[7px] sm:text-[9px] text-muted-foreground text-center font-medium leading-tight px-2">{{ healthSummary }}</p>
     </div>
 
     <!-- Year Progress -->
@@ -777,6 +828,12 @@ const formatDate = (dateStr: string) => {
         <div v-else class="py-4 sm:py-6 text-center"><TrendingDown class="h-5 w-5 sm:h-6 sm:w-6 text-muted-foreground/20 mx-auto mb-1" /><p class="text-[9px] sm:text-[10px] text-muted-foreground">No expenses</p></div>
     </div>
 </div>
+
+<!-- Floating Action Button (FAB) -->
+<button @click="showQuickAddModal = true" 
+    class="fixed bottom-24 right-6 md:bottom-10 md:right-10 w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all z-40 group">
+    <Plus class="w-7 h-7 group-hover:rotate-90 transition-transform duration-300" />
+</button>
 
 </div>
 </AppLayout>
