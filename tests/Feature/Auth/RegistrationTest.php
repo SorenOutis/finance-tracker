@@ -21,10 +21,11 @@ class RegistrationTest extends TestCase
         $response = $this->post(route('register.store'), [
             'name' => 'Test User',
             'email' => 'test@example.com',
-            'password' => 'password',
-            'password_confirmation' => 'password',
+            'password' => '123456',
+            'password_confirmation' => '123456',
             'account_name' => 'Test Wallet',
             'initial_balance' => 1000,
+            'currency' => 'PHP',
         ]);
 
         $this->assertAuthenticated();
@@ -33,6 +34,7 @@ class RegistrationTest extends TestCase
         $this->assertDatabaseHas('accounts', [
             'name' => 'Test Wallet',
             'initial_balance' => 1000,
+            'currency' => 'PHP',
         ]);
     }
 }

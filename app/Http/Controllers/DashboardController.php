@@ -256,7 +256,12 @@ class DashboardController extends Controller
             });
 
         return Inertia::render('Dashboard', [
-            'user' => $user,
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'is_onboarded' => $user->is_onboarded,
+            ],
             'dashboard' => [
                 'totalIncome' => $totalIncome,
                 'totalExpense' => $totalExpenses,

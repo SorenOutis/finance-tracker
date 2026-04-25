@@ -9,6 +9,10 @@ Route::inertia('/', 'Welcome', [
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', \App\Http\Controllers\DashboardController::class)->name('dashboard');
+    Route::post('onboarding/complete', function () {
+        auth()->user()->update(['is_onboarded' => true]);
+        return back();
+    })->name('onboarding.complete');
     Route::get('yearly', \App\Http\Controllers\YearlyController::class)->name('yearly');
     Route::get('analytics', \App\Http\Controllers\AnalyticsController::class)->name('analytics');
     Route::get('assets', \App\Http\Controllers\AssetsController::class)->name('assets');

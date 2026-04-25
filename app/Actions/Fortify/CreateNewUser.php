@@ -26,6 +26,7 @@ class CreateNewUser implements CreatesNewUsers
             'password' => $this->passwordRules(),
             'account_name' => ['required', 'string', 'max:255'],
             'initial_balance' => ['required', 'numeric', 'min:0'],
+            'currency' => ['required', 'string', 'size:3'],
         ])->validate();
 
         return DB::transaction(function () use ($input) {
@@ -40,7 +41,7 @@ class CreateNewUser implements CreatesNewUsers
                 'name' => $input['account_name'],
                 'type' => 'cash',
                 'initial_balance' => $input['initial_balance'],
-                'currency' => 'PHP',
+                'currency' => $input['currency'] ?? 'PHP',
             ]);
 
             return $user;

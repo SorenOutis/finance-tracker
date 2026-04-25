@@ -29,7 +29,7 @@ import {
 ChartJS.register(...registerables);
 
 interface Entry { id: number; amount: number; date: string; category?: string; description?: string; }
-interface User { name: string; email: string; }
+interface User { id: number; name: string; email: string; is_onboarded: boolean; }
 interface DashboardData {
     totalIncome: number; totalExpense: number; netIncome: number; netWorth: number;
     totalBalance: number; prevMonthIncome: number; prevMonthExpense: number;
@@ -138,6 +138,118 @@ const showIncomeModal = useStorage('dashboard-income-modal', false);
 const showExpenseModal = useStorage('dashboard-expense-modal', false);
 const showBudgetModal = ref(false);
 const showGoalModal = ref(false);
+const showOnboarding = ref(false);
+const onboardingStep = ref(1);
+const totalOnboardingSteps = 5;
+const tooltipStyle = ref({ top: '50%', left: '50%', transform: 'translate(-50%, -50%)' });
+const tooltipSide = ref<'top' | 'bottom'>('bottom');
+
+const updateTooltipPosition = () => {
+    if (!showOnboarding.value) return;
+
+    if (onboardingStep.value === 1 || onboardingStep.value === 5) {
+        tooltipStyle.value = { top: '50%', left: '50%', transform: 'translate(-50%, -50%)' };
+        tooltipSide.value = 'bottom';
+        return;
+    }
+
+    const target = document.querySelector(`.onboarding-target-${onboardingStep.value}`);
+    if (target) {
+        const rect = target.getBoundingClientRect();
+        const isSmallScreen = window.innerWidth < 640;
+        
+        // Position tooltip below the element if there's space, otherwise above
+        const spaceBelow = window.innerHeight - rect.bottom;
+        const positionAbove = spaceBelow < 250;
+        tooltipSide.value = positionAbove ? 'bottom' : 'top'; // Tooltip is on top of element -> arrow is at bottom (so tooltip is 'top')
+        
+        tooltipStyle.value = {
+            top: positionAbove ? `${rect.top - 20}px` : `${rect.bottom + 20}px`,
+            left: isSmallScreen ? '50%' : `${rect.left + rect.width / 2}px`,
+            transform: isSmallScreen 
+                ? `translate(-50%, ${positionAbove ? '-100%' : '0'})` 
+                : `translate(-50%, ${positionAbove ? '-100%' : '0'})`,
+            maxWidth: isSmallScreen ? 'calc(100vw - 48px)' : '320px',
+            position: 'fixed'
+        };
+    }
+};
+
+const completeOnboarding = () => {
+    const routeFunc = (window as any).route;
+    const url = routeFunc ? routeFunc('onboarding.complete') : '/onboarding/complete';
+    router.post(url, {}, {
+        onSuccess: () => {
+            showOnboarding.value = false;
+        }
+    });
+};
+
+const nextOnboardingStep = () => {
+    if (onboardingStep.value < totalOnboardingSteps) {
+        onboardingStep.value++;
+    } else {
+        completeOnboarding();
+    }
+};
+
+const prevOnboardingStep = () => {
+    if (onboardingStep.value > 1) {
+        onboardingStep.value--;
+    }
+};
+
+watch(onboardingStep, (newStep) => {
+    setTimeout(() => {
+        const target = document.querySelector(`.onboarding-target-${newStep}`);
+        if (target) {
+            target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            setTimeout(updateTooltipPosition, 400); // Wait for scroll to finish
+        } else {
+            updateTooltipPosition();
+        }
+    }, 100);
+});
+
+onMounted(() => {
+    // Animate rings using GSAP
+    gsap.to(animatedSR, {
+        value: Math.max(0, Math.min(100, savingsRate.value)),
+        duration: 1.5,
+        ease: 'expo.out',
+        delay: 0.2
+    });
+
+    gsap.to(animatedHS, {
+        value: healthScore.value,
+        duration: 1.5,
+        ease: 'expo.out',
+        delay: 0.4
+    });
+
+    window.addEventListener('resize', updateTooltipPosition);
+    
+    // Sequence: Show onboarding only if welcome modal is closed and user is not onboarded
+    if (!showWelcomeModal.value && !props.user.is_onboarded) {
+        showOnboarding.value = true;
+        updateTooltipPosition();
+    }
+});
+
+const startOnboardingFromWelcome = () => {
+    showWelcomeModal.value = false;
+    if (!props.user.is_onboarded) {
+        showOnboarding.value = true;
+        setTimeout(updateTooltipPosition, 300);
+    }
+};
+
+const highlightClass = (targetStep: number) => {
+    if (!showOnboarding.value || onboardingStep.value !== targetStep) return '';
+    return `onboarding-target-${targetStep} relative z-[100] ring-4 ring-primary ring-offset-4 ring-offset-background rounded-[20px] transition-all duration-500 shadow-[0_0_50px_rgba(var(--primary),0.3)] bg-background scale-[1.02] pointer-events-auto`;
+};
+
+// Remove getTooltipPosition computed as we now use tooltipStyle
 const showWelcomeModal = useStorage('show-welcome-modal-v1', true, sessionStorage);
 const showRecurringModal = ref(false);
 const showQuickAddModal = ref(false);
@@ -184,7 +296,102 @@ const formatDate = (dateStr: string) => {
 <template>
 <Head title="Dashboard" />
 <AppLayout :breadcrumbs="breadcrumbs">
-<div class="flex h-full flex-1 flex-col gap-5 md:gap-6 overflow-x-auto p-4 sm:p-8 pb-24 md:pb-8">
+<div class="flex h-full flex-1 flex-col gap-5 md:gap-6 overflow-x-auto p-4 sm:p-8 pb-24 md:pb-8 relative">
+
+<!-- Onboarding Backdrop -->
+<Transition
+    enter-active-class="transition-opacity duration-500"
+    enter-from-class="opacity-0"
+    leave-active-class="transition-opacity duration-500"
+    leave-to-class="opacity-0"
+>
+    <div v-if="showOnboarding && onboardingStep > 0" class="fixed inset-0 bg-black/80 backdrop-blur-[2px] z-[50] pointer-events-auto" @click="completeOnboarding"></div>
+</Transition>
+
+<!-- Onboarding Overlay (Non-modal) -->
+<Teleport to="body">
+    <Transition
+        enter-active-class="transition duration-300 ease-out"
+        enter-from-class="opacity-0 scale-95"
+        leave-active-class="transition duration-200 ease-in"
+        leave-to-class="opacity-0 scale-95"
+    >
+        <div v-if="showOnboarding" 
+            :style="tooltipStyle"
+            class="fixed z-[200] w-full transition-all duration-500 ease-in-out px-6 sm:px-0"
+        >
+            <div class="bg-white text-black shadow-[0_20px_50px_rgba(0,0,0,0.3)] rounded-xl overflow-visible mx-auto relative p-6 max-w-full">
+                <!-- Arrow/Beak -->
+                <div v-if="onboardingStep !== 1 && onboardingStep !== 5"
+                    :class="[
+                        'absolute left-1/2 -translate-x-1/2 w-4 h-4 bg-white rotate-45 transition-all duration-500',
+                        tooltipSide === 'top' ? '-top-2' : '-bottom-2'
+                    ]"
+                ></div>
+
+                <!-- Close button -->
+                <button @click="completeOnboarding" class="absolute top-4 right-4 text-black/40 hover:text-black transition-colors">
+                    <X class="w-4 h-4" />
+                </button>
+
+                <div class="text-left">
+                    <!-- Step 1: Welcome -->
+                    <div v-if="onboardingStep === 1" class="animate-fade-up">
+                        <h2 class="text-xl font-bold tracking-tight mb-2 pr-6">Welcome to Dashboard</h2>
+                        <p class="text-sm text-black/70 leading-relaxed">
+                            Let's take a quick tour of your new financial hub.
+                        </p>
+                    </div>
+
+                    <!-- Step 2: Monthly Performance -->
+                    <div v-if="onboardingStep === 2" class="animate-fade-up">
+                        <h2 class="text-xl font-bold tracking-tight mb-2 pr-6">Live Stats</h2>
+                        <p class="text-sm text-black/70 leading-relaxed">
+                            Track your real-time performance and financial metrics.
+                        </p>
+                    </div>
+
+                    <!-- Step 3: Manage Wallets -->
+                    <div v-if="onboardingStep === 3" class="animate-fade-up">
+                        <h2 class="text-xl font-bold tracking-tight mb-2 pr-6">Account Wallets</h2>
+                        <p class="text-sm text-black/70 leading-relaxed">
+                            Connect and manage your GCash, Maya, and Bank accounts.
+                        </p>
+                    </div>
+
+                    <!-- Step 4: Financial Health -->
+                    <div v-if="onboardingStep === 4" class="animate-fade-up">
+                        <h2 class="text-xl font-bold tracking-tight mb-2 pr-6">Health Score</h2>
+                        <p class="text-sm text-black/70 leading-relaxed">
+                            See your financial wellbeing based on your spending habits.
+                        </p>
+                    </div>
+
+                    <!-- Step 5: Ready to Go -->
+                    <div v-if="onboardingStep === 5" class="animate-fade-up">
+                        <h2 class="text-xl font-bold tracking-tight mb-2 pr-6">You're All Set!</h2>
+                        <p class="text-sm text-black/70 leading-relaxed">
+                            Ready to start tracking? Click Get Started to begin.
+                        </p>
+                    </div>
+
+                    <div class="mt-8 flex items-center justify-between">
+                        <span class="text-xs font-bold text-black/40">{{ onboardingStep }} of {{ totalOnboardingSteps }}</span>
+                        
+                        <div class="flex gap-2">
+                            <button v-if="onboardingStep > 1" @click="prevOnboardingStep" class="px-4 py-2 rounded-lg border border-black/10 text-xs font-bold hover:bg-black/5 transition-all">
+                                ← Previous
+                            </button>
+                            <Button @click="nextOnboardingStep" size="sm" class="px-6 py-2 rounded-lg bg-black text-white text-xs font-bold hover:bg-black/90 transition-all border-none">
+                                {{ onboardingStep === totalOnboardingSteps ? 'Get Started' : 'Next →' }}
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </Transition>
+</Teleport>
 
 <!-- Header + Controls -->
 <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between animate-fade-up stagger-1 mb-2">
@@ -198,7 +405,7 @@ const formatDate = (dateStr: string) => {
 </div>
 
 <!-- Stat Cards -->
-<div class="grid grid-cols-2 gap-3 md:grid-cols-4 lg:gap-4">
+<div :class="['grid grid-cols-2 gap-3 md:grid-cols-4 lg:gap-4', highlightClass(2), showOnboarding && onboardingStep === 2 ? 'relative z-[100]' : '']">
     <div v-for="(stat, idx) in displayStats" :key="stat.label"
         :class="['group p-4 rounded-[20px] overflow-hidden relative border border-border/40 bg-card/20 premium-hover cursor-default animate-fade-up', `stagger-${idx+1}`, stat.tint]">
         <div class="absolute top-0 right-0 w-20 h-20 opacity-[0.03] pointer-events-none group-hover:scale-110 transition-transform duration-500">
@@ -219,7 +426,7 @@ const formatDate = (dateStr: string) => {
 </div>
 
 <!-- Wallet Cards Strip -->
-<div v-if="accounts?.length" class="animate-fade-up stagger-3 mt-1">
+<div v-if="accounts?.length" :class="['animate-fade-up stagger-3 mt-1 p-2', highlightClass(3), showOnboarding && onboardingStep === 3 ? 'relative z-[100]' : '']">
     <div class="flex items-center justify-between mb-2">
         <p class="text-[10px] font-bold tracking-widest uppercase text-muted-foreground/80 font-sans">My Wallets</p>
         <a href="/wallets" class="text-[10px] font-semibold text-primary hover:underline">View all</a>
@@ -371,7 +578,7 @@ const formatDate = (dateStr: string) => {
 </div>
 
 <!-- Rings Row: Savings + Health + Year Progress -->
-<div class="grid grid-cols-2 lg:grid-cols-3 gap-3 animate-fade-up stagger-5">
+<div :class="['grid grid-cols-2 lg:grid-cols-3 gap-3 animate-fade-up stagger-5', showOnboarding && onboardingStep === 4 ? 'relative z-[100]' : '']">
     <!-- Savings Rate Ring -->
     <div class="surface-card p-4 flex flex-col items-center justify-center">
         <p class="text-[10px] font-semibold tracking-[0.08em] uppercase text-muted-foreground mb-3 font-sans">Savings Rate</p>
@@ -388,7 +595,7 @@ const formatDate = (dateStr: string) => {
     </div>
 
     <!-- Health Score Gauge -->
-    <div class="surface-card p-4 flex flex-col items-center justify-center">
+    <div :class="['surface-card p-4 flex flex-col items-center justify-center', highlightClass(4)]">
         <p class="text-[10px] font-semibold tracking-[0.08em] uppercase text-muted-foreground mb-3 font-sans">Financial Health</p>
         <div class="relative w-24 h-24">
             <svg class="w-full h-full -rotate-90" viewBox="0 0 120 120">
@@ -615,7 +822,7 @@ const formatDate = (dateStr: string) => {
                 </div>
 
                 <DialogFooter class="mt-6 sm:mt-8 w-full sm:justify-center">
-                    <button @click="showWelcomeModal = false" class="w-full sm:w-auto px-8 sm:px-10 py-3 sm:py-4 rounded-[18px] sm:rounded-[20px] bg-primary text-primary-foreground font-bold text-sm sm:text-base shadow-lg shadow-primary/20 hover:shadow-primary/30 hover:scale-[1.02] active:scale-[0.98] transition-all">
+                    <button @click="startOnboardingFromWelcome" class="w-full sm:w-auto px-8 sm:px-10 py-3 sm:py-4 rounded-[18px] sm:rounded-[20px] bg-primary text-primary-foreground font-bold text-sm sm:text-base shadow-lg shadow-primary/20 hover:shadow-primary/30 hover:scale-[1.02] active:scale-[0.98] transition-all">
                         Get Started
                     </button>
                 </DialogFooter>

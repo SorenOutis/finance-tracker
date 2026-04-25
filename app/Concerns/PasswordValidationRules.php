@@ -14,7 +14,7 @@ trait PasswordValidationRules
      */
     protected function passwordRules(): array
     {
-        return ['required', 'string', 'confirmed'];
+        return ['required', 'string', 'numeric', 'digits:6', 'confirmed'];
     }
 
     /**

@@ -6,138 +6,79 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
-import AuthBase from '@/layouts/AuthLayout.vue';
-import LoadingScreen from '@/components/LoadingScreen.vue';
 import { login } from '@/routes';
-import { store } from '@/routes/register';
-import { ref, computed } from 'vue';
-import { ArrowRight, ArrowLeft, Check, Smartphone, Lock, User, Mail, Sparkles, Wallet, Coins } from 'lucide-vue-next';
+import { ref, computed, watch } from 'vue';
+import { 
+    ArrowRight, 
+    ArrowLeft, 
+    Check, 
+    User, 
+    Mail, 
+    Lock, 
+    Wallet, 
+    Coins, 
+    Globe,
+    Smartphone
+} from 'lucide-vue-next';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 
 const step = ref(1);
-const totalSteps = 5;
-const authMethod = ref<'pin' | 'pattern' | null>(null);
+const totalSteps = 3;
+const pinSetupStep = ref<'create' | 'confirm'>('create');
+const pinError = ref('');
 
 const form = useForm({
     name: '',
     email: '',
-    password: '',
+    password: '', // This will store the 6-digit PIN
     password_confirmation: '',
     account_name: 'Main Wallet',
     initial_balance: '0',
+    currency: 'PHP',
 });
 
-const pin = ref(['', '', '', '', '', '']);
-const confirmPin = ref(['', '', '', '', '', '']);
-
-// Pattern state
-const pattern = ref<number[]>([]);
-const isDrawing = ref(false);
-const isConfirming = ref(false);
-const currentPos = ref({ x: 0, y: 0 });
-const patternContainer = ref<HTMLElement | null>(null);
-const patternError = ref('');
-
-const dots = computed(() => {
-    const d = [];
-    for (let i = 0; i < 3; i++) {
-        for (let j = 0; j < 3; j++) {
-            d.push({ id: i * 3 + j, x: j * 100 + 50, y: i * 100 + 50 });
-        }
-    }
-    return d;
-});
-
-const startDrawing = (e: MouseEvent | TouchEvent) => {
-    e.preventDefault();
-    isDrawing.value = true;
-    patternError.value = '';
-    pattern.value = [];
-    updateCurrentPos(e);
-    handleMove(e);
-};
-
-const handleMove = (e: MouseEvent | TouchEvent) => {
-    if (!isDrawing.value) return;
-    updateCurrentPos(e);
-    
-    dots.value.forEach(dot => {
-        const dx = currentPos.value.x - dot.x;
-        const dy = currentPos.value.y - dot.y;
-        const dist = Math.sqrt(dx * dx + dy * dy);
-        if (dist < 30 && !pattern.value.includes(dot.id)) {
-            pattern.value.push(dot.id);
-            // Haptic feedback if available
-            if ('vibrate' in navigator) navigator.vibrate(10);
-        }
-    });
-};
-
-const stopDrawing = () => {
-    if (!isDrawing.value) return;
-    isDrawing.value = false;
-    
-    if (pattern.value.length < 3) {
-        pattern.value = [];
-        patternError.value = 'Pattern must connect at least 3 dots';
-        return;
-    }
-    
-    const patternStr = pattern.value.join('');
-    
-    if (!isConfirming.value) {
-        form.password = patternStr;
-        isConfirming.value = true;
-        pattern.value = [];
-    } else {
-        form.password_confirmation = patternStr;
-        if (form.password !== form.password_confirmation) {
-            isConfirming.value = false;
-            form.password = '';
-            form.password_confirmation = '';
-            pattern.value = [];
-            patternError.value = 'Patterns do not match. Please try again.';
-        }
-    }
-};
-
-const updateCurrentPos = (e: MouseEvent | TouchEvent) => {
-    const rect = patternContainer.value?.getBoundingClientRect();
-    if (!rect) return;
-    
-    const clientX = 'touches' in e ? e.touches[0].clientX : (e as MouseEvent).clientX;
-    const clientY = 'touches' in e ? e.touches[0].clientY : (e as MouseEvent).clientY;
-    
-    currentPos.value = {
-        x: (clientX - rect.left) * (300 / rect.width),
-        y: (clientY - rect.top) * (300 / rect.height)
-    };
-};
+const pinDigits = ref(['', '', '', '', '', '']);
+const confirmPinDigits = ref(['', '', '', '', '', '']);
 
 const nextStep = () => {
-    if (step.value === 2) {
+    if (step.value === 1) {
         if (!form.name || !form.email) return;
+        step.value = 2;
+    } else if (step.value === 2) {
+        if (pinSetupStep.value === 'create') {
+            if (pinDigits.value.join('').length === 6) {
+                pinSetupStep.value = 'confirm';
+                // Focus first digit of confirm pin
+                setTimeout(() => document.getElementById('confirm-pin-0')?.focus(), 100);
+            }
+        } else {
+            if (isStep2Valid.value) {
+                form.password = pinDigits.value.join('');
+                form.password_confirmation = confirmPinDigits.value.join('');
+                step.value = 3;
+            }
+        }
     }
-    if (step.value < totalSteps) step.value++;
-};
-
-const selectAuthMethod = (method: 'pin' | 'pattern') => {
-    authMethod.value = method;
-    form.password = '';
-    form.password_confirmation = '';
-    isConfirming.value = false;
-    pattern.value = [];
-    patternError.value = '';
-    pin.value = ['', '', '', '', '', ''];
-    confirmPin.value = ['', '', '', '', '', ''];
-    nextStep();
 };
 
 const prevStep = () => {
-    if (step.value > 1) step.value--;
+    if (step.value === 2 && pinSetupStep.value === 'confirm') {
+        pinSetupStep.value = 'create';
+        confirmPinDigits.value = ['', '', '', '', '', ''];
+        setTimeout(() => document.getElementById('pin-0')?.focus(), 100);
+    } else if (step.value > 1) {
+        step.value--;
+    }
 };
 
 const updatePin = (index: number, val: string, isConfirm: boolean = false) => {
-    const target = isConfirm ? confirmPin : pin;
+    const target = isConfirm ? confirmPinDigits : pinDigits;
     if (val.length > 1) val = val[0];
     if (!/^\d*$/.test(val)) return;
     
@@ -147,13 +88,26 @@ const updatePin = (index: number, val: string, isConfirm: boolean = false) => {
         const nextInput = document.getElementById(`${isConfirm ? 'confirm-' : ''}pin-${index + 1}`);
         nextInput?.focus();
     }
-    
-    form.password = pin.value.join('');
-    form.password_confirmation = confirmPin.value.join('');
+
+    // Auto-advance if 6 digits are entered
+    if (target.value.every(d => d !== '')) {
+        if (!isConfirm) {
+            setTimeout(nextStep, 300);
+        } else {
+            if (pinDigits.value.join('') !== confirmPinDigits.value.join('')) {
+                pinError.value = "PINs don't match. Try again.";
+                confirmPinDigits.value = ['', '', '', '', '', ''];
+                setTimeout(() => document.getElementById('confirm-pin-0')?.focus(), 100);
+            } else {
+                pinError.value = '';
+                setTimeout(nextStep, 300);
+            }
+        }
+    }
 };
 
 const handleBackspace = (index: number, isConfirm: boolean = false) => {
-    const target = isConfirm ? confirmPin : pin;
+    const target = isConfirm ? confirmPinDigits : pinDigits;
     if (!target.value[index] && index > 0) {
         const prevInput = document.getElementById(`${isConfirm ? 'confirm-' : ''}pin-${index - 1}`);
         prevInput?.focus();
@@ -161,10 +115,6 @@ const handleBackspace = (index: number, isConfirm: boolean = false) => {
 };
 
 const submit = () => {
-    if (form.password !== form.password_confirmation) {
-        alert('Security codes do not match');
-        return;
-    }
     form.post('/register', {
         onStart: () => {
             sessionStorage.setItem('has-seen-loading', 'false');
@@ -178,6 +128,25 @@ const submit = () => {
         onFinish: () => form.reset('password', 'password_confirmation'),
     });
 };
+
+const currencies = [
+    { label: 'Philippine Peso (₱)', value: 'PHP' },
+    { label: 'US Dollar ($)', value: 'USD' },
+    { label: 'Euro (€)', value: 'EUR' },
+    { label: 'Japanese Yen (¥)', value: 'JPY' },
+    { label: 'British Pound (£)', value: 'GBP' },
+];
+
+const isStep2Valid = computed(() => {
+    const pin = pinDigits.value.join('');
+    const confirmPin = confirmPinDigits.value.join('');
+    return pin.length === 6 && confirmPin.length === 6 && pin === confirmPin;
+});
+
+// Watch for changes in pinDigits to clear errors
+watch([pinDigits, confirmPinDigits], () => {
+    if (pinError.value) pinError.value = '';
+}, { deep: true });
 </script>
 
 <template>
@@ -186,7 +155,7 @@ const submit = () => {
         <div class="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary/10 rounded-full blur-[120px] pointer-events-none"></div>
         <div class="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-primary/5 rounded-full blur-[120px] pointer-events-none"></div>
 
-        <Head title="Welcome" />
+        <Head title="Register" />
 
         <div class="w-full max-w-[400px] z-10">
             <!-- Progress Dots -->
@@ -197,29 +166,10 @@ const submit = () => {
                 </div>
             </div>
 
-            <!-- Step 1: Welcome -->
-            <div v-if="step === 1" class="animate-fade-up flex flex-col items-center text-center">
-                <div class="w-20 h-20 bg-primary/10 rounded-[24px] flex items-center justify-center mb-8">
-                    <Sparkles class="w-10 h-10 text-primary" />
-                </div>
-                <h1 class="text-4xl font-black tracking-tight mb-4">Welcome to Finance Tracker</h1>
-                <p class="text-muted-foreground text-lg mb-12 leading-relaxed">
-                    The simplest way to manage your wallets, bills, and monthly income in one place.
-                </p>
-                <Button @click="nextStep" size="lg" class="w-full h-14 rounded-2xl text-lg font-bold shadow-lg shadow-primary/20">
-                    Get Started
-                    <ArrowRight class="ml-2 w-5 h-5" />
-                </Button>
-                <p class="mt-8 text-sm text-muted-foreground">
-                    Already have an account? 
-                    <TextLink :href="login()" class="text-primary font-bold hover:underline">Log in</TextLink>
-                </p>
-            </div>
-
-            <!-- Step 2: Information -->
-            <div v-if="step === 2" class="animate-fade-up">
-                <h2 class="text-3xl font-black tracking-tight mb-2">About You</h2>
-                <p class="text-muted-foreground mb-8">Tell us a bit about yourself to get started.</p>
+            <!-- Step 1: Basic Information -->
+            <div v-if="step === 1" class="animate-fade-up">
+                <h1 class="text-4xl font-black tracking-tight mb-2">Create Account</h1>
+                <p class="text-muted-foreground mb-8">Tell us who you are to get started.</p>
                 
                 <div class="grid gap-5">
                     <div class="grid gap-2">
@@ -239,172 +189,106 @@ const submit = () => {
                 </div>
 
                 <div class="flex flex-col gap-4 mt-12">
-                    <Button @click="nextStep" :disabled="!form.name || !form.email" size="lg" class="w-full h-14 rounded-2xl text-lg font-bold">
+                    <Button @click="nextStep" :disabled="!form.name || !form.email" size="lg" class="w-full h-14 rounded-2xl text-lg font-bold shadow-lg shadow-primary/20">
                         Continue
                         <ArrowRight class="ml-2 w-5 h-5" />
                     </Button>
-                    <button @click="prevStep" class="text-sm font-bold text-muted-foreground hover:text-foreground py-2 transition-colors">
-                        Go Back
-                    </button>
+                    <p class="text-center text-sm text-muted-foreground">
+                        Already have an account? 
+                        <TextLink :href="login()" class="text-primary font-bold hover:underline">Log in</TextLink>
+                    </p>
                 </div>
             </div>
 
-            <!-- Step 3: Choose Auth Method -->
-            <div v-if="step === 3" class="animate-fade-up">
-                <h2 class="text-3xl font-black tracking-tight mb-2">Security Method</h2>
-                <p class="text-muted-foreground mb-8">Choose how you want to secure your account.</p>
-
-                <div class="grid gap-4">
-                    <button @click="selectAuthMethod('pin')" class="flex items-center gap-4 p-5 rounded-[24px] bg-muted/30 border-2 border-transparent hover:border-primary/50 hover:bg-primary/5 transition-all text-left group">
-                        <div class="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
-                            <Smartphone class="w-6 h-6" />
-                        </div>
-                        <div>
-                            <p class="font-black text-lg">Security PIN</p>
-                            <p class="text-xs text-muted-foreground">Use a 6-digit numeric code</p>
-                        </div>
-                    </button>
-
-                    <button @click="selectAuthMethod('pattern')" class="flex items-center gap-4 p-5 rounded-[24px] bg-muted/30 border-2 border-transparent hover:border-primary/50 hover:bg-primary/5 transition-all text-left group">
-                        <div class="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
-                            <Lock class="w-6 h-6" />
-                        </div>
-                        <div>
-                            <p class="font-black text-lg">Lock Pattern</p>
-                            <p class="text-xs text-muted-foreground">Draw a custom security pattern</p>
-                        </div>
-                    </button>
-                </div>
-
-                <div class="flex flex-col gap-4 mt-12">
-                    <button @click="prevStep" class="text-sm font-bold text-muted-foreground hover:text-foreground py-2 transition-colors">
-                        Go Back
-                    </button>
-                </div>
-            </div>
-
-            <!-- Step 4: Security Setup -->
-            <div v-if="step === 4" class="animate-fade-up">
-                <div v-if="authMethod === 'pin'">
-                    <h2 class="text-3xl font-black tracking-tight mb-2">Create PIN</h2>
-                    <p class="text-muted-foreground mb-8">Set a 6-digit PIN to secure your data.</p>
-                    <div class="space-y-8">
-                        <div>
-                            <Label class="text-xs font-bold uppercase tracking-widest text-muted-foreground ml-1 block mb-3">New PIN</Label>
-                            <div class="flex justify-between gap-2">
-                                <input v-for="(v, i) in pin" :key="i" :id="`pin-${i}`" 
-                                    v-model="pin[i]" type="password" inputmode="numeric" maxlength="1"
-                                    @input="e => updatePin(i, (e.target as HTMLInputElement).value, false)"
-                                    @keydown.backspace="handleBackspace(i, false)"
-                                    class="w-12 h-14 text-center text-2xl font-black rounded-xl bg-muted/30 border-2 border-transparent focus:border-primary focus:bg-background transition-all outline-none" />
-                            </div>
-                        </div>
-
-                        <div>
-                            <Label class="text-xs font-bold uppercase tracking-widest text-muted-foreground ml-1 block mb-3">Confirm PIN</Label>
-                            <div class="flex justify-between gap-2">
-                                <input v-for="(v, i) in confirmPin" :key="i" :id="`confirm-pin-${i}`" 
-                                    v-model="confirmPin[i]" type="password" inputmode="numeric" maxlength="1"
-                                    @input="e => updatePin(i, (e.target as HTMLInputElement).value, true)"
-                                    @keydown.backspace="handleBackspace(i, true)"
-                                    class="w-12 h-14 text-center text-2xl font-black rounded-xl bg-muted/30 border-2 border-transparent focus:border-primary focus:bg-background transition-all outline-none" />
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div v-if="authMethod === 'pattern'">
-                    <h2 class="text-3xl font-black tracking-tight mb-2">{{ isConfirming ? 'Confirm Pattern' : 'Create Pattern' }}</h2>
-                    <p class="text-muted-foreground mb-8">{{ isConfirming ? 'Draw your pattern again to confirm.' : 'Draw your security pattern below.' }}</p>
-                    
-                    <div class="relative w-[300px] h-[300px] mx-auto bg-muted/10 rounded-[32px] overflow-hidden touch-none"
-                         ref="patternContainer"
-                         @mousedown="startDrawing"
-                         @mousemove="handleMove"
-                         @mouseup="stopDrawing"
-                         @mouseleave="stopDrawing"
-                         @touchstart="startDrawing"
-                         @touchmove="handleMove"
-                         @touchend="stopDrawing">
-                        
-                        <svg class="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 300 300">
-                            <!-- Lines connecting selected dots -->
-                            <polyline 
-                                :points="pattern.map(id => `${dots[id].x},${dots[id].y}`).join(' ')" 
-                                fill="none" 
-                                class="stroke-primary" 
-                                stroke-width="4" 
-                                stroke-linecap="round" 
-                                stroke-linejoin="round" 
-                            />
-                            <!-- Line from last dot to current cursor -->
-                            <line v-if="isDrawing && pattern.length > 0"
-                                  :x1="dots[pattern[pattern.length - 1]].x"
-                                  :y1="dots[pattern[pattern.length - 1]].y"
-                                  :x2="currentPos.x"
-                                  :y2="currentPos.y"
-                                  class="stroke-primary" 
-                                  stroke-width="4" 
-                                  stroke-linecap="round" />
-                        </svg>
-
-                        <!-- Dots -->
-                        <div v-for="dot in dots" :key="dot.id"
-                             class="absolute rounded-full transition-all duration-200"
-                             :class="pattern.includes(dot.id) ? 'w-4 h-4 bg-primary' : 'w-2 h-2 bg-muted-foreground/30'"
-                             :style="{ left: `${dot.x}px`, top: `${dot.y}px`, transform: 'translate(-50%, -50%)' }">
-                            <div v-if="pattern.includes(dot.id)" class="absolute inset-0 rounded-full animate-ping bg-primary/20" style="width: 300%; height: 300%; left: -100%; top: -100%;"></div>
-                        </div>
-                    </div>
-                    
-                    <p v-if="patternError" class="text-destructive text-sm mt-4 text-center font-bold">{{ patternError }}</p>
-                </div>
-
-                <div class="flex flex-col gap-4 mt-12">
-                    <Button @click="nextStep" :disabled="!form.password || form.password !== form.password_confirmation || (authMethod === 'pin' && form.password.length !== 6)" size="lg" class="w-full h-14 rounded-2xl text-lg font-bold">
-                        Continue
-                        <ArrowRight class="ml-2 w-5 h-5" />
-                    </Button>
-                    <button @click="prevStep" class="text-sm font-bold text-muted-foreground hover:text-foreground py-2 transition-colors">
-                        Go Back
-                    </button>
+            <!-- Step 2: PIN Setup (Sequential) -->
+            <div v-if="step === 2" class="animate-fade-up">
+                <div class="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mb-6 mx-auto">
+                    <Smartphone class="w-8 h-8 text-primary" />
                 </div>
                 
-                <div v-if="form.errors.password" class="mt-4 text-center">
-                    <InputError :message="form.errors.password" />
+                <div v-if="pinSetupStep === 'create'" class="text-center animate-in fade-in slide-in-from-right-4 duration-300">
+                    <h2 class="text-3xl font-black tracking-tight mb-2">Set Your PIN</h2>
+                    <p class="text-muted-foreground mb-8">Create a 6-digit security PIN for your account.</p>
+                    
+                    <div class="flex justify-between gap-2 mb-4">
+                        <input v-for="(v, i) in pinDigits" :key="i" :id="`pin-${i}`" 
+                            v-model="pinDigits[i]" type="password" inputmode="numeric" maxlength="1"
+                            @input="e => updatePin(i, (e.target as HTMLInputElement).value, false)"
+                            @keydown.backspace="handleBackspace(i, false)"
+                            class="w-12 h-14 text-center text-2xl font-black rounded-xl bg-muted/30 border-2 border-transparent focus:border-primary focus:bg-background transition-all outline-none" />
+                    </div>
+                </div>
+
+                <div v-else class="text-center animate-in fade-in slide-in-from-right-4 duration-300">
+                    <h2 class="text-3xl font-black tracking-tight mb-2">Confirm PIN</h2>
+                    <p class="text-muted-foreground mb-8">Please re-enter your PIN to confirm.</p>
+                    
+                    <div class="flex justify-between gap-2 mb-4">
+                        <input v-for="(v, i) in confirmPinDigits" :key="i" :id="`confirm-pin-${i}`" 
+                            v-model="confirmPinDigits[i]" type="password" inputmode="numeric" maxlength="1"
+                            @input="e => updatePin(i, (e.target as HTMLInputElement).value, true)"
+                            @keydown.backspace="handleBackspace(i, true)"
+                            class="w-12 h-14 text-center text-2xl font-black rounded-xl bg-muted/30 border-2 border-transparent focus:border-primary focus:bg-background transition-all outline-none" />
+                    </div>
+                    <p v-if="pinError" class="text-destructive text-sm font-bold animate-shake">{{ pinError }}</p>
+                </div>
+
+                <div class="flex flex-col gap-4 mt-12">
+                    <button @click="prevStep" class="text-sm font-bold text-muted-foreground hover:text-foreground py-2 transition-colors flex items-center justify-center gap-2">
+                        <ArrowLeft class="w-4 h-4" />
+                        Go Back
+                    </button>
                 </div>
             </div>
 
-            <!-- Step 5: Financial Onboarding -->
-            <div v-if="step === 5" class="animate-fade-up">
+            <!-- Step 3: Wallet Setup -->
+            <div v-if="step === 3" class="animate-fade-up">
                 <h2 class="text-3xl font-black tracking-tight mb-2">Almost There!</h2>
-                <p class="text-muted-foreground mb-8">Let's set up your first wallet to start tracking.</p>
+                <p class="text-muted-foreground mb-8">Set up your first wallet to start tracking your finances.</p>
                 
                 <div class="grid gap-5">
                     <div class="grid gap-2">
                         <Label class="text-xs font-bold uppercase tracking-widest text-muted-foreground ml-1">Wallet Name</Label>
                         <div class="relative">
                             <Wallet class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                            <Input v-model="form.account_name" class="h-12 pl-11 rounded-xl bg-muted/30 border-transparent focus:bg-background transition-all" placeholder="e.g., Cash, Main Bank" />
+                            <Input v-model="form.account_name" class="h-12 pl-11 rounded-xl bg-muted/30 border-transparent focus:bg-background transition-all" placeholder="e.g., Cash, GCash, Bank" />
                         </div>
                     </div>
+                    
                     <div class="grid gap-2">
-                        <Label class="text-xs font-bold uppercase tracking-widest text-muted-foreground ml-1">Initial Balance (₱)</Label>
+                        <Label class="text-xs font-bold uppercase tracking-widest text-muted-foreground ml-1">Currency</Label>
+                        <div class="relative">
+                            <Globe class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground z-10" />
+                            <Select v-model="form.currency">
+                                <SelectTrigger class="h-12 pl-11 rounded-xl bg-muted/30 border-transparent focus:bg-background transition-all w-full">
+                                    <SelectValue placeholder="Select currency" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem v-for="c in currencies" :key="c.value" :value="c.value">
+                                        {{ c.label }}
+                                    </SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    </div>
+
+                    <div class="grid gap-2">
+                        <Label class="text-xs font-bold uppercase tracking-widest text-muted-foreground ml-1">Initial Balance</Label>
                         <div class="relative">
                             <Coins class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                             <Input v-model="form.initial_balance" type="number" step="0.01" class="h-12 pl-11 rounded-xl bg-muted/30 border-transparent focus:bg-background transition-all" placeholder="0.00" />
                         </div>
-                        <p class="text-[10px] text-muted-foreground ml-1">You can always change this later.</p>
                     </div>
                 </div>
 
                 <div class="flex flex-col gap-4 mt-12">
                     <Button @click="submit" :disabled="!form.account_name || form.processing" size="lg" class="w-full h-14 rounded-2xl text-lg font-bold shadow-lg shadow-primary/20">
                         <Spinner v-if="form.processing" class="mr-2" />
-                        Complete Setup
+                        Complete Registration
                         <Check v-if="!form.processing" class="ml-2 w-5 h-5" />
                     </Button>
-                    <button @click="prevStep" class="text-sm font-bold text-muted-foreground hover:text-foreground py-2 transition-colors">
+                    <button @click="prevStep" class="text-sm font-bold text-muted-foreground hover:text-foreground py-2 transition-colors flex items-center justify-center gap-2">
+                        <ArrowLeft class="w-4 h-4" />
                         Go Back
                     </button>
                 </div>
@@ -431,5 +315,16 @@ const submit = () => {
         opacity: 1;
         transform: translateY(0);
     }
+}
+
+.animate-shake {
+    animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+}
+
+@keyframes shake {
+    10%, 90% { transform: translate3d(-1px, 0, 0); }
+    20%, 80% { transform: translate3d(2px, 0, 0); }
+    30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+    40%, 60% { transform: translate3d(4px, 0, 0); }
 }
 </style>

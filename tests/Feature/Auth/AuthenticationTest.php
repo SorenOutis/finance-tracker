@@ -25,7 +25,7 @@ class AuthenticationTest extends TestCase
 
         $response = $this->post(route('login.store'), [
             'email' => $user->email,
-            'password' => 'password',
+            'password' => '123456',
         ]);
 
         $this->assertAuthenticated();
@@ -53,7 +53,7 @@ class AuthenticationTest extends TestCase
 
         $response = $this->post(route('login'), [
             'email' => $user->email,
-            'password' => 'password',
+            'password' => '123456',
         ]);
 
         $response->assertRedirect(route('two-factor.login'));
