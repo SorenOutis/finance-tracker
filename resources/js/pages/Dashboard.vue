@@ -296,7 +296,7 @@ const formatDate = (dateStr: string) => {
 <template>
 <Head title="Dashboard" />
 <AppLayout :breadcrumbs="breadcrumbs">
-<div class="flex h-full flex-1 flex-col gap-5 md:gap-6 overflow-x-auto p-4 sm:p-8 pb-24 md:pb-8 relative">
+<div class="flex h-full flex-1 flex-col gap-4 md:gap-6 overflow-x-auto p-3 sm:p-8 pb-24 md:pb-8 relative">
 
 <!-- Onboarding Backdrop -->
 <Transition
@@ -405,172 +405,172 @@ const formatDate = (dateStr: string) => {
 </div>
 
 <!-- Stat Cards -->
-<div :class="['grid grid-cols-2 gap-3 md:grid-cols-4 lg:gap-4', highlightClass(2), showOnboarding && onboardingStep === 2 ? 'relative z-[100]' : '']">
+<div :class="['grid grid-cols-2 gap-2.5 md:grid-cols-4 lg:gap-4', highlightClass(2), showOnboarding && onboardingStep === 2 ? 'relative z-[100]' : '']">
     <div v-for="(stat, idx) in displayStats" :key="stat.label"
-        :class="['group p-4 rounded-[20px] overflow-hidden relative border border-border/40 bg-card/20 premium-hover cursor-default animate-fade-up', `stagger-${idx+1}`, stat.tint]">
-        <div class="absolute top-0 right-0 w-20 h-20 opacity-[0.03] pointer-events-none group-hover:scale-110 transition-transform duration-500">
-            <component :is="stat.icon" class="size-20 -translate-y-4 translate-x-4" />
+        :class="['group p-3.5 rounded-[18px] sm:p-4 sm:rounded-[20px] overflow-hidden relative border border-border/40 bg-card/20 premium-hover cursor-default animate-fade-up', `stagger-${idx+1}`, stat.tint]">
+        <div class="absolute top-0 right-0 w-16 h-16 sm:w-20 sm:h-20 opacity-[0.03] pointer-events-none group-hover:scale-110 transition-transform duration-500">
+            <component :is="stat.icon" class="size-16 sm:size-20 -translate-y-4 translate-x-4" />
         </div>
-        <div class="flex items-center justify-between mb-1.5">
-            <p class="text-[9px] font-bold tracking-widest uppercase text-muted-foreground/80 font-sans">{{ stat.label }}</p>
-            <span v-if="stat.change != null" :class="['inline-flex items-center gap-0.5 rounded-full px-1.2 py-0.3 text-[8px] font-bold',
+        <div class="flex items-center justify-between mb-1">
+            <p class="text-[8px] sm:text-[9px] font-bold tracking-widest uppercase text-muted-foreground/80 font-sans">{{ stat.label }}</p>
+            <span v-if="stat.change != null" :class="['inline-flex items-center gap-0.5 rounded-full px-1.2 py-0.3 text-[7px] sm:text-[8px] font-bold',
                 stat.changeInverted ? (stat.change <= 0 ? 'bg-[--fin-gain]/12 text-[--fin-gain]' : 'bg-[--fin-loss]/12 text-[--fin-loss]') : (stat.change >= 0 ? 'bg-[--fin-gain]/12 text-[--fin-gain]' : 'bg-[--fin-loss]/12 text-[--fin-loss]')]">
                 <component :is="stat.changeInverted ? (stat.change <= 0 ? ArrowDownRight : ArrowUpRight) : (stat.change >= 0 ? ArrowUpRight : ArrowDownRight)" class="h-2 w-2" />
                 {{ Math.abs(stat.change).toFixed(1) }}%
             </span>
         </div>
-        <div class="pt-1">
-            <p :class="['text-xl sm:text-2xl font-black font-display tracking-tight leading-none', stat.colorClass || 'text-foreground']">{{ stat.value }}</p>
+        <div class="pt-0.5">
+            <p :class="['text-lg sm:text-2xl font-black font-display tracking-tight leading-none', stat.colorClass || 'text-foreground']">{{ stat.value }}</p>
         </div>
     </div>
 </div>
 
 <!-- Wallet Cards Strip -->
-<div v-if="accounts?.length" :class="['animate-fade-up stagger-3 mt-1 p-2', highlightClass(3), showOnboarding && onboardingStep === 3 ? 'relative z-[100]' : '']">
-    <div class="flex items-center justify-between mb-2">
-        <p class="text-[10px] font-bold tracking-widest uppercase text-muted-foreground/80 font-sans">My Wallets</p>
-        <a href="/wallets" class="text-[10px] font-semibold text-primary hover:underline">View all</a>
+<div v-if="accounts?.length" :class="['animate-fade-up stagger-3 mt-1 p-1', highlightClass(3), showOnboarding && onboardingStep === 3 ? 'relative z-[100]' : '']">
+    <div class="flex items-center justify-between mb-2 px-1">
+        <p class="text-[9px] sm:text-[10px] font-bold tracking-widest uppercase text-muted-foreground/80 font-sans">My Wallets</p>
+        <a href="/wallets" class="text-[9px] sm:text-[10px] font-semibold text-primary hover:underline">View all</a>
     </div>
-    <div class="flex gap-3 overflow-x-auto snap-x snap-mandatory pb-2 scrollbar-hide">
+    <div class="flex gap-2.5 overflow-x-auto snap-x snap-mandatory pb-2 scrollbar-hide">
         <div v-for="account in accounts" :key="account.id"
-            class="group relative flex-shrink-0 w-[220px] sm:w-[260px] snap-start overflow-hidden rounded-[18px] p-4 sm:p-5 text-white shadow-lg transition-all duration-300 hover:shadow-xl hover:-translate-y-0.5 cursor-default"
+            class="group relative flex-shrink-0 w-[190px] sm:w-[260px] snap-start overflow-hidden rounded-[16px] sm:rounded-[18px] p-3.5 sm:p-5 text-white shadow-lg transition-all duration-300 hover:shadow-xl hover:-translate-y-0.5 cursor-default"
             :style="{ background: walletGradient(account.type, account.color) }">
             <!-- Card pattern -->
             <div class="absolute inset-0 opacity-[0.06] pointer-events-none">
-                <div class="absolute top-2 right-2 w-20 h-20 border-2 border-white rounded-full"></div>
-                <div class="absolute -bottom-6 -left-6 w-28 h-28 border-2 border-white rounded-full"></div>
+                <div class="absolute top-2 right-2 w-16 h-16 border-2 border-white rounded-full"></div>
+                <div class="absolute -bottom-6 -left-6 w-24 h-24 border-2 border-white rounded-full"></div>
             </div>
             <div class="relative z-10">
-                <div class="mb-4">
-                    <p class="text-[8px] font-bold uppercase tracking-wider opacity-60 mb-0.5">{{ account.holder_name || 'Account' }}</p>
-                    <h3 class="text-sm font-black tracking-tight leading-none">{{ account.name }}</h3>
+                <div class="mb-3.5">
+                    <p class="text-[7px] sm:text-[8px] font-bold uppercase tracking-wider opacity-60 mb-0.5">{{ account.holder_name || 'Account' }}</p>
+                    <h3 class="text-xs sm:text-sm font-black tracking-tight leading-none">{{ account.name }}</h3>
                 </div>
                 
-                <p class="text-lg sm:text-xl font-black font-mono tracking-tight leading-none mb-3">{{ formatCurrency(account.balance) }}</p>
+                <p class="text-base sm:text-xl font-black font-mono tracking-tight leading-none mb-2.5">{{ formatCurrency(account.balance) }}</p>
                 
                 <div class="flex items-center gap-1.5 opacity-90 mb-3">
                     <div class="p-1 rounded-md bg-white/20"><component :is="walletIcon(account.type)" class="h-2.5 w-2.5" /></div>
-                    <span class="text-[8px] font-bold uppercase tracking-wider">{{ walletLabel(account.type) }}</span>
-                    <span v-if="account.last4" class="text-[8px] font-mono opacity-70 ml-1.5">•••• {{ account.last4 }}</span>
+                    <span class="text-[7px] sm:text-[8px] font-bold uppercase tracking-wider">{{ walletLabel(account.type) }}</span>
+                    <span v-if="account.last4" class="text-[7px] sm:text-[8px] font-mono opacity-70 ml-1.5">•••• {{ account.last4 }}</span>
                 </div>
 
-                <div class="flex items-center gap-1.5 mt-2.5 pt-2 border-t border-white/15">
-                    <span class="inline-flex items-center gap-0.5 rounded-full bg-white/15 px-1.5 py-0.5 text-[9px] font-bold">
+                <div class="flex items-center gap-1.5 mt-2 pt-2 border-t border-white/15">
+                    <span class="inline-flex items-center gap-0.5 rounded-full bg-white/15 px-1.2 py-0.3 text-[8px] sm:text-[9px] font-bold">
                         <ArrowDownRight class="h-2 w-2" /> {{ formatCurrency(account.month_income) }}
                     </span>
-                    <span class="inline-flex items-center gap-0.5 rounded-full bg-white/15 px-1.5 py-0.5 text-[9px] font-bold">
+                    <span class="inline-flex items-center gap-0.5 rounded-full bg-white/15 px-1.2 py-0.3 text-[8px] sm:text-[9px] font-bold">
                         <ArrowUpRight class="h-2 w-2" /> {{ formatCurrency(account.month_expense) }}
                     </span>
                 </div>
             </div>
         </div>
         <!-- Add wallet card -->
-        <a href="/wallets" class="flex-shrink-0 w-[120px] snap-start flex flex-col items-center justify-center rounded-[18px] border-2 border-dashed border-border/40 bg-card/10 text-muted-foreground hover:border-primary/50 hover:text-primary transition-all cursor-pointer">
-            <Plus class="h-5 w-5 mb-1" />
-            <span class="text-[10px] font-bold">Add Wallet</span>
+        <a href="/wallets" class="flex-shrink-0 w-[100px] sm:w-[120px] snap-start flex flex-col items-center justify-center rounded-[16px] sm:rounded-[18px] border-2 border-dashed border-border/40 bg-card/10 text-muted-foreground hover:border-primary/50 hover:text-primary transition-all cursor-pointer">
+            <Plus class="h-4 w-4 sm:h-5 sm:w-5 mb-1" />
+            <span class="text-[9px] sm:text-[10px] font-bold">Add Wallet</span>
         </a>
     </div>
 </div>
 
 <!-- Incomes Cards Strip -->
-<div v-if="recurringIncomes?.length" class="animate-fade-up stagger-3 mt-2">
-    <div class="flex items-center justify-between mb-2">
-        <p class="text-[10px] font-bold tracking-widest uppercase text-muted-foreground/80 font-sans">Monthly Incomes</p>
-        <a href="/incomes" class="text-[10px] font-semibold text-primary hover:underline">View all</a>
+<div v-if="recurringIncomes?.length" class="animate-fade-up stagger-3 mt-2 px-1">
+    <div class="flex items-center justify-between mb-2 px-1">
+        <p class="text-[9px] sm:text-[10px] font-bold tracking-widest uppercase text-muted-foreground/80 font-sans">Monthly Incomes</p>
+        <a href="/incomes" class="text-[9px] sm:text-[10px] font-semibold text-primary hover:underline">View all</a>
     </div>
-    <div class="flex gap-3 overflow-x-auto snap-x snap-mandatory pb-2 scrollbar-hide">
+    <div class="flex gap-2.5 overflow-x-auto snap-x snap-mandatory pb-2 scrollbar-hide">
         <div v-for="income in recurringIncomes" :key="income.id"
-            class="group relative flex-shrink-0 w-[200px] sm:w-[240px] snap-start overflow-hidden rounded-[18px] p-4 transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5 cursor-default text-white shadow-md"
+            class="group relative flex-shrink-0 w-[170px] sm:w-[240px] snap-start overflow-hidden rounded-[16px] sm:rounded-[18px] p-3.5 transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5 cursor-default text-white shadow-md"
             :style="{ background: simpleGradient(income.color, '#10b981') }">
             
             <div class="relative z-10">
                 <div class="flex items-center justify-between mb-3">
                     <div class="flex items-center gap-1.5">
                         <div class="p-1.5 rounded-lg bg-white/20"><Wallet class="h-3 w-3" /></div>
-                        <span class="text-[9px] font-bold uppercase tracking-wider opacity-90 truncate max-w-[80px]">{{ income.name }}</span>
+                        <span class="text-[8px] sm:text-[9px] font-bold uppercase tracking-wider opacity-90 truncate max-w-[70px] sm:max-w-[80px]">{{ income.name }}</span>
                     </div>
-                    <span class="text-[8px] font-black px-1.5 py-0.5 rounded-full bg-white/20 uppercase">Active</span>
+                    <span class="text-[7px] sm:text-[8px] font-black px-1.2 py-0.3 rounded-full bg-white/20 uppercase">Active</span>
                 </div>
                 
-                <p class="text-lg font-black font-mono tracking-tight leading-none">+{{ formatCurrency(income.amount) }}</p>
+                <p class="text-base sm:text-lg font-black font-mono tracking-tight leading-none">+{{ formatCurrency(income.amount) }}</p>
                 
                 <div class="flex items-center justify-between mt-3 pt-2 border-t border-white/10">
-                    <p class="text-[9px] font-bold opacity-80 uppercase">{{ income.frequency }}</p>
-                    <p class="text-[9px] font-mono font-bold opacity-70">{{ formatDate(income.next_due_date) }}</p>
+                    <p class="text-[8px] sm:text-[9px] font-bold opacity-80 uppercase">{{ income.frequency }}</p>
+                    <p class="text-[8px] sm:text-[9px] font-mono font-bold opacity-70">{{ formatDate(income.next_due_date) }}</p>
                 </div>
             </div>
         </div>
         <!-- Add income card -->
-        <a href="/incomes" class="flex-shrink-0 w-[120px] snap-start flex flex-col items-center justify-center rounded-[18px] border-2 border-dashed border-border/60 bg-card text-muted-foreground hover:border-primary/50 hover:text-primary transition-all cursor-pointer shadow-sm">
-            <Plus class="h-5 w-5 mb-1" />
-            <span class="text-[10px] font-bold">Add Income</span>
+        <a href="/incomes" class="flex-shrink-0 w-[100px] sm:w-[120px] snap-start flex flex-col items-center justify-center rounded-[16px] sm:rounded-[18px] border-2 border-dashed border-border/60 bg-card text-muted-foreground hover:border-primary/50 hover:text-primary transition-all cursor-pointer shadow-sm">
+            <Plus class="h-4 w-4 sm:h-5 sm:w-5 mb-1" />
+            <span class="text-[9px] sm:text-[10px] font-bold">Add Income</span>
         </a>
     </div>
 </div>
 
 <!-- Bills Cards Strip -->
-<div v-if="upcomingBills?.length" class="animate-fade-up stagger-4 mt-2">
-    <div class="flex items-center justify-between mb-2">
-        <p class="text-[10px] font-bold tracking-widest uppercase text-muted-foreground/80 font-sans">My Bills</p>
-        <a href="/bills" class="text-[10px] font-semibold text-primary hover:underline">View all</a>
+<div v-if="upcomingBills?.length" class="animate-fade-up stagger-4 mt-2 px-1">
+    <div class="flex items-center justify-between mb-2 px-1">
+        <p class="text-[9px] sm:text-[10px] font-bold tracking-widest uppercase text-muted-foreground/80 font-sans">My Bills</p>
+        <a href="/bills" class="text-[9px] sm:text-[10px] font-semibold text-primary hover:underline">View all</a>
     </div>
-    <div class="flex gap-3 overflow-x-auto snap-x snap-mandatory pb-2 scrollbar-hide">
+    <div class="flex gap-2.5 overflow-x-auto snap-x snap-mandatory pb-2 scrollbar-hide">
         <div v-for="bill in upcomingBills" :key="bill.id"
-            class="group relative flex-shrink-0 w-[200px] sm:w-[240px] snap-start overflow-hidden rounded-[18px] p-4 transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5 cursor-default text-white shadow-md"
+            class="group relative flex-shrink-0 w-[170px] sm:w-[240px] snap-start overflow-hidden rounded-[16px] sm:rounded-[18px] p-3.5 transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5 cursor-default text-white shadow-md"
             :style="{ background: simpleGradient(bill.color, '#ef4444') }">
             
             <div class="relative z-10">
                 <div class="flex items-center justify-between mb-3">
                     <div class="flex items-center gap-1.5">
                         <div class="p-1.5 rounded-lg bg-white/20"><CalendarClock class="h-3 w-3" /></div>
-                        <span class="text-[9px] font-bold uppercase tracking-wider opacity-90 truncate max-w-[80px]">{{ bill.name }}</span>
+                        <span class="text-[8px] sm:text-[9px] font-bold uppercase tracking-wider opacity-90 truncate max-w-[70px] sm:max-w-[80px]">{{ bill.name }}</span>
                     </div>
-                    <span class="text-[8px] font-black px-1.5 py-0.5 rounded-full bg-white/20 uppercase">{{ bill.days_until === 0 ? 'Today' : `In ${bill.days_until}d` }}</span>
+                    <span class="text-[7px] sm:text-[8px] font-black px-1.2 py-0.3 rounded-full bg-white/20 uppercase">{{ bill.days_until === 0 ? 'Today' : `In ${bill.days_until}d` }}</span>
                 </div>
                 
-                <p class="text-lg font-black font-mono tracking-tight leading-none">{{ formatCurrency(bill.amount) }}</p>
+                <p class="text-base sm:text-lg font-black font-mono tracking-tight leading-none">{{ formatCurrency(bill.amount) }}</p>
                 
                 <div class="flex items-center justify-between mt-3 pt-2 border-t border-white/10">
-                    <p class="text-[9px] font-bold opacity-80 uppercase">{{ bill.frequency }}</p>
-                    <p class="text-[9px] font-mono font-bold opacity-70">{{ formatDate(bill.next_due_date) }}</p>
+                    <p class="text-[8px] sm:text-[9px] font-bold opacity-80 uppercase">{{ bill.frequency }}</p>
+                    <p class="text-[8px] sm:text-[9px] font-mono font-bold opacity-70">{{ formatDate(bill.next_due_date) }}</p>
                 </div>
             </div>
         </div>
         <!-- Add bill card -->
-        <a href="/bills" class="flex-shrink-0 w-[120px] snap-start flex flex-col items-center justify-center rounded-[18px] border-2 border-dashed border-border/60 bg-card text-muted-foreground hover:border-primary/50 hover:text-primary transition-all cursor-pointer shadow-sm">
-            <Plus class="h-5 w-5 mb-1" />
-            <span class="text-[10px] font-bold">Add Bill</span>
+        <a href="/bills" class="flex-shrink-0 w-[100px] sm:w-[120px] snap-start flex flex-col items-center justify-center rounded-[16px] sm:rounded-[18px] border-2 border-dashed border-border/60 bg-card text-muted-foreground hover:border-primary/50 hover:text-primary transition-all cursor-pointer shadow-sm">
+            <Plus class="h-4 w-4 sm:h-5 sm:w-5 mb-1" />
+            <span class="text-[9px] sm:text-[10px] font-bold">Add Bill</span>
         </a>
     </div>
 </div>
 
 <!-- Transaction Chips + Income vs Expense Bar -->
-<div class="grid gap-3 md:grid-cols-2 animate-fade-up stagger-5 mt-1">
+<div class="grid gap-2.5 md:grid-cols-2 animate-fade-up stagger-5 mt-1 px-1">
     <!-- Transaction Stats Chips (Pills layout) -->
-    <div class="p-4 rounded-[20px] border border-border/40 bg-card/20 flex flex-wrap items-center justify-center gap-2">
-        <span class="inline-flex items-center gap-1.5 rounded-full bg-card/40 border border-border/30 px-3 py-1 text-[11px] font-bold text-muted-foreground transition-all">
-            <Activity class="h-3 w-3" /> {{ transactionStats.total }} transactions
+    <div class="p-3.5 rounded-[18px] sm:p-4 sm:rounded-[20px] border border-border/40 bg-card/20 flex flex-wrap items-center justify-center gap-1.5">
+        <span class="inline-flex items-center gap-1 rounded-full bg-card/40 border border-border/30 px-2.5 py-0.8 text-[10px] sm:text-[11px] font-bold text-muted-foreground transition-all">
+            <Activity class="h-2.5 w-2.5 sm:h-3 sm:w-3" /> {{ transactionStats.total }} transactions
         </span>
-        <span class="inline-flex items-center gap-1.5 rounded-full bg-card/40 border border-border/30 px-3 py-1 text-[11px] font-bold text-foreground">
+        <span class="inline-flex items-center gap-1 rounded-full bg-card/40 border border-border/30 px-2.5 py-0.8 text-[10px] sm:text-[11px] font-bold text-foreground">
             {{ transactionStats.incomeCount }} income
         </span>
-        <span class="inline-flex items-center gap-1.5 rounded-full bg-card/40 border border-border/30 px-3 py-1 text-[11px] font-bold text-foreground">
+        <span class="inline-flex items-center gap-1 rounded-full bg-card/40 border border-border/30 px-2.5 py-0.8 text-[10px] sm:text-[11px] font-bold text-foreground">
             {{ transactionStats.expenseCount }} expenses
         </span>
-        <span v-if="transactionStats.avgExpense > 0" class="inline-flex items-center gap-1.5 rounded-full bg-card/40 border border-border/30 px-3 py-1 text-[11px] font-bold text-muted-foreground/80">
+        <span v-if="transactionStats.avgExpense > 0" class="inline-flex items-center gap-1 rounded-full bg-card/40 border border-border/30 px-2.5 py-0.8 text-[10px] sm:text-[11px] font-bold text-muted-foreground/80">
             Avg {{ formatCurrency(transactionStats.avgExpense) }}
         </span>
     </div>
 
     <!-- Income vs Expense Comparison Bar -->
-    <div class="surface-card p-4 rounded-[20px]">
-        <p class="text-[9px] font-semibold tracking-[0.08em] uppercase text-muted-foreground mb-2 font-sans">Income vs Expenses</p>
-        <div class="flex h-2 rounded-full overflow-hidden bg-muted/30">
+    <div class="surface-card p-3.5 sm:p-4 rounded-[18px] sm:rounded-[20px]">
+        <p class="text-[8px] sm:text-[9px] font-semibold tracking-[0.08em] uppercase text-muted-foreground mb-1.5 font-sans">Income vs Expenses</p>
+        <div class="flex h-1.5 sm:h-2 rounded-full overflow-hidden bg-muted/30">
             <div class="bg-[--fin-gain] transition-all duration-700 rounded-l-full"
                 :style="{ width: (props.dashboard.totalIncome + props.dashboard.totalExpense > 0 ? (props.dashboard.totalIncome / (props.dashboard.totalIncome + props.dashboard.totalExpense)) * 100 : 50) + '%' }"></div>
             <div class="bg-[--fin-loss] transition-all duration-700 rounded-r-full flex-1"></div>
         </div>
-        <div class="flex justify-between mt-1 text-[9px] font-mono font-semibold">
+        <div class="flex justify-between mt-1 text-[8px] sm:text-[9px] font-mono font-semibold">
             <span class="text-[--fin-gain]">{{ formatCurrency(animatedIncome) }}</span>
             <span class="text-[--fin-loss]">{{ formatCurrency(animatedExpense) }}</span>
         </div>
@@ -578,54 +578,54 @@ const formatDate = (dateStr: string) => {
 </div>
 
 <!-- Rings Row: Savings + Health + Year Progress -->
-<div :class="['grid grid-cols-2 lg:grid-cols-3 gap-3 animate-fade-up stagger-5', showOnboarding && onboardingStep === 4 ? 'relative z-[100]' : '']">
+<div :class="['grid grid-cols-2 lg:grid-cols-3 gap-2.5 animate-fade-up stagger-5 px-1', showOnboarding && onboardingStep === 4 ? 'relative z-[100]' : '']">
     <!-- Savings Rate Ring -->
-    <div class="surface-card p-4 flex flex-col items-center justify-center">
-        <p class="text-[10px] font-semibold tracking-[0.08em] uppercase text-muted-foreground mb-3 font-sans">Savings Rate</p>
-        <div class="relative w-24 h-24">
+    <div class="surface-card p-3.5 sm:p-4 flex flex-col items-center justify-center rounded-[18px] sm:rounded-[20px]">
+        <p class="text-[9px] sm:text-[10px] font-semibold tracking-[0.08em] uppercase text-muted-foreground mb-2 sm:mb-3 font-sans">Savings Rate</p>
+        <div class="relative w-20 h-20 sm:w-24 sm:h-24">
             <svg class="w-full h-full -rotate-90" viewBox="0 0 120 120">
                 <circle cx="60" cy="60" :r="R" fill="none" class="stroke-border/30" stroke-width="8" />
                 <circle cx="60" cy="60" :r="R" fill="none" :stroke="savingsRate >= 0 ? 'oklch(0.76 0.16 162)' : 'oklch(0.62 0.22 18)'" stroke-width="8" stroke-linecap="round" :stroke-dasharray="C" :stroke-dashoffset="ringOffset" class="transition-all duration-1000 ease-out" />
             </svg>
             <div class="absolute inset-0 flex items-center justify-center">
-                <span class="text-lg font-bold font-mono tracking-tighter" :class="savingsRate >= 0 ? 'text-[--fin-gain]' : 'text-[--fin-loss]'">{{ animatedSR.toFixed(0) }}%</span>
+                <span class="text-base sm:text-lg font-bold font-mono tracking-tighter" :class="savingsRate >= 0 ? 'text-[--fin-gain]' : 'text-[--fin-loss]'">{{ animatedSR.toFixed(0) }}%</span>
             </div>
         </div>
-        <p class="mt-2 text-[10px] text-muted-foreground text-center font-sans">{{ savingsRate >= 20 ? 'Great job!' : savingsRate >= 0 ? 'Room to improve' : 'Over budget' }}</p>
+        <p class="mt-1.5 text-[8px] sm:text-[10px] text-muted-foreground text-center font-sans">{{ savingsRate >= 20 ? 'Great job!' : savingsRate >= 0 ? 'Room to improve' : 'Over budget' }}</p>
     </div>
 
     <!-- Health Score Gauge -->
-    <div :class="['surface-card p-4 flex flex-col items-center justify-center', highlightClass(4)]">
-        <p class="text-[10px] font-semibold tracking-[0.08em] uppercase text-muted-foreground mb-3 font-sans">Financial Health</p>
-        <div class="relative w-24 h-24">
+    <div :class="['surface-card p-3.5 sm:p-4 flex flex-col items-center justify-center rounded-[18px] sm:rounded-[20px]', highlightClass(4)]">
+        <p class="text-[9px] sm:text-[10px] font-semibold tracking-[0.08em] uppercase text-muted-foreground mb-2 sm:mb-3 font-sans">Financial Health</p>
+        <div class="relative w-20 h-20 sm:w-24 sm:h-24">
             <svg class="w-full h-full -rotate-90" viewBox="0 0 120 120">
                 <circle cx="60" cy="60" :r="R" fill="none" class="stroke-border/30" stroke-width="8" />
                 <circle cx="60" cy="60" :r="R" fill="none" :stroke="healthColor" stroke-width="8" stroke-linecap="round" :stroke-dasharray="C" :stroke-dashoffset="healthOffset" class="transition-all duration-1000 ease-out" />
             </svg>
             <div class="absolute inset-0 flex items-center justify-center">
-                <span class="text-lg font-bold font-mono tracking-tighter">{{ animatedHS.toFixed(0) }}</span>
+                <span class="text-base sm:text-lg font-bold font-mono tracking-tighter">{{ animatedHS.toFixed(0) }}</span>
             </div>
         </div>
-        <p class="mt-2 text-[10px] font-semibold text-center font-sans" :style="{ color: healthColor }">{{ healthLabel }}</p>
+        <p class="mt-1.5 text-[8px] sm:text-[10px] font-semibold text-center font-sans" :style="{ color: healthColor }">{{ healthLabel }}</p>
     </div>
 
     <!-- Year Progress -->
-    <div class="surface-card p-4 col-span-2 lg:col-span-1">
-        <p class="text-[10px] font-semibold tracking-[0.08em] uppercase text-muted-foreground mb-2 font-sans">Year Progress</p>
-        <div class="w-full h-2 rounded-full bg-muted/30 overflow-hidden mb-3">
+    <div class="surface-card p-3.5 sm:p-4 col-span-2 lg:col-span-1 rounded-[18px] sm:rounded-[20px]">
+        <p class="text-[9px] sm:text-[10px] font-semibold tracking-[0.08em] uppercase text-muted-foreground mb-2 font-sans">Year Progress</p>
+        <div class="w-full h-1.5 sm:h-2 rounded-full bg-muted/30 overflow-hidden mb-2 sm:mb-3">
             <div class="h-full rounded-full bg-primary transition-all duration-700" :style="{ width: yearProgress + '%' }"></div>
         </div>
-        <p class="text-[10px] text-muted-foreground font-sans mb-3">{{ yearProgress }}% of {{ new Date(selectedDate).getFullYear() }} complete</p>
-        <div class="space-y-1.5">
-            <div class="flex justify-between text-[10px] font-sans">
+        <p class="text-[8px] sm:text-[10px] text-muted-foreground font-sans mb-2 sm:mb-3">{{ yearProgress }}% of {{ new Date(selectedDate).getFullYear() }} complete</p>
+        <div class="space-y-1">
+            <div class="flex justify-between text-[8px] sm:text-[10px] font-sans">
                 <span class="text-muted-foreground">YTD Income</span>
                 <span class="font-mono font-semibold text-[--fin-gain]">{{ formatCurrency(ytd.income) }}</span>
             </div>
-            <div class="flex justify-between text-[10px] font-sans">
+            <div class="flex justify-between text-[8px] sm:text-[10px] font-sans">
                 <span class="text-muted-foreground">YTD Expenses</span>
                 <span class="font-mono font-semibold text-[--fin-loss]">{{ formatCurrency(ytd.expense) }}</span>
             </div>
-            <div class="flex justify-between text-[10px] font-sans border-t border-border/30 pt-1.5">
+            <div class="flex justify-between text-[8px] sm:text-[10px] font-sans border-t border-border/30 pt-1">
                 <span class="font-semibold text-foreground">YTD Net</span>
                 <span :class="['font-mono font-bold', ytd.net >= 0 ? 'text-[--fin-gain]' : 'text-[--fin-loss]']">{{ formatCurrency(ytd.net) }}</span>
             </div>
@@ -634,99 +634,99 @@ const formatDate = (dateStr: string) => {
 </div>
 
 <!-- Sparkline + Top Expense + Streak -->
-<div class="grid gap-3 md:grid-cols-3 animate-fade-up stagger-5">
+<div class="grid gap-2.5 md:grid-cols-3 animate-fade-up stagger-5 px-1">
     <!-- Daily Spending Sparkline -->
-    <div class="surface-card p-4 md:col-span-2">
-        <h2 class="text-sm font-bold text-foreground font-display tracking-tight">Daily Spending</h2>
-        <p class="text-[10px] text-muted-foreground font-sans mb-3">{{ fmtMonthYear(currentMonth) }}</p>
-        <div v-if="dailySpending?.some(d => d.amount > 0)" class="relative" style="height: 140px;">
+    <div class="surface-card p-3.5 sm:p-4 md:col-span-2 rounded-[18px] sm:rounded-[20px]">
+        <h2 class="text-xs sm:text-sm font-bold text-foreground font-display tracking-tight">Daily Spending</h2>
+        <p class="text-[8px] sm:text-[10px] text-muted-foreground font-sans mb-2 sm:mb-3">{{ fmtMonthYear(currentMonth) }}</p>
+        <div v-if="dailySpending?.some(d => d.amount > 0)" class="relative" style="height: 120px; sm:height: 140px;">
             <LineChart :key="JSON.stringify(sparklineData)" :data="sparklineData" :options="sparkOpts" style="position: relative; height: 100%;" />
         </div>
-        <div v-else class="flex h-32 items-center justify-center">
-            <div class="text-center"><TrendingDown class="h-6 w-6 text-muted-foreground/20 mx-auto mb-1" /><p class="text-[10px] text-muted-foreground font-sans">No spending data</p></div>
+        <div v-else class="flex h-24 sm:h-32 items-center justify-center">
+            <div class="text-center"><TrendingDown class="h-5 w-5 sm:h-6 sm:w-6 text-muted-foreground/20 mx-auto mb-1" /><p class="text-[8px] sm:text-[10px] text-muted-foreground font-sans">No spending data</p></div>
         </div>
     </div>
 
     <!-- Top Expense + Streak -->
-    <div class="grid grid-cols-2 gap-3 md:block md:space-y-3">
+    <div class="grid grid-cols-2 gap-2.5 md:block md:space-y-3">
         <!-- Top Expense Spotlight -->
-        <div v-if="topExpense" class="surface-card p-4">
-            <div class="flex items-center gap-1.5 mb-2">
-                <AlertCircle class="h-3.5 w-3.5 text-[--fin-loss]" />
-                <p class="text-[10px] font-semibold tracking-[0.08em] uppercase text-muted-foreground font-sans">Biggest Expense</p>
+        <div v-if="topExpense" class="surface-card p-3.5 sm:p-4 rounded-[18px] sm:rounded-[20px]">
+            <div class="flex items-center gap-1.5 mb-1.5 sm:mb-2">
+                <AlertCircle class="h-3 w-3 sm:h-3.5 sm:w-3.5 text-[--fin-loss]" />
+                <p class="text-[8px] sm:text-[10px] font-semibold tracking-[0.08em] uppercase text-muted-foreground font-sans">Biggest Expense</p>
             </div>
-            <p class="text-lg font-bold font-mono text-[--fin-loss]">{{ formatCurrency(topExpense.amount) }}</p>
-            <p class="text-[11px] font-semibold text-foreground mt-1">{{ topExpense.category }}</p>
-            <p v-if="topExpense.description" class="text-[10px] text-muted-foreground mt-0.5">{{ topExpense.description }}</p>
+            <p class="text-base sm:text-lg font-bold font-mono text-[--fin-loss]">{{ formatCurrency(topExpense.amount) }}</p>
+            <p class="text-[10px] sm:text-[11px] font-semibold text-foreground mt-0.5 sm:mt-1">{{ topExpense.category }}</p>
+            <p v-if="topExpense.description" class="text-[8px] sm:text-[10px] text-muted-foreground mt-0.5 truncate">{{ topExpense.description }}</p>
         </div>
 
         <!-- Spending Streak -->
-        <div class="surface-card p-4">
-            <div class="flex items-center gap-1.5 mb-2">
-                <Flame class="h-3.5 w-3.5 text-amber-500" />
-                <p class="text-[10px] font-semibold tracking-[0.08em] uppercase text-muted-foreground font-sans">Savings Streak</p>
+        <div class="surface-card p-3.5 sm:p-4 rounded-[18px] sm:rounded-[20px]">
+            <div class="flex items-center gap-1.5 mb-1.5 sm:mb-2">
+                <Flame class="h-3 w-3 sm:h-3.5 sm:w-3.5 text-amber-500" />
+                <p class="text-[8px] sm:text-[10px] font-semibold tracking-[0.08em] uppercase text-muted-foreground font-sans">Savings Streak</p>
             </div>
-            <p class="text-2xl font-bold font-mono text-foreground">{{ savingsStreak }}</p>
-            <p class="text-[10px] text-muted-foreground font-sans">consecutive month{{ savingsStreak !== 1 ? 's' : '' }} saving</p>
+            <p class="text-xl sm:text-2xl font-bold font-mono text-foreground">{{ savingsStreak }}</p>
+            <p class="text-[8px] sm:text-[10px] text-muted-foreground font-sans">consecutive month{{ savingsStreak !== 1 ? 's' : '' }} saving</p>
         </div>
     </div>
 </div>
 
 <!-- Budget Tracker -->
-<div v-if="budget" class="surface-card premium-hover p-4 animate-fade-up stagger-5">
+<div v-if="budget" class="surface-card premium-hover p-3.5 sm:p-4 animate-fade-up stagger-5 rounded-[18px] sm:rounded-[20px] mx-1">
     <div class="flex items-center justify-between mb-2">
         <div class="flex items-center gap-1.5">
-            <Target class="h-3.5 w-3.5 text-primary" />
-            <p class="text-[10px] font-semibold tracking-[0.08em] uppercase text-muted-foreground font-sans">Monthly Budget</p>
+            <Target class="h-3 w-3 sm:h-3.5 sm:w-3.5 text-primary" />
+            <p class="text-[9px] sm:text-[10px] font-semibold tracking-[0.08em] uppercase text-muted-foreground font-sans">Monthly Budget</p>
         </div>
-        <span :class="['text-[10px] font-bold px-2 py-0.5 rounded-full', budgetUsedPct > 100 ? 'bg-[--fin-loss]/12 text-[--fin-loss]' : budgetUsedPct > 80 ? 'bg-amber-500/12 text-amber-600' : 'bg-[--fin-gain]/12 text-[--fin-gain]']">
+        <span :class="['text-[9px] sm:text-[10px] font-bold px-1.5 sm:px-2 py-0.5 rounded-full', budgetUsedPct > 100 ? 'bg-[--fin-loss]/12 text-[--fin-loss]' : budgetUsedPct > 80 ? 'bg-amber-500/12 text-amber-600' : 'bg-[--fin-gain]/12 text-[--fin-gain]']">
             {{ budgetUsedPct.toFixed(0) }}% used
         </span>
     </div>
-    <div class="w-full h-2.5 rounded-full bg-muted/30 overflow-hidden">
+    <div class="w-full h-2 sm:h-2.5 rounded-full bg-muted/30 overflow-hidden">
         <div class="h-full rounded-full transition-all duration-700" :class="budgetUsedPct > 100 ? 'bg-[--fin-loss]' : budgetUsedPct > 80 ? 'bg-amber-500' : 'bg-[--fin-gain]'" :style="{ width: Math.min(100, budgetUsedPct) + '%' }"></div>
     </div>
-    <div class="flex justify-between mt-1.5 text-[10px] font-mono">
+    <div class="flex justify-between mt-1.5 text-[9px] sm:text-[10px] font-mono">
         <span class="text-muted-foreground">{{ formatCurrency(animatedExpense) }} spent</span>
         <span class="text-foreground font-semibold">{{ formatCurrency(budget.monthly_limit) }} limit</span>
     </div>
 </div>
 
 <!-- Category Breakdown -->
-<div v-if="expensesByCategory?.length" class="surface-card premium-hover p-4 animate-fade-up stagger-5">
-    <h2 class="text-sm font-bold text-foreground font-display tracking-tight">Expense Breakdown</h2>
-    <p class="text-[10px] text-muted-foreground font-sans mb-4">Where your money goes</p>
-    <div class="space-y-3">
+<div v-if="expensesByCategory?.length" class="surface-card premium-hover p-3.5 sm:p-4 animate-fade-up stagger-5 rounded-[18px] sm:rounded-[20px] mx-1">
+    <h2 class="text-xs sm:text-sm font-bold text-foreground font-display tracking-tight">Expense Breakdown</h2>
+    <p class="text-[9px] sm:text-[10px] text-muted-foreground font-sans mb-3 sm:mb-4">Where your money goes</p>
+    <div class="space-y-2.5 sm:space-y-3">
         <div v-for="(cat, idx) in expensesByCategory" :key="cat.category">
             <div class="flex items-center justify-between mb-1">
-                <div class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full shrink-0" :style="{ backgroundColor: catColors[idx % catColors.length] }"></span><span class="text-xs font-semibold text-foreground font-sans">{{ cat.category }}</span></div>
-                <div class="flex items-center gap-2"><span class="text-[10px] text-muted-foreground">{{ cat.percentage }}%</span><span class="text-xs font-bold font-mono text-foreground">{{ formatCurrency(cat.amount) }}</span></div>
+                <div class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full shrink-0" :style="{ backgroundColor: catColors[idx % catColors.length] }"></span><span class="text-[11px] sm:text-xs font-semibold text-foreground font-sans">{{ cat.category }}</span></div>
+                <div class="flex items-center gap-2"><span class="text-[9px] sm:text-[10px] text-muted-foreground">{{ cat.percentage }}%</span><span class="text-[11px] sm:text-xs font-bold font-mono text-foreground">{{ formatCurrency(cat.amount) }}</span></div>
             </div>
-            <div class="w-full h-1.5 bg-muted/40 rounded-full overflow-hidden"><div class="h-full rounded-full animate-bar-fill origin-left" :style="{ width: cat.percentage + '%', backgroundColor: catColors[idx % catColors.length], animationDelay: (idx * 100) + 'ms' }"></div></div>
+            <div class="w-full h-1 sm:h-1.5 bg-muted/40 rounded-full overflow-hidden"><div class="h-full rounded-full animate-bar-fill origin-left" :style="{ width: cat.percentage + '%', backgroundColor: catColors[idx % catColors.length], animationDelay: (idx * 100) + 'ms' }"></div></div>
         </div>
     </div>
 </div>
 
 <!-- Financial Goals -->
-<div v-if="financialGoals?.length" class="surface-card p-4 animate-fade-up stagger-5">
-    <h2 class="text-sm font-bold text-foreground font-display tracking-tight mb-4">Financial Goals</h2>
-    <div class="grid gap-3 md:grid-cols-2">
-        <div v-for="goal in financialGoals" :key="goal.id" class="group p-3 rounded-xl bg-muted/20 border border-border/30 relative">
+<div v-if="financialGoals?.length" class="surface-card p-3.5 sm:p-4 animate-fade-up stagger-5 rounded-[18px] sm:rounded-[20px] mx-1">
+    <h2 class="text-xs sm:text-sm font-bold text-foreground font-display tracking-tight mb-3 sm:mb-4">Financial Goals</h2>
+    <div class="grid gap-2.5 sm:gap-3 md:grid-cols-2">
+        <div v-for="goal in financialGoals" :key="goal.id" class="group p-2.5 sm:p-3 rounded-xl bg-muted/20 border border-border/30 relative">
             <button @click="deleteGoal(goal.id)" class="absolute top-2 right-2 p-1 rounded text-muted-foreground opacity-0 transition-all hover:bg-destructive/10 hover:text-destructive group-hover:opacity-100"><X class="h-3 w-3" /></button>
-            <div class="flex items-center gap-3">
-                <div class="relative w-12 h-12 shrink-0">
+            <div class="flex items-center gap-2.5 sm:gap-3">
+                <div class="relative w-10 h-10 sm:w-12 sm:h-12 shrink-0">
                     <svg class="w-full h-full -rotate-90" viewBox="0 0 120 120">
                         <circle cx="60" cy="60" r="50" fill="none" class="stroke-border/30" stroke-width="8" />
                         <circle cx="60" cy="60" r="50" fill="none" :stroke="goal.color" stroke-width="8" stroke-linecap="round"
                             :stroke-dasharray="2 * Math.PI * 50"
                             :stroke-dashoffset="2 * Math.PI * 50 - (Math.min(1, goal.current_amount / goal.target_amount) * 2 * Math.PI * 50)" />
                     </svg>
-                    <div class="absolute inset-0 flex items-center justify-center"><span class="text-[9px] font-bold font-mono">{{ Math.round((goal.current_amount / goal.target_amount) * 100) }}%</span></div>
+                    <div class="absolute inset-0 flex items-center justify-center"><span class="text-[8px] sm:text-[9px] font-bold font-mono">{{ Math.round((goal.current_amount / goal.target_amount) * 100) }}%</span></div>
                 </div>
                 <div class="flex-1 min-w-0">
-                    <p class="text-xs font-bold text-foreground truncate">{{ goal.name }}</p>
-                    <p class="text-[10px] font-mono text-muted-foreground">{{ formatCurrency(goal.current_amount) }} / {{ formatCurrency(goal.target_amount) }}</p>
-                    <p v-if="goal.deadline" class="text-[9px] text-muted-foreground mt-0.5">Due {{ goal.deadline }}</p>
+                    <p class="text-[11px] sm:text-xs font-bold text-foreground truncate">{{ goal.name }}</p>
+                    <p class="text-[9px] sm:text-[10px] font-mono text-muted-foreground">{{ formatCurrency(goal.current_amount) }} / {{ formatCurrency(goal.target_amount) }}</p>
+                    <p v-if="goal.deadline" class="text-[8px] sm:text-[9px] text-muted-foreground mt-0.5">Due {{ goal.deadline }}</p>
                 </div>
             </div>
         </div>
@@ -734,47 +734,47 @@ const formatDate = (dateStr: string) => {
 </div>
 
 <!-- Recent Activity Timeline -->
-<div v-if="recentActivity?.length" class="surface-card premium-hover p-4 animate-fade-up stagger-5 mt-1">
-    <div class="flex items-center gap-1.5 mb-3"><Activity class="h-3.5 w-3.5 text-primary" /><h2 class="text-sm font-bold text-foreground font-display tracking-tight">Recent Activity</h2></div>
+<div v-if="recentActivity?.length" class="surface-card premium-hover p-3.5 sm:p-4 animate-fade-up stagger-5 mt-1 rounded-[18px] sm:rounded-[20px] mx-1">
+    <div class="flex items-center gap-1.5 mb-2.5 sm:mb-3"><Activity class="h-3 w-3 sm:h-3.5 sm:w-3.5 text-primary" /><h2 class="text-xs sm:text-sm font-bold text-foreground font-display tracking-tight">Recent Activity</h2></div>
     <div class="space-y-0 divide-y divide-border/20">
-        <div v-for="item in recentActivity" :key="`${item.type}-${item.id}`" class="flex items-center justify-between py-2.5 first:pt-0 last:pb-0">
-            <div class="flex items-center gap-2.5">
+        <div v-for="item in recentActivity" :key="`${item.type}-${item.id}`" class="flex items-center justify-between py-2 sm:py-2.5 first:pt-0 last:pb-0">
+            <div class="flex items-center gap-2 sm:gap-2.5">
                 <div :class="['w-1.5 h-1.5 rounded-full shrink-0', item.type === 'income' ? 'bg-[--fin-gain]' : 'bg-[--fin-loss]']"></div>
                 <div>
-                    <p class="text-xs font-semibold text-foreground">{{ item.category || (item.type === 'income' ? 'Income' : 'Expense') }}</p>
-                    <p class="text-[10px] text-muted-foreground">{{ item.date }}</p>
+                    <p class="text-[11px] sm:text-xs font-semibold text-foreground">{{ item.category || (item.type === 'income' ? 'Income' : 'Expense') }}</p>
+                    <p class="text-[9px] sm:text-[10px] text-muted-foreground">{{ item.date }}</p>
                 </div>
             </div>
-            <span :class="['text-xs font-bold font-mono', item.type === 'income' ? 'text-[--fin-gain]' : 'text-[--fin-loss]']">{{ item.type === 'income' ? '+' : '-' }}{{ formatCurrency(item.amount) }}</span>
+            <span :class="['text-[11px] sm:text-xs font-bold font-mono', item.type === 'income' ? 'text-[--fin-gain]' : 'text-[--fin-loss]']">{{ item.type === 'income' ? '+' : '-' }}{{ formatCurrency(item.amount) }}</span>
         </div>
     </div>
 </div>
 
 <!-- Income & Expense Entry Lists -->
-<div class="grid grid-cols-2 gap-3 animate-fade-up stagger-5">
-    <div class="surface-card premium-hover p-4">
-        <div class="mb-3 flex items-center gap-2"><div class="p-1 rounded bg-[--fin-gain]/10"><Wallet class="h-3.5 w-3.5 text-[--fin-gain]" /></div><h2 class="text-sm font-bold text-foreground">Income</h2><span class="text-[10px] text-muted-foreground ml-auto">{{ fmtYearMonth(currentMonth) }}</span></div>
+<div class="grid grid-cols-2 gap-2.5 sm:gap-3 animate-fade-up stagger-5 px-1">
+    <div class="surface-card premium-hover p-3.5 sm:p-4 rounded-[18px] sm:rounded-[20px]">
+        <div class="mb-2 sm:mb-3 flex items-center gap-1.5 sm:gap-2"><div class="p-1 rounded bg-[--fin-gain]/10"><Wallet class="h-3 w-3 sm:h-3.5 sm:w-3.5 text-[--fin-gain]" /></div><h2 class="text-[11px] sm:text-sm font-bold text-foreground">Income</h2><span class="text-[8px] sm:text-[10px] text-muted-foreground ml-auto">{{ fmtYearMonth(currentMonth) }}</span></div>
         <div v-if="incomeEntries.length" class="divide-y divide-border/20">
             <TransitionGroup name="list-slide" appear>
-                <div v-for="e in incomeEntries" :key="e.id" class="entry-row group flex items-start justify-between py-2.5 first:pt-0">
-                    <div><p class="text-xs font-semibold font-mono text-[--fin-gain]">+{{ formatCurrency(e.amount) }}</p><div class="flex gap-1.5 mt-1"><span class="text-[10px] text-muted-foreground">{{ e.date }}</span><span v-if="e.category" class="text-[9px] font-semibold bg-muted/50 px-1.5 py-0.5 rounded-full text-muted-foreground">{{ e.category }}</span></div></div>
-                    <button @click="deleteEntry(e.id, 'income')" class="p-1 text-muted-foreground opacity-0 transition-all hover:text-destructive group-hover:opacity-100"><span class="text-xs">✕</span></button>
+                <div v-for="e in incomeEntries" :key="e.id" class="entry-row group flex items-start justify-between py-2 sm:py-2.5 first:pt-0">
+                    <div><p class="text-[11px] sm:text-xs font-semibold font-mono text-[--fin-gain]">+{{ formatCurrency(e.amount) }}</p><div class="flex gap-1 sm:gap-1.5 mt-0.5 sm:mt-1"><span class="text-[9px] sm:text-[10px] text-muted-foreground">{{ e.date }}</span><span v-if="e.category" class="text-[8px] sm:text-[9px] font-semibold bg-muted/50 px-1 sm:px-1.5 py-0.5 rounded-full text-muted-foreground">{{ e.category }}</span></div></div>
+                    <button @click="deleteEntry(e.id, 'income')" class="p-1 text-muted-foreground opacity-0 transition-all hover:text-destructive group-hover:opacity-100"><span class="text-[10px] sm:text-xs">✕</span></button>
                 </div>
             </TransitionGroup>
         </div>
-        <div v-else class="py-6 text-center"><Wallet class="h-6 w-6 text-muted-foreground/20 mx-auto mb-1" /><p class="text-[10px] text-muted-foreground">No income</p></div>
+        <div v-else class="py-4 sm:py-6 text-center"><Wallet class="h-5 w-5 sm:h-6 sm:w-6 text-muted-foreground/20 mx-auto mb-1" /><p class="text-[9px] sm:text-[10px] text-muted-foreground">No income</p></div>
     </div>
-    <div class="surface-card premium-hover p-4">
-        <div class="mb-3 flex items-center gap-2"><div class="p-1 rounded bg-[--fin-loss]/10"><TrendingDown class="h-3.5 w-3.5 text-[--fin-loss]" /></div><h2 class="text-sm font-bold text-foreground">Expenses</h2><span class="text-[10px] text-muted-foreground ml-auto">{{ fmtYearMonth(currentMonth) }}</span></div>
+    <div class="surface-card premium-hover p-3.5 sm:p-4 rounded-[18px] sm:rounded-[20px]">
+        <div class="mb-2 sm:mb-3 flex items-center gap-1.5 sm:gap-2"><div class="p-1 rounded bg-[--fin-loss]/10"><TrendingDown class="h-3 w-3 sm:h-3.5 sm:w-3.5 text-[--fin-loss]" /></div><h2 class="text-[11px] sm:text-sm font-bold text-foreground">Expenses</h2><span class="text-[8px] sm:text-[10px] text-muted-foreground ml-auto">{{ fmtYearMonth(currentMonth) }}</span></div>
         <div v-if="expenseEntries.length" class="divide-y divide-border/20">
             <TransitionGroup name="list-slide" appear>
-                <div v-for="e in expenseEntries" :key="e.id" class="entry-row group flex items-start justify-between py-2.5 first:pt-0">
-                    <div><p class="text-xs font-semibold font-mono text-[--fin-loss]">-{{ formatCurrency(e.amount) }}</p><div class="flex gap-1.5 mt-1"><span class="text-[10px] text-muted-foreground">{{ e.date }}</span><span v-if="e.category" class="text-[9px] font-semibold bg-muted/50 px-1.5 py-0.5 rounded-full text-muted-foreground">{{ e.category }}</span></div></div>
-                    <button @click="deleteEntry(e.id, 'expense')" class="p-1 text-muted-foreground opacity-0 transition-all hover:text-destructive group-hover:opacity-100"><span class="text-xs">✕</span></button>
+                <div v-for="e in expenseEntries" :key="e.id" class="entry-row group flex items-start justify-between py-2 sm:py-2.5 first:pt-0">
+                    <div><p class="text-[11px] sm:text-xs font-semibold font-mono text-[--fin-loss]">-{{ formatCurrency(e.amount) }}</p><div class="flex gap-1 sm:gap-1.5 mt-0.5 sm:mt-1"><span class="text-[9px] sm:text-[10px] text-muted-foreground">{{ e.date }}</span><span v-if="e.category" class="text-[8px] sm:text-[9px] font-semibold bg-muted/50 px-1 sm:px-1.5 py-0.5 rounded-full text-muted-foreground">{{ e.category }}</span></div></div>
+                    <button @click="deleteEntry(e.id, 'expense')" class="p-1 text-muted-foreground opacity-0 transition-all hover:text-destructive group-hover:opacity-100"><span class="text-[10px] sm:text-xs">✕</span></button>
                 </div>
             </TransitionGroup>
         </div>
-        <div v-else class="py-6 text-center"><TrendingDown class="h-6 w-6 text-muted-foreground/20 mx-auto mb-1" /><p class="text-[10px] text-muted-foreground">No expenses</p></div>
+        <div v-else class="py-4 sm:py-6 text-center"><TrendingDown class="h-5 w-5 sm:h-6 sm:w-6 text-muted-foreground/20 mx-auto mb-1" /><p class="text-[9px] sm:text-[10px] text-muted-foreground">No expenses</p></div>
     </div>
 </div>
 
