@@ -12,6 +12,8 @@ import {
     CreditCard, Smartphone, Landmark, Coins, Bitcoin, MoreHorizontal, Sun, SunDim, Moon
 } from 'lucide-vue-next';
 import { router } from '@inertiajs/vue3';
+import TransactionModal from '@/components/TransactionModal.vue';
+import RecurringEntryModal from '@/components/RecurringEntryModal.vue';
 import { useChartDefaults } from '@/composables/useChartDefaults';
 import { useNumberAnimation } from '@/composables/useNumberAnimation';
 import gsap from 'gsap';
@@ -271,14 +273,44 @@ const walletIcon = (type: string) => ({ gcash: Smartphone, maya: Smartphone, pay
 const walletLabel = (type: string) => ({ gcash: 'GCash', maya: 'Maya', paypal: 'PayPal', bank: 'Bank', cash: 'Cash', credit_card: 'Credit Card', crypto: 'Crypto' }[type] || type);
 const budgetForm = useForm({ monthly_limit: props.budget?.monthly_limit?.toString() || '' });
 const goalForm = useForm({ name: '', target_amount: '', current_amount: '', deadline: '', color: '#14b8a6' });
-const recurringForm = useForm({ name: '', amount: '', type: 'expense' as string, category: '', description: '', frequency: 'monthly' as string, next_due_date: getYYYYMMDD(new Date()) });
+const recurringForm = useForm({ name: '', amount: '', type: 'expense' as string, category: '', description: '', frequency: 'monthly' as string, next_due_date: getYYYYMMDD(new Date()), color: '' });
 
-const addIncome = () => { if (!incomeForm.amount) return; incomeForm.post('/incomes', { onSuccess: () => { incomeForm.reset(); incomeForm.date = getYYYYMMDD(new Date()); showIncomeModal.value = false; } }); };
-const addExpense = () => { if (!expenseForm.amount) return; expenseForm.post('/expenses', { onSuccess: () => { expenseForm.reset(); expenseForm.date = getYYYYMMDD(new Date()); showExpenseModal.value = false; } }); };
+const addIncome = (data: any) => { 
+    incomeForm.amount = data.amount;
+    incomeForm.date = data.date;
+    incomeForm.category = data.category;
+    incomeForm.description = data.description;
+    incomeForm.account_id = data.account_id;
+    incomeForm.post('/incomes', { onSuccess: () => { incomeForm.reset(); incomeForm.date = getYYYYMMDD(new Date()); showIncomeModal.value = false; } }); 
+};
+const addExpense = (data: any) => { 
+    expenseForm.amount = data.amount;
+    expenseForm.date = data.date;
+    expenseForm.category = data.category;
+    expenseForm.description = data.description;
+    expenseForm.account_id = data.account_id;
+    expenseForm.post('/expenses', { onSuccess: () => { expenseForm.reset(); expenseForm.date = getYYYYMMDD(new Date()); showExpenseModal.value = false; } }); 
+};
 const saveBudget = () => { if (!budgetForm.monthly_limit) return; budgetForm.post('/budgets', { onSuccess: () => { showBudgetModal.value = false; } }); };
 const addGoal = () => { if (!goalForm.name || !goalForm.target_amount) return; goalForm.post('/financial-goals', { onSuccess: () => { goalForm.reset(); goalForm.color = '#14b8a6'; showGoalModal.value = false; } }); };
 const deleteGoal = (id: number) => { router.delete(`/financial-goals/${id}`, { preserveScroll: true }); };
-const addRecurring = () => { if (!recurringForm.name || !recurringForm.amount) return; recurringForm.post('/recurring-transactions', { onSuccess: () => { recurringForm.reset(); recurringForm.type = 'expense'; recurringForm.frequency = 'monthly'; recurringForm.next_due_date = getYYYYMMDD(new Date()); showRecurringModal.value = false; } }); };
+const addRecurring = (data: any) => {
+    recurringForm.name = data.name;
+    recurringForm.amount = data.amount;
+    recurringForm.type = data.type;
+    recurringForm.category = data.category;
+    recurringForm.frequency = data.frequency;
+    recurringForm.next_due_date = data.next_due_date;
+    recurringForm.color = data.color;
+
+    if (!recurringForm.name || !recurringForm.amount) return;
+    recurringForm.post('/recurring-transactions', {
+        onSuccess: () => {
+            recurringForm.reset();
+            showRecurringModal.value = false;
+        }
+    });
+};
 const deleteRecurring = (id: number) => { router.delete(`/recurring-transactions/${id}`, { preserveScroll: true }); };
 const deleteEntry = (id: number, type: 'income' | 'expense') => { router.delete(`/${type}s/${id}`, { preserveScroll: true }); };
 
@@ -881,43 +913,21 @@ const formatDate = (dateStr: string) => {
     </DialogContent>
 </Dialog>
 
-<!-- Add Income Modal -->
-<Teleport to="body">
-<Transition enter-active-class="transition duration-200 ease-out" enter-from-class="opacity-0" enter-to-class="opacity-100" leave-active-class="transition duration-150 ease-in" leave-from-class="opacity-100" leave-to-class="opacity-0">
-<div v-if="showIncomeModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm" @click.self="showIncomeModal = false">
-    <Transition appear enter-active-class="transition duration-200 ease-out" enter-from-class="opacity-0 scale-95 translate-y-2" enter-to-class="opacity-100 scale-100 translate-y-0">
-    <div class="surface-elevated w-full max-w-md mx-4 p-4 rounded-2xl max-h-[90vh] overflow-y-auto">
-        <div class="flex items-center gap-2 mb-3"><div class="p-1.5 rounded-lg bg-[--fin-gain]/10"><Wallet class="h-4 w-4 text-[--fin-gain]" /></div><h3 class="text-lg font-bold">Add Income</h3></div>
-        <div class="space-y-2 sm:space-y-4">
-            <div><label class="block text-sm font-semibold text-muted-foreground">Amount</label><input v-model="incomeForm.amount" type="number" placeholder="0.00" class="mt-1 w-full rounded-lg border border-border bg-card px-3 py-1.5 sm:py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/10" /></div>
-            <div><label class="block text-sm font-semibold text-muted-foreground">Date</label><input v-model="incomeForm.date" type="date" class="mt-1 w-full rounded-lg border border-border bg-card px-3 py-1.5 sm:py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/10" /></div>
-            <div><label class="block text-sm font-semibold text-muted-foreground">Category</label><input v-model="incomeForm.category" type="text" placeholder="e.g., Salary" class="mt-1 w-full rounded-lg border border-border bg-card px-3 py-1.5 sm:py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/10" /></div>
-            <div><label class="block text-sm font-semibold text-muted-foreground">Description</label><input v-model="incomeForm.description" type="text" placeholder="Optional" class="mt-1 w-full rounded-lg border border-border bg-card px-3 py-1.5 sm:py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/10" /></div>
-            <div v-if="accounts?.length"><label class="block text-sm font-semibold text-muted-foreground">Wallet</label><select v-model="incomeForm.account_id" class="mt-1 w-full rounded-lg border border-border bg-card px-3 py-1.5 sm:py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/10"><option value="">No wallet</option><option v-for="a in accounts" :key="a.id" :value="a.id">{{ a.name }} ({{ walletLabel(a.type) }})</option></select></div>
-        </div>
-        <div class="flex gap-2 mt-3 sm:mt-5"><button @click="showIncomeModal = false" class="flex-1 rounded-lg border border-border px-4 py-2 text-sm font-semibold text-muted-foreground hover:bg-accent/50">Cancel</button><button @click="addIncome" class="flex-1 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90">Add</button></div>
-    </div></Transition>
-</div></Transition>
-</Teleport>
+<TransactionModal 
+    v-model:open="showIncomeModal"
+    type="income"
+    title="Add Income"
+    :accounts="accounts"
+    @submit="addIncome"
+/>
 
-<!-- Add Expense Modal -->
-<Teleport to="body">
-<Transition enter-active-class="transition duration-200 ease-out" enter-from-class="opacity-0" enter-to-class="opacity-100" leave-active-class="transition duration-150 ease-in" leave-from-class="opacity-100" leave-to-class="opacity-0">
-<div v-if="showExpenseModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm" @click.self="showExpenseModal = false">
-    <Transition appear enter-active-class="transition duration-200 ease-out" enter-from-class="opacity-0 scale-95 translate-y-2" enter-to-class="opacity-100 scale-100 translate-y-0">
-    <div class="surface-elevated w-full max-w-md mx-4 p-4 rounded-2xl max-h-[90vh] overflow-y-auto">
-        <div class="flex items-center gap-2 mb-3"><div class="p-1.5 rounded-lg bg-[--fin-loss]/10"><TrendingDown class="h-4 w-4 text-[--fin-loss]" /></div><h3 class="text-lg font-bold">Add Expense</h3></div>
-        <div class="space-y-2 sm:space-y-4">
-            <div><label class="block text-sm font-semibold text-muted-foreground">Amount</label><input v-model="expenseForm.amount" type="number" placeholder="0.00" class="mt-1 w-full rounded-lg border border-border bg-card px-3 py-1.5 sm:py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/10" /></div>
-            <div><label class="block text-sm font-semibold text-muted-foreground">Date</label><input v-model="expenseForm.date" type="date" class="mt-1 w-full rounded-lg border border-border bg-card px-3 py-1.5 sm:py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/10" /></div>
-            <div><label class="block text-sm font-semibold text-muted-foreground">Category</label><input v-model="expenseForm.category" type="text" placeholder="e.g., Food" class="mt-1 w-full rounded-lg border border-border bg-card px-3 py-1.5 sm:py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/10" /></div>
-            <div><label class="block text-sm font-semibold text-muted-foreground">Description</label><input v-model="expenseForm.description" type="text" placeholder="Optional" class="mt-1 w-full rounded-lg border border-border bg-card px-3 py-1.5 sm:py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/10" /></div>
-            <div v-if="accounts?.length"><label class="block text-sm font-semibold text-muted-foreground">Wallet</label><select v-model="expenseForm.account_id" class="mt-1 w-full rounded-lg border border-border bg-card px-3 py-1.5 sm:py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/10"><option value="">No wallet</option><option v-for="a in accounts" :key="a.id" :value="a.id">{{ a.name }} ({{ walletLabel(a.type) }})</option></select></div>
-        </div>
-        <div class="flex gap-2 mt-3 sm:mt-5"><button @click="showExpenseModal = false" class="flex-1 rounded-lg border border-border px-4 py-2 text-sm font-semibold text-muted-foreground hover:bg-accent/50">Cancel</button><button @click="addExpense" class="flex-1 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90">Add</button></div>
-    </div></Transition>
-</div></Transition>
-</Teleport>
+<TransactionModal 
+    v-model:open="showExpenseModal"
+    type="expense"
+    title="Add Expense"
+    :accounts="accounts"
+    @submit="addExpense"
+/>
 
 <!-- Budget Modal -->
 <Teleport to="body">
@@ -955,27 +965,9 @@ const formatDate = (dateStr: string) => {
 </div></Transition>
 </Teleport>
 
-<!-- Recurring Transaction Modal -->
-<Teleport to="body">
-<Transition enter-active-class="transition duration-200 ease-out" enter-from-class="opacity-0" enter-to-class="opacity-100" leave-active-class="transition duration-150 ease-in" leave-from-class="opacity-100" leave-to-class="opacity-0">
-<div v-if="showRecurringModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm" @click.self="showRecurringModal = false">
-    <Transition appear enter-active-class="transition duration-200 ease-out" enter-from-class="opacity-0 scale-95 translate-y-2" enter-to-class="opacity-100 scale-100 translate-y-0">
-    <div class="surface-elevated w-full max-w-md mx-4 p-4 rounded-2xl max-h-[90vh] overflow-y-auto">
-        <div class="flex items-center gap-2 mb-3"><div class="p-1.5 rounded-lg bg-primary/10"><CalendarClock class="h-4 w-4 text-primary" /></div><h3 class="text-lg font-bold">Add Recurring Transaction</h3></div>
-        <div class="space-y-2 sm:space-y-4">
-            <div><label class="block text-sm font-semibold text-muted-foreground">Name</label><input v-model="recurringForm.name" type="text" placeholder="e.g., Rent" class="mt-1 w-full rounded-lg border border-border bg-card px-3 py-1.5 sm:py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/10" /></div>
-            <div class="grid gap-4 grid-cols-2">
-                <div><label class="block text-sm font-semibold text-muted-foreground">Amount</label><input v-model="recurringForm.amount" type="number" placeholder="0.00" class="mt-1 w-full rounded-lg border border-border bg-card px-3 py-1.5 sm:py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/10" /></div>
-                <div><label class="block text-sm font-semibold text-muted-foreground">Type</label><select v-model="recurringForm.type" class="mt-1 w-full rounded-lg border border-border bg-card px-3 py-1.5 sm:py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/10"><option value="expense">Expense</option><option value="income">Income</option></select></div>
-            </div>
-            <div class="grid gap-4 grid-cols-2">
-                <div><label class="block text-sm font-semibold text-muted-foreground">Frequency</label><select v-model="recurringForm.frequency" class="mt-1 w-full rounded-lg border border-border bg-card px-3 py-1.5 sm:py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/10"><option value="weekly">Weekly</option><option value="monthly">Monthly</option><option value="yearly">Yearly</option></select></div>
-                <div><label class="block text-sm font-semibold text-muted-foreground">Next Due</label><input v-model="recurringForm.next_due_date" type="date" class="mt-1 w-full rounded-lg border border-border bg-card px-3 py-1.5 sm:py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/10" /></div>
-            </div>
-            <div><label class="block text-sm font-semibold text-muted-foreground">Category</label><input v-model="recurringForm.category" type="text" placeholder="e.g., Housing" class="mt-1 w-full rounded-lg border border-border bg-card px-3 py-1.5 sm:py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/10" /></div>
-        </div>
-        <div class="flex gap-2 mt-3 sm:mt-5"><button @click="showRecurringModal = false" class="flex-1 rounded-lg border border-border px-4 py-2 text-sm font-semibold text-muted-foreground hover:bg-accent/50">Cancel</button><button @click="addRecurring" class="flex-1 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90">Add</button></div>
-    </div></Transition>
-</div></Transition>
-</Teleport>
+<RecurringEntryModal 
+    v-model:open="showRecurringModal"
+    title="Add Recurring"
+    @submit="addRecurring"
+/>
 </template>

@@ -10,6 +10,7 @@ import {
 import {
     Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter
 } from '@/components/ui/dialog';
+import RecurringEntryModal from '@/components/RecurringEntryModal.vue';
 
 interface BillItem {
     id: number;
@@ -70,7 +71,16 @@ const presetColors = [
     '#EF4444', '#F59E0B', '#10B981', '#3B82F6', '#6366F1', '#8B5CF6', '#EC4899', '#18181B', '#6B7280'
 ];
 
-const addBill = () => {
+const addBill = (data: any) => {
+    billForm.name = data.name;
+    billForm.amount = data.amount;
+    billForm.type = data.type;
+    billForm.category = data.category;
+    billForm.description = data.description;
+    billForm.frequency = data.frequency;
+    billForm.next_due_date = data.next_due_date;
+    billForm.color = data.color;
+
     if (!billForm.name || !billForm.amount) return;
     billForm.post('/recurring-transactions', {
         onSuccess: () => {
@@ -94,8 +104,20 @@ const openEdit = (bill: BillItem) => {
     showEditModal.value = true;
 };
 
-const updateBill = () => {
-    if (!editingBill.value || !editForm.name) return;
+const updateBill = (data: any) => {
+    if (!editingBill.value) return;
+
+    editForm.name = data.name;
+    editForm.amount = data.amount;
+    editForm.type = data.type;
+    editForm.category = data.category;
+    editForm.description = data.description;
+    editForm.frequency = data.frequency;
+    editForm.next_due_date = data.next_due_date;
+    editForm.is_active = data.is_active;
+    editForm.color = data.color;
+
+    if (!editForm.name) return;
     editForm.patch(`/recurring-transactions/${editingBill.value.id}`, {
         onSuccess: () => {
             showEditModal.value = false;
@@ -251,226 +273,18 @@ const simpleGradient = (color: string | null, def: string) => {
 </div>
 </AppLayout>
 
-<!-- Add Bill Modal -->
-<Dialog v-model:open="showAddModal">
-    <DialogContent class="sm:max-w-[480px] max-w-[95vw] p-0 overflow-hidden border-none bg-transparent shadow-none">
-        <div class="relative bg-card rounded-[32px] overflow-hidden border border-border/50 shadow-2xl flex flex-col max-h-[85vh]">
-            <!-- Preview card -->
-            <div class="p-3 sm:p-5 text-white relative overflow-hidden transition-all duration-500" :style="{ background: simpleGradient(billForm.color, '#ef4444') }">
-                <div class="absolute inset-0 opacity-[0.1] pointer-events-none">
-                    <div class="absolute top-2 right-2 w-24 h-24 border-2 border-white rounded-full"></div>
-                </div>
-                <div class="relative z-10">
-                    <div class="flex items-center justify-between mb-1 sm:mb-4">
-                        <div class="flex items-center gap-2">
-                            <div class="p-1 sm:p-2 rounded-lg bg-white/20">
-                                <component :is="billForm.type === 'income' ? Wallet : CalendarClock" class="h-3 w-3 sm:h-4 sm:w-4" />
-                            </div>
-                            <span class="text-[9px] sm:text-[10px] font-bold uppercase tracking-widest opacity-80">{{ billForm.type }}</span>
-                        </div>
-                        <span class="text-[9px] sm:text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/20 uppercase tracking-wider">{{ billForm.frequency }}</span>
-                    </div>
-                    <div class="flex items-baseline justify-between gap-2">
-                        <div class="flex-1 min-w-0">
-                            <h3 class="text-base sm:text-lg font-black tracking-tight leading-none mb-0.5 truncate">{{ billForm.name || 'Bill Name' }}</h3>
-                            <p class="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider opacity-60 truncate">{{ billForm.category || 'Category' }}</p>
-                        </div>
-                        <div class="flex items-baseline gap-0.5">
-                            <span class="text-base sm:text-2xl font-black font-mono">
-                                {{ billForm.type === 'income' ? '+' : '-' }}{{ formatCurrency(Number(billForm.amount) || 0) }}
-                            </span>
-                        </div>
-                    </div>
-                </div>
-            </div>
+<RecurringEntryModal 
+    v-model:open="showAddModal"
+    title="Create Bill"
+    fixedType="expense"
+    @submit="addBill"
+/>
 
-            <div class="p-4 sm:p-6 overflow-y-auto">
-                <DialogHeader class="mb-2 sm:mb-5">
-                    <DialogTitle class="text-lg sm:text-xl font-black tracking-tight font-display">Add Bill</DialogTitle>
-                    <DialogDescription class="hidden sm:block text-xs text-muted-foreground">Create a new recurring payment or income.</DialogDescription>
-                </DialogHeader>
-
-                <div class="space-y-3 sm:space-y-4">
-                    <div class="grid grid-cols-2 gap-4">
-                        <div class="col-span-2">
-                            <label class="block text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-1 ml-1">Bill Name</label>
-                            <input v-model="billForm.name" type="text" placeholder="e.g., Netflix Subscription" class="w-full rounded-xl border border-border bg-card px-3 py-2 sm:px-3.5 sm:py-2.5 text-sm transition-all focus:border-primary focus:outline-none focus:ring-4 focus:ring-primary/5 placeholder:text-muted-foreground/50" />
-                        </div>
-                    </div>
-                    
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-1 ml-1">Amount</label>
-                            <div class="relative">
-                                <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground font-bold text-xs">₱</span>
-                                <input v-model="billForm.amount" type="number" placeholder="0.00" class="w-full rounded-xl border border-border bg-card pl-7 pr-3 py-2 sm:pr-3.5 sm:py-2.5 text-sm transition-all focus:border-primary focus:outline-none focus:ring-4 focus:ring-primary/5 placeholder:text-muted-foreground/50" />
-                            </div>
-                        </div>
-                        <div>
-                            <label class="block text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-1.5 ml-1">Type</label>
-                            <select v-model="billForm.type" class="w-full rounded-xl border border-border bg-card px-3 py-2 sm:px-3.5 sm:py-2.5 text-sm transition-all focus:border-primary focus:outline-none focus:ring-4 focus:ring-primary/5 appearance-none cursor-pointer">
-                                <option value="expense">Expense</option>
-                                <option value="income">Income</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-1 ml-1">Frequency</label>
-                            <select v-model="billForm.frequency" class="w-full rounded-xl border border-border bg-card px-3 py-2 sm:px-3.5 sm:py-2.5 text-sm transition-all focus:border-primary focus:outline-none focus:ring-4 focus:ring-primary/5 appearance-none cursor-pointer">
-                                <option v-for="f in frequencies" :key="f.value" :value="f.value">{{ f.label }}</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-1 ml-1">Next Due Date</label>
-                            <input v-model="billForm.next_due_date" type="date" class="w-full rounded-xl border border-border bg-card px-3 py-2 sm:px-3.5 sm:py-2.5 text-sm transition-all focus:border-primary focus:outline-none focus:ring-4 focus:ring-primary/5 cursor-pointer" />
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-4">
-                        <div class="col-span-1">
-                            <label class="block text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-1 ml-1">Category</label>
-                            <input v-model="billForm.category" type="text" placeholder="e.g., Entertainment" class="w-full rounded-xl border border-border bg-card px-3 py-2 sm:px-3.5 sm:py-2.5 text-sm transition-all focus:border-primary focus:outline-none focus:ring-4 focus:ring-primary/5 placeholder:text-muted-foreground/50" />
-                        </div>
-                        <div class="col-span-1">
-                            <label class="block text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-1 ml-1">Color Theme</label>
-                            <div class="flex items-center gap-2 px-1 py-2">
-                                <div v-for="color in presetColors.slice(0, 5)" :key="color" 
-                                    @click="billForm.color = color"
-                                    class="w-5 h-5 rounded-full cursor-pointer transition-all hover:scale-110 active:scale-95 border-2"
-                                    :class="billForm.color === color ? 'border-primary ring-2 ring-primary/20' : 'border-transparent'"
-                                    :style="{ backgroundColor: color }">
-                                </div>
-                                <div class="relative w-5 h-5 rounded-full border-2 border-dashed border-border flex items-center justify-center hover:border-primary transition-colors cursor-pointer group">
-                                    <input v-model="billForm.color" type="color" class="absolute inset-0 opacity-0 cursor-pointer w-full h-full" />
-                                    <Plus class="w-3 h-3 text-muted-foreground group-hover:text-primary" />
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="flex gap-2 sm:gap-3 mt-4 sm:mt-8">
-                    <button @click="showAddModal = false" class="flex-1 rounded-xl border border-border px-4 py-2 sm:py-2.5 text-xs font-bold text-muted-foreground transition-all hover:bg-muted/50 active:scale-95">Cancel</button>
-                    <button @click="addBill" class="flex-2 rounded-xl bg-primary px-4 sm:px-8 py-2 sm:py-2.5 text-xs font-bold text-primary-foreground transition-all hover:bg-primary/90 shadow-lg shadow-primary/20 active:scale-95">Add Bill</button>
-                </div>
-            </div>
-        </div>
-    </DialogContent>
-</Dialog>
-
-<!-- Edit Bill Modal -->
-<Dialog v-model:open="showEditModal">
-    <DialogContent class="sm:max-w-[480px] max-w-[95vw] p-0 overflow-hidden border-none bg-transparent shadow-none">
-        <div class="relative bg-card rounded-[32px] overflow-hidden border border-border/50 shadow-2xl flex flex-col max-h-[85vh]">
-            <!-- Preview card -->
-            <div class="p-3 sm:p-5 text-white relative overflow-hidden transition-all duration-500" :style="{ background: simpleGradient(editForm.color, '#ef4444') }">
-                <div class="absolute inset-0 opacity-[0.1] pointer-events-none">
-                    <div class="absolute top-2 right-2 w-24 h-24 border-2 border-white rounded-full"></div>
-                </div>
-                <div class="relative z-10">
-                    <div class="flex items-center justify-between mb-1 sm:mb-4">
-                        <div class="flex items-center gap-2">
-                            <div class="p-1 sm:p-2 rounded-lg bg-white/20">
-                                <component :is="editForm.type === 'income' ? Wallet : CalendarClock" class="h-3 w-3 sm:h-4 sm:w-4" />
-                            </div>
-                            <span class="text-[9px] sm:text-[10px] font-bold uppercase tracking-widest opacity-80">{{ editForm.type }}</span>
-                        </div>
-                        <span class="text-[9px] sm:text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/20 uppercase tracking-wider">{{ editForm.frequency }}</span>
-                    </div>
-                    <div class="flex items-baseline justify-between gap-2">
-                        <div class="flex-1 min-w-0">
-                            <h3 class="text-base sm:text-lg font-black tracking-tight leading-none mb-0.5 truncate">{{ editForm.name || 'Bill Name' }}</h3>
-                            <p class="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider opacity-60 truncate">{{ editForm.category || 'Category' }}</p>
-                        </div>
-                        <div class="flex items-baseline gap-0.5">
-                            <span class="text-base sm:text-2xl font-black font-mono">
-                                {{ editForm.type === 'income' ? '+' : '-' }}{{ formatCurrency(Number(editForm.amount) || 0) }}
-                            </span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="p-4 sm:p-6 overflow-y-auto">
-                <DialogHeader class="mb-2 sm:mb-5">
-                    <DialogTitle class="text-lg sm:text-xl font-black tracking-tight font-display">Edit Bill</DialogTitle>
-                    <DialogDescription class="hidden sm:block text-xs text-muted-foreground">Update your bill details.</DialogDescription>
-                </DialogHeader>
-
-                <div class="space-y-3 sm:space-y-4">
-                    <div class="grid grid-cols-2 gap-4">
-                        <div class="col-span-2">
-                            <label class="block text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-1 ml-1">Bill Name</label>
-                            <input v-model="editForm.name" type="text" placeholder="e.g., Netflix Subscription" class="w-full rounded-xl border border-border bg-card px-3 py-2 sm:px-3.5 sm:py-2.5 text-sm transition-all focus:border-primary focus:outline-none focus:ring-4 focus:ring-primary/5 placeholder:text-muted-foreground/50" />
-                        </div>
-                    </div>
-                    
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-1 ml-1">Amount</label>
-                            <div class="relative">
-                                <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground font-bold text-xs">₱</span>
-                                <input v-model="editForm.amount" type="number" placeholder="0.00" class="w-full rounded-xl border border-border bg-card pl-7 pr-3 py-2 sm:pr-3.5 sm:py-2.5 text-sm transition-all focus:border-primary focus:outline-none focus:ring-4 focus:ring-primary/5 placeholder:text-muted-foreground/50" />
-                            </div>
-                        </div>
-                        <div>
-                            <label class="block text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-1.5 ml-1">Type</label>
-                            <select v-model="editForm.type" class="w-full rounded-xl border border-border bg-card px-3 py-2 sm:px-3.5 sm:py-2.5 text-sm transition-all focus:border-primary focus:outline-none focus:ring-4 focus:ring-primary/5 appearance-none cursor-pointer">
-                                <option value="expense">Expense</option>
-                                <option value="income">Income</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-1 ml-1">Frequency</label>
-                            <select v-model="editForm.frequency" class="w-full rounded-xl border border-border bg-card px-3.5 py-2.5 text-sm transition-all focus:border-primary focus:outline-none focus:ring-4 focus:ring-primary/5 appearance-none cursor-pointer">
-                                <option v-for="f in frequencies" :key="f.value" :value="f.value">{{ f.label }}</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-1 ml-1">Next Due Date</label>
-                            <input v-model="editForm.next_due_date" type="date" class="w-full rounded-xl border border-border bg-card px-3 py-2 sm:px-3.5 sm:py-2.5 text-sm transition-all focus:border-primary focus:outline-none focus:ring-4 focus:ring-primary/5 cursor-pointer" />
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-4">
-                        <div class="col-span-1">
-                            <label class="block text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-1 ml-1">Category</label>
-                            <input v-model="editForm.category" type="text" placeholder="e.g., Entertainment" class="w-full rounded-xl border border-border bg-card px-3 py-2 sm:px-3.5 sm:py-2.5 text-sm transition-all focus:border-primary focus:outline-none focus:ring-4 focus:ring-primary/5 placeholder:text-muted-foreground/50" />
-                        </div>
-                        <div class="col-span-1">
-                            <label class="block text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-1 ml-1">Color Theme</label>
-                            <div class="flex items-center gap-2 px-1 py-2">
-                                <div v-for="color in presetColors.slice(0, 5)" :key="color" 
-                                    @click="editForm.color = color"
-                                    class="w-5 h-5 rounded-full cursor-pointer transition-all hover:scale-110 active:scale-95 border-2"
-                                    :class="editForm.color === color ? 'border-primary ring-2 ring-primary/20' : 'border-transparent'"
-                                    :style="{ backgroundColor: color }">
-                                </div>
-                                <div class="relative w-5 h-5 rounded-full border-2 border-dashed border-border flex items-center justify-center hover:border-primary transition-colors cursor-pointer group">
-                                    <input v-model="editForm.color" type="color" class="absolute inset-0 opacity-0 cursor-pointer w-full h-full" />
-                                    <Plus class="w-3 h-3 text-muted-foreground group-hover:text-primary" />
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="flex items-center gap-3 pt-2 px-1">
-                        <input v-model="editForm.is_active" type="checkbox" id="is_active" class="w-4 h-4 rounded border-border bg-card text-primary focus:ring-primary/20 transition-all cursor-pointer" />
-                        <label for="is_active" class="text-xs font-bold uppercase tracking-wider text-muted-foreground cursor-pointer">Active Bill</label>
-                    </div>
-                </div>
-
-                <div class="flex gap-2 sm:gap-3 mt-4 sm:mt-8">
-                    <button @click="showEditModal = false" class="flex-1 rounded-xl border border-border px-4 py-2 sm:py-2.5 text-xs font-bold text-muted-foreground transition-all hover:bg-muted/50 active:scale-95">Cancel</button>
-                    <button @click="updateBill" class="flex-2 rounded-xl bg-primary px-4 sm:px-8 py-2 sm:py-2.5 text-xs font-bold text-primary-foreground transition-all hover:bg-primary/90 shadow-lg shadow-primary/20 active:scale-95">Save Changes</button>
-                </div>
-            </div>
-        </div>
-    </DialogContent>
-</Dialog>
+<RecurringEntryModal 
+    v-model:open="showEditModal"
+    title="Save Changes"
+    fixedType="expense"
+    :initialData="editingBill || {}"
+    @submit="updateBill"
+/>
 </template>
