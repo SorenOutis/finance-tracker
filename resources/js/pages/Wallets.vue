@@ -97,6 +97,10 @@ const defaultColors: Record<string, string> = {
     other: '#6366F1',
 };
 
+const presetColors = [
+    '#6366F1', '#007DFE', '#00B274', '#F59E0B', '#EF4444', '#EC4899', '#8B5CF6', '#18181B', '#6B7280'
+];
+
 const getCardGradient = (type: string, color: string | null) => {
     const base = color || defaultColors[type] || '#6366F1';
     return `linear-gradient(135deg, ${base} 0%, ${base}CC 50%, ${base}99 100%)`;
@@ -200,22 +204,34 @@ const addExpense = () => {
 <AppLayout :breadcrumbs="breadcrumbs">
 <div class="flex h-full flex-1 flex-col gap-5 md:gap-6 overflow-x-auto p-4 sm:p-8 pb-24 md:pb-8">
 
-<!-- Header -->
-<div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between animate-fade-up stagger-1">
-    <div>
-        <h1 class="text-4xl font-extrabold leading-tight tracking-tight text-foreground">Wallets</h1>
-        <p class="mt-2 text-sm text-muted-foreground/80 font-medium font-sans">Manage your payment accounts & wallets</p>
-    </div>
-    <button @click="showAddModal = true" class="group flex items-center gap-2 rounded-2xl bg-primary px-4 py-2.5 text-sm font-bold text-primary-foreground transition-all hover:bg-primary/90 shadow-lg shadow-primary/20 active:scale-[0.98]">
-        <Plus class="h-4 w-4 transition-transform group-hover:rotate-90" /> Add Wallet
-    </button>
-</div>
+<!-- Header Section (Compact Hero) -->
+<div class="relative overflow-hidden rounded-[24px] bg-card border border-border/50 p-4 sm:p-5 mb-1.5 sm:mb-2 animate-fade-up stagger-1">
+    <!-- Background abstract shapes -->
+    <div class="absolute -top-12 -right-12 w-32 h-32 bg-primary/5 rounded-full blur-2xl"></div>
+    <div class="absolute -bottom-12 -left-12 w-32 h-32 bg-secondary/5 rounded-full blur-2xl"></div>
 
-<!-- Total Balance Card -->
-<div class="surface-card p-5 rounded-[24px] animate-fade-up stagger-2">
-    <p class="text-[10px] font-bold tracking-widest uppercase text-muted-foreground/80 font-sans">Total Balance</p>
-    <p class="text-3xl sm:text-4xl font-black font-display tracking-tight mt-1 text-foreground">{{ formatCurrency(totalBalance) }}</p>
-    <p class="text-xs text-muted-foreground mt-1">Across {{ accounts.length }} wallet{{ accounts.length !== 1 ? 's' : '' }}</p>
+    <div class="relative flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div class="flex-1">
+            <div class="flex items-center gap-2 mb-1">
+                <div class="p-1 rounded-lg bg-primary/10 text-primary">
+                    <Wallet class="w-3.5 h-3.5" />
+                </div>
+                <span class="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/80 font-sans">Finances</span>
+            </div>
+            <h1 class="text-xl sm:text-2xl font-black tracking-tight text-foreground font-display">
+                My <span class="text-primary">Wallets</span>
+            </h1>
+            <p class="mt-1 text-[11px] sm:text-xs text-muted-foreground font-medium max-w-xl leading-relaxed">
+                Manage your payment accounts and keep track of your <span class="text-foreground font-bold">{{ formatCurrency(totalBalance) }}</span> total balance.
+            </p>
+        </div>
+
+        <div class="flex-shrink-0 flex items-center gap-3">
+            <button @click="showAddModal = true" class="group flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-xs font-bold text-primary-foreground transition-all hover:bg-primary/90 shadow-lg shadow-primary/20 active:scale-[0.98]">
+                <Plus class="h-3.5 w-3.5 transition-transform group-hover:rotate-90" /> Add Wallet
+            </button>
+        </div>
+    </div>
 </div>
 
 <!-- Wallet Cards Grid -->
@@ -350,47 +366,67 @@ const addExpense = () => {
                 </DialogHeader>
 
                 <div class="space-y-4">
-                    <div class="grid grid-cols-2 gap-3">
-                        <div>
-                            <label class="block text-sm font-semibold text-muted-foreground">Wallet Name</label>
-                            <input v-model="accountForm.name" type="text" placeholder="e.g., My GCash" class="mt-1 w-full rounded-lg border border-border bg-card px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/10" />
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="col-span-2 sm:col-span-1">
+                            <label class="block text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-1.5 ml-1">Wallet Name</label>
+                            <input v-model="accountForm.name" type="text" placeholder="e.g., My GCash" class="w-full rounded-xl border border-border bg-card px-3.5 py-2.5 text-sm transition-all focus:border-primary focus:outline-none focus:ring-4 focus:ring-primary/5 placeholder:text-muted-foreground/50" />
                         </div>
-                        <div>
-                            <label class="block text-sm font-semibold text-muted-foreground">Type</label>
-                            <select v-model="accountForm.type" class="mt-1 w-full rounded-lg border border-border bg-card px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/10">
+                        <div class="col-span-2 sm:col-span-1">
+                            <label class="block text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-1.5 ml-1">Account Type</label>
+                            <select v-model="accountForm.type" class="w-full rounded-xl border border-border bg-card px-3.5 py-2.5 text-sm transition-all focus:border-primary focus:outline-none focus:ring-4 focus:ring-primary/5 appearance-none cursor-pointer">
                                 <option v-for="t in accountTypes" :key="t.value" :value="t.value">{{ t.label }}</option>
                             </select>
                         </div>
                     </div>
-                    <div class="grid grid-cols-2 gap-3">
-                        <div>
-                            <label class="block text-sm font-semibold text-muted-foreground">Initial Balance</label>
-                            <input v-model="accountForm.initial_balance" type="number" placeholder="0.00" class="mt-1 w-full rounded-lg border border-border bg-card px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/10" />
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="col-span-2 sm:col-span-1">
+                            <label class="block text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-1.5 ml-1">Initial Balance</label>
+                            <div class="relative">
+                                <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground font-bold text-xs">₱</span>
+                                <input v-model="accountForm.initial_balance" type="number" placeholder="0.00" class="w-full rounded-xl border border-border bg-card pl-7 pr-3.5 py-2.5 text-sm transition-all focus:border-primary focus:outline-none focus:ring-4 focus:ring-primary/5 placeholder:text-muted-foreground/50" />
+                            </div>
                         </div>
-                        <div>
-                            <label class="block text-sm font-semibold text-muted-foreground">Color</label>
-                            <input v-model="accountForm.color" type="color" :value="accountForm.color || defaultColors[accountForm.type]" class="mt-1 w-full h-[38px] rounded-lg border border-border bg-card cursor-pointer" />
+                        <div class="col-span-2 sm:col-span-1">
+                            <label class="block text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-1.5 ml-1">Color Theme</label>
+                            <div class="flex items-center gap-2 px-1">
+                                <div v-for="color in presetColors" :key="color" 
+                                    @click="accountForm.color = color"
+                                    class="w-6 h-6 rounded-full cursor-pointer transition-all hover:scale-110 active:scale-95 border-2"
+                                    :class="accountForm.color === color ? 'border-primary ring-2 ring-primary/20' : 'border-transparent'"
+                                    :style="{ backgroundColor: color }">
+                                </div>
+                                <div class="relative w-6 h-6 rounded-full border-2 border-dashed border-border flex items-center justify-center hover:border-primary transition-colors cursor-pointer group">
+                                    <input v-model="accountForm.color" type="color" class="absolute inset-0 opacity-0 cursor-pointer w-full h-full" />
+                                    <Plus class="w-3 h-3 text-muted-foreground group-hover:text-primary" />
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    <div class="grid grid-cols-2 gap-3">
-                        <div>
-                            <label class="block text-sm font-semibold text-muted-foreground">Last 4 digits</label>
-                            <input v-model="accountForm.last4" type="text" maxlength="4" placeholder="Optional" class="mt-1 w-full rounded-lg border border-border bg-card px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/10" />
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="col-span-2 sm:col-span-1">
+                            <label class="block text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-1.5 ml-1">Card Holder</label>
+                            <input v-model="accountForm.holder_name" type="text" placeholder="Full Name" class="w-full rounded-xl border border-border bg-card px-3.5 py-2.5 text-sm transition-all focus:border-primary focus:outline-none focus:ring-4 focus:ring-primary/5 placeholder:text-muted-foreground/50" />
                         </div>
-                        <div>
-                            <label class="block text-sm font-semibold text-muted-foreground">Holder Name</label>
-                            <input v-model="accountForm.holder_name" type="text" placeholder="Optional" class="mt-1 w-full rounded-lg border border-border bg-card px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/10" />
+                        <div class="col-span-2 sm:col-span-1">
+                            <label class="block text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-1.5 ml-1">Last 4 Digits</label>
+                            <input v-model="accountForm.last4" type="text" maxlength="4" placeholder="••••" class="w-full rounded-xl border border-border bg-card px-3.5 py-2.5 text-sm transition-all focus:border-primary focus:outline-none focus:ring-4 focus:ring-primary/5 placeholder:text-muted-foreground/50 font-mono" />
                         </div>
                     </div>
-                    <div v-if="accountForm.type === 'credit_card'" >
-                        <label class="block text-sm font-semibold text-muted-foreground">Credit Limit</label>
-                        <input v-model="accountForm.credit_limit" type="number" placeholder="50000" class="mt-1 w-full rounded-lg border border-border bg-card px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/10" />
+
+                    <div v-if="accountForm.type === 'credit_card'" class="animate-in fade-in slide-in-from-top-2 duration-300">
+                        <label class="block text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-1.5 ml-1">Credit Limit</label>
+                        <div class="relative">
+                            <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground font-bold text-xs">₱</span>
+                            <input v-model="accountForm.credit_limit" type="number" placeholder="50,000.00" class="w-full rounded-xl border border-border bg-card pl-7 pr-3.5 py-2.5 text-sm transition-all focus:border-primary focus:outline-none focus:ring-4 focus:ring-primary/5 placeholder:text-muted-foreground/50" />
+                        </div>
                     </div>
                 </div>
 
-                <div class="flex gap-2 mt-6">
-                    <button @click="showAddModal = false" class="flex-1 rounded-lg border border-border px-4 py-2.5 text-sm font-semibold text-muted-foreground hover:bg-accent/50">Cancel</button>
-                    <button @click="addAccount" class="flex-1 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90">Add Wallet</button>
+                <div class="flex gap-3 mt-8">
+                    <button @click="showAddModal = false" class="flex-1 rounded-xl border border-border px-4 py-2.5 text-xs font-bold text-muted-foreground transition-all hover:bg-muted/50 active:scale-95">Cancel</button>
+                    <button @click="addAccount" class="flex-2 rounded-xl bg-primary px-8 py-2.5 text-xs font-bold text-primary-foreground transition-all hover:bg-primary/90 shadow-lg shadow-primary/20 active:scale-95">Create Wallet</button>
                 </div>
             </div>
         </div>
@@ -425,51 +461,71 @@ const addExpense = () => {
             <div class="p-6">
                 <DialogHeader class="mb-5">
                     <DialogTitle class="text-xl font-black tracking-tight font-display">Edit Wallet</DialogTitle>
-                    <DialogDescription class="text-xs text-muted-foreground">Update your wallet details.</DialogDescription>
+                    <DialogDescription class="text-xs text-muted-foreground">Update your account details.</DialogDescription>
                 </DialogHeader>
 
                 <div class="space-y-4">
-                    <div class="grid grid-cols-2 gap-3">
-                        <div>
-                            <label class="block text-sm font-semibold text-muted-foreground">Wallet Name</label>
-                            <input v-model="editForm.name" type="text" class="mt-1 w-full rounded-lg border border-border bg-card px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/10" />
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="col-span-2 sm:col-span-1">
+                            <label class="block text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-1.5 ml-1">Wallet Name</label>
+                            <input v-model="editForm.name" type="text" placeholder="e.g., My GCash" class="w-full rounded-xl border border-border bg-card px-3.5 py-2.5 text-sm transition-all focus:border-primary focus:outline-none focus:ring-4 focus:ring-primary/5" />
                         </div>
-                        <div>
-                            <label class="block text-sm font-semibold text-muted-foreground">Type</label>
-                            <select v-model="editForm.type" class="mt-1 w-full rounded-lg border border-border bg-card px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/10">
+                        <div class="col-span-2 sm:col-span-1">
+                            <label class="block text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-1.5 ml-1">Account Type</label>
+                            <select v-model="editForm.type" class="w-full rounded-xl border border-border bg-card px-3.5 py-2.5 text-sm transition-all focus:border-primary focus:outline-none focus:ring-4 focus:ring-primary/5 appearance-none cursor-pointer">
                                 <option v-for="t in accountTypes" :key="t.value" :value="t.value">{{ t.label }}</option>
                             </select>
                         </div>
                     </div>
-                    <div class="grid grid-cols-2 gap-3">
-                        <div>
-                            <label class="block text-sm font-semibold text-muted-foreground">Initial Balance</label>
-                            <input v-model="editForm.initial_balance" type="number" class="mt-1 w-full rounded-lg border border-border bg-card px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/10" />
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="col-span-2 sm:col-span-1">
+                            <label class="block text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-1.5 ml-1">Initial Balance</label>
+                            <div class="relative">
+                                <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground font-bold text-xs">₱</span>
+                                <input v-model="editForm.initial_balance" type="number" placeholder="0.00" class="w-full rounded-xl border border-border bg-card pl-7 pr-3.5 py-2.5 text-sm transition-all focus:border-primary focus:outline-none focus:ring-4 focus:ring-primary/5" />
+                            </div>
                         </div>
-                        <div>
-                            <label class="block text-sm font-semibold text-muted-foreground">Color</label>
-                            <input v-model="editForm.color" type="color" class="mt-1 w-full h-[38px] rounded-lg border border-border bg-card cursor-pointer" />
+                        <div class="col-span-2 sm:col-span-1">
+                            <label class="block text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-1.5 ml-1">Color Theme</label>
+                            <div class="flex items-center gap-2 px-1">
+                                <div v-for="color in presetColors" :key="color" 
+                                    @click="editForm.color = color"
+                                    class="w-6 h-6 rounded-full cursor-pointer transition-all hover:scale-110 active:scale-95 border-2"
+                                    :class="editForm.color === color ? 'border-primary ring-2 ring-primary/20' : 'border-transparent'"
+                                    :style="{ backgroundColor: color }">
+                                </div>
+                                <div class="relative w-6 h-6 rounded-full border-2 border-dashed border-border flex items-center justify-center hover:border-primary transition-colors cursor-pointer group">
+                                    <input v-model="editForm.color" type="color" class="absolute inset-0 opacity-0 cursor-pointer w-full h-full" />
+                                    <Plus class="w-3 h-3 text-muted-foreground group-hover:text-primary" />
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    <div class="grid grid-cols-2 gap-3">
-                        <div>
-                            <label class="block text-sm font-semibold text-muted-foreground">Last 4 digits</label>
-                            <input v-model="editForm.last4" type="text" maxlength="4" class="mt-1 w-full rounded-lg border border-border bg-card px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/10" />
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="col-span-2 sm:col-span-1">
+                            <label class="block text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-1.5 ml-1">Card Holder</label>
+                            <input v-model="editForm.holder_name" type="text" placeholder="Full Name" class="w-full rounded-xl border border-border bg-card px-3.5 py-2.5 text-sm transition-all focus:border-primary focus:outline-none focus:ring-4 focus:ring-primary/5" />
                         </div>
-                        <div>
-                            <label class="block text-sm font-semibold text-muted-foreground">Holder Name</label>
-                            <input v-model="editForm.holder_name" type="text" class="mt-1 w-full rounded-lg border border-border bg-card px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/10" />
+                        <div class="col-span-2 sm:col-span-1">
+                            <label class="block text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-1.5 ml-1">Last 4 Digits</label>
+                            <input v-model="editForm.last4" type="text" maxlength="4" placeholder="••••" class="w-full rounded-xl border border-border bg-card px-3.5 py-2.5 text-sm transition-all focus:border-primary focus:outline-none focus:ring-4 focus:ring-primary/5 font-mono" />
                         </div>
                     </div>
-                    <div v-if="editForm.type === 'credit_card'">
-                        <label class="block text-sm font-semibold text-muted-foreground">Credit Limit</label>
-                        <input v-model="editForm.credit_limit" type="number" class="mt-1 w-full rounded-lg border border-border bg-card px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/10" />
+
+                    <div v-if="editForm.type === 'credit_card'" class="animate-in fade-in slide-in-from-top-2 duration-300">
+                        <label class="block text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-1.5 ml-1">Credit Limit</label>
+                        <div class="relative">
+                            <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground font-bold text-xs">₱</span>
+                            <input v-model="editForm.credit_limit" type="number" placeholder="50,000.00" class="w-full rounded-xl border border-border bg-card pl-7 pr-3.5 py-2.5 text-sm transition-all focus:border-primary focus:outline-none focus:ring-4 focus:ring-primary/5" />
+                        </div>
                     </div>
                 </div>
 
-                <div class="flex gap-2 mt-6">
-                    <button @click="showEditModal = false" class="flex-1 rounded-lg border border-border px-4 py-2.5 text-sm font-semibold text-muted-foreground hover:bg-accent/50">Cancel</button>
-                    <button @click="updateAccount" class="flex-1 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90">Save</button>
+                <div class="flex gap-3 mt-8">
+                    <button @click="showEditModal = false" class="flex-1 rounded-xl border border-border px-4 py-2.5 text-xs font-bold text-muted-foreground transition-all hover:bg-muted/50 active:scale-95">Cancel</button>
+                    <button @click="updateAccount" class="flex-2 rounded-xl bg-primary px-8 py-2.5 text-xs font-bold text-primary-foreground transition-all hover:bg-primary/90 shadow-lg shadow-primary/20 active:scale-95">Save Changes</button>
                 </div>
             </div>
         </div>

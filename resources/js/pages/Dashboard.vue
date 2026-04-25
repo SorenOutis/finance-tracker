@@ -258,7 +258,6 @@ const highlightClass = (targetStep: number) => {
 // Remove getTooltipPosition computed as we now use tooltipStyle
 const showWelcomeModal = useStorage('show-welcome-modal-v1', true, sessionStorage);
 const showRecurringModal = ref(false);
-const showQuickAddModal = ref(false);
 
 // Forms
 const incomeForm = useForm({ amount: '', date: getYYYYMMDD(new Date()), category: '', description: '', account_id: '' as string | number });
@@ -829,12 +828,6 @@ const formatDate = (dateStr: string) => {
     </div>
 </div>
 
-<!-- Floating Action Button (FAB) -->
-<button @click="showQuickAddModal = true" 
-    class="fixed bottom-24 right-6 md:bottom-10 md:right-10 w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all z-40 group">
-    <Plus class="w-7 h-7 group-hover:rotate-90 transition-transform duration-300" />
-</button>
-
 </div>
 </AppLayout>
 
@@ -985,62 +978,4 @@ const formatDate = (dateStr: string) => {
     </div></Transition>
 </div></Transition>
 </Teleport>
-<!-- Quick Add Modal -->
-<Dialog v-model:open="showQuickAddModal">
-    <DialogContent class="sm:max-w-[400px] max-w-[90vw] p-0 overflow-hidden border-none bg-transparent shadow-none">
-        <div class="relative bg-card rounded-[32px] overflow-hidden border border-border/50 shadow-2xl animate-in zoom-in-95 duration-200">
-            <div class="p-6 sm:p-8">
-                <DialogHeader class="mb-6">
-                    <DialogTitle class="text-xl font-black tracking-tight font-display">Quick Actions</DialogTitle>
-                    <DialogDescription class="text-xs text-muted-foreground font-medium">Choose an action to manage your finances.</DialogDescription>
-                </DialogHeader>
-
-                <div class="grid grid-cols-1 gap-2.5">
-                    <button @click="showQuickAddModal = false; showIncomeModal = true" class="group flex items-center justify-between p-4 rounded-2xl bg-muted/30 border border-border/40 hover:bg-card hover:border-primary/50 transition-all active:scale-[0.98]">
-                        <div class="flex items-center gap-3">
-                            <div class="p-2 rounded-xl bg-[--fin-gain]/10 text-[--fin-gain]"><Wallet class="h-5 w-5" /></div>
-                            <div class="text-left">
-                                <p class="text-sm font-bold text-foreground">Add Income</p>
-                                <p class="text-[10px] text-muted-foreground">Log your earnings</p>
-                            </div>
-                        </div>
-                        <Plus class="h-4 w-4 text-muted-foreground group-hover:text-primary transition-transform group-hover:rotate-90" />
-                    </button>
-
-                    <button @click="showQuickAddModal = false; showExpenseModal = true" class="group flex items-center justify-between p-4 rounded-2xl bg-muted/30 border border-border/40 hover:bg-card hover:border-primary/50 transition-all active:scale-[0.98]">
-                        <div class="flex items-center gap-3">
-                            <div class="p-2 rounded-xl bg-[--fin-loss]/10 text-[--fin-loss]"><TrendingDown class="h-5 w-5" /></div>
-                            <div class="text-left">
-                                <p class="text-sm font-bold text-foreground">Add Expense</p>
-                                <p class="text-[10px] text-muted-foreground">Log your spending</p>
-                            </div>
-                        </div>
-                        <Plus class="h-4 w-4 text-muted-foreground group-hover:text-primary transition-transform group-hover:rotate-90" />
-                    </button>
-
-                    <div class="grid grid-cols-3 gap-2.5 mt-2">
-                        <button @click="showQuickAddModal = false; showBudgetModal = true" class="flex flex-col items-center justify-center p-3 rounded-2xl bg-muted/30 border border-border/40 hover:bg-card hover:border-primary/50 transition-all active:scale-[0.98]">
-                            <Target class="h-5 w-5 text-primary mb-2" />
-                            <p class="text-[10px] font-bold">Budget</p>
-                        </button>
-                        <button @click="showQuickAddModal = false; showGoalModal = true" class="flex flex-col items-center justify-center p-3 rounded-2xl bg-muted/30 border border-border/40 hover:bg-card hover:border-primary/50 transition-all active:scale-[0.98]">
-                            <Zap class="h-5 w-5 text-amber-500 mb-2" />
-                            <p class="text-[10px] font-bold">Goal</p>
-                        </button>
-                        <button @click="showQuickAddModal = false; showRecurringModal = true" class="flex flex-col items-center justify-center p-3 rounded-2xl bg-muted/30 border border-border/40 hover:bg-card hover:border-primary/50 transition-all active:scale-[0.98]">
-                            <CalendarClock class="h-5 w-5 text-blue-500 mb-2" />
-                            <p class="text-[10px] font-bold">Recurring</p>
-                        </button>
-                    </div>
-                </div>
-
-                <div class="mt-6">
-                    <button @click="showQuickAddModal = false" class="w-full py-3 rounded-xl bg-muted/50 text-muted-foreground font-bold text-sm hover:bg-muted transition-all active:scale-[0.98]">
-                        Close
-                    </button>
-                </div>
-            </div>
-        </div>
-    </DialogContent>
-</Dialog>
 </template>

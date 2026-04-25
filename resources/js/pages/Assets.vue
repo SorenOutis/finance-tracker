@@ -185,49 +185,51 @@ const statCards = computed(() => [
 
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="flex h-full flex-1 flex-col gap-5 md:gap-8 overflow-x-auto p-4 sm:p-8 pb-24 md:pb-8">
-            <!-- Header -->
-            <div class="animate-fade-up stagger-1">
-                <h1 class="text-3xl lg:text-4xl font-bold leading-tight tracking-tight">Assets & Liabilities</h1>
-                <p class="mt-2 text-sm text-muted-foreground font-sans">Manage your financial holdings and track your net worth</p>
-            </div>
+            <!-- Header Section (Compact Hero) -->
+            <div class="relative overflow-hidden rounded-[24px] bg-card border border-border/50 p-4 sm:p-6 mb-1.5 sm:mb-2 animate-fade-up stagger-1">
+                <!-- Background abstract shapes -->
+                <div class="absolute -top-12 -right-12 w-32 h-32 bg-primary/5 rounded-full blur-2xl"></div>
+                <div class="absolute -bottom-12 -left-12 w-32 h-32 bg-secondary/5 rounded-full blur-2xl"></div>
 
-            <!-- Stats Row -->
-            <div class="grid grid-cols-2 gap-4 md:grid-cols-3 lg:gap-6">
-                <div v-for="(stat, idx) in statCards" :key="stat.label"
-                    :class="['group surface-card p-4 lg:p-5 overflow-hidden relative hover:scale-[1.03] transition-all duration-300 hover:shadow-lg cursor-default animate-fade-up', `stagger-${idx + 1}`, stat.tint]">
-                    <div class="absolute top-0 right-0 w-20 h-20 opacity-[0.04] pointer-events-none transition-transform duration-500 group-hover:scale-110">
-                        <component :is="stat.icon" class="size-20 -translate-y-3 translate-x-3" />
+                <div class="relative flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+                    <div class="flex-1">
+                        <div class="flex items-center gap-2 mb-1">
+                            <div class="p-1 rounded-lg bg-primary/10 text-primary">
+                                <Scale class="w-3.5 h-3.5" />
+                            </div>
+                            <span class="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/80 font-sans">Net Worth</span>
+                        </div>
+                        <h1 class="text-xl sm:text-2xl font-black tracking-tight text-foreground font-display">
+                            Holdings & <span class="text-primary">Liabilities</span>
+                        </h1>
+                        <p class="mt-1 text-[11px] sm:text-xs text-muted-foreground font-medium max-w-xl leading-relaxed">
+                            Managing <span class="text-foreground font-bold">{{ formatCurrency(props.totalAssets) }}</span> in assets and <span class="text-foreground font-bold">{{ formatCurrency(props.totalLiabilities) }}</span> in liabilities across your portfolio.
+                        </p>
                     </div>
-                    <p class="text-[11px] font-semibold tracking-[0.08em] uppercase text-muted-foreground mb-2.5 font-sans">
-                        {{ stat.label }}</p>
-                    <p class="text-2xl lg:text-3xl font-bold text-foreground font-mono tracking-tighter leading-none">{{
-                        stat.value }}</p>
-                </div>
 
-                <!-- Net Worth with Ring -->
-                <div class="surface-card p-4 lg:p-5 overflow-hidden relative stat-tint-accent animate-fade-up stagger-3 hover:scale-[1.03] transition-all duration-300 hover:shadow-lg cursor-default group md:col-span-1 col-span-2">
-                    <div class="flex items-center gap-4">
-                        <div class="relative w-16 h-16 shrink-0">
+                    <div class="flex flex-row items-center gap-6 lg:pl-6 lg:border-l border-border/50">
+                        <!-- Net Worth Ring -->
+                        <div class="relative w-14 h-14 sm:w-16 sm:h-16 shrink-0">
                             <svg class="w-full h-full -rotate-90" viewBox="0 0 120 120">
                                 <circle cx="60" cy="60" :r="ringRadius" fill="none"
-                                    class="stroke-border/30" stroke-width="8" />
+                                    class="stroke-border/30" stroke-width="12" />
                                 <circle cx="60" cy="60" :r="ringRadius" fill="none"
                                     :stroke="props.netWorth >= 0 ? 'oklch(0.76 0.16 162)' : 'oklch(0.62 0.22 18)'"
-                                    stroke-width="8"
+                                    stroke-width="12"
                                     stroke-linecap="round"
                                     :stroke-dasharray="ringCircumference"
                                     :stroke-dashoffset="ringDashOffset"
                                     class="transition-all duration-1000 ease-out" />
                             </svg>
                             <div class="absolute inset-0 flex items-center justify-center">
-                                <Scale class="h-4 w-4 text-muted-foreground" />
+                                <Scale class="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground/50" />
                             </div>
                         </div>
-                        <div class="min-w-0 flex-1">
-                            <p class="text-[11px] font-semibold tracking-[0.08em] uppercase text-muted-foreground mb-1.5 font-sans truncate">
-                                Net Worth</p>
-                            <p :class="['text-2xl lg:text-3xl font-bold font-mono tracking-tighter leading-none truncate', props.netWorth >= 0 ? 'text-[--fin-gain]' : 'text-[--fin-loss]']">
-                                {{ formatCurrency(props.netWorth) }}</p>
+                        <div class="flex flex-col">
+                            <span class="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/70">Current Net Worth</span>
+                            <span :class="['text-xl sm:text-2xl font-black font-mono tracking-tighter', props.netWorth >= 0 ? 'text-[--fin-gain]' : 'text-[--fin-loss]']">
+                                {{ formatCurrency(props.netWorth) }}
+                            </span>
                         </div>
                     </div>
                 </div>

@@ -128,31 +128,32 @@ const maxAmount = computed(() => {
 
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="flex h-full flex-1 flex-col gap-5 md:gap-8 overflow-x-auto p-4 sm:p-8 pb-24 md:pb-8">
-            <!-- Header -->
-            <div class="animate-fade-up stagger-1">
-                <div class="flex items-center gap-3">
-                    <div class="p-2 rounded-xl bg-primary/8">
-                        <Calendar class="h-5 w-5 text-primary" />
-                    </div>
-                    <div>
-                        <h1 class="text-3xl lg:text-4xl font-bold leading-tight tracking-tight">Yearly Overview</h1>
-                        <p class="mt-1 text-sm text-muted-foreground font-sans">Full year <span class="font-semibold text-foreground">{{ props.currentYear }}</span> financial summary</p>
-                    </div>
-                </div>
-            </div>
+            <!-- Header Section (Compact Hero) -->
+            <div class="relative overflow-hidden rounded-[24px] bg-card border border-border/50 p-4 sm:p-5 mb-1.5 sm:mb-2 animate-fade-up stagger-1">
+                <!-- Background abstract shapes -->
+                <div class="absolute -top-12 -right-12 w-32 h-32 bg-primary/5 rounded-full blur-2xl"></div>
+                <div class="absolute -bottom-12 -left-12 w-32 h-32 bg-secondary/5 rounded-full blur-2xl"></div>
 
-            <!-- Year Stats Cards -->
-            <div class="grid grid-cols-2 gap-4 md:grid-cols-3 lg:gap-6">
-                <div
-                    v-for="(stat, idx) in displayStats"
-                    :key="stat.label"
-                    :class="['group surface-card p-4 lg:p-5 overflow-hidden relative hover:scale-[1.03] transition-all duration-300 hover:shadow-lg cursor-default animate-fade-up', `stagger-${idx + 1}`, stat.tint]"
-                >
-                    <div class="absolute top-0 right-0 w-20 h-20 opacity-[0.04] pointer-events-none transition-transform duration-500 group-hover:scale-110">
-                        <component :is="stat.icon" class="size-20 -translate-y-3 translate-x-3" />
+                <div class="relative flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div class="flex-1">
+                        <div class="flex items-center gap-2 mb-1">
+                            <div class="p-1 rounded-lg bg-primary/10 text-primary">
+                                <Calendar class="w-3.5 h-3.5" />
+                            </div>
+                            <span class="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/80 font-sans">Yearly</span>
+                        </div>
+                        <h1 class="text-xl sm:text-2xl font-black tracking-tight text-foreground font-display">
+                            Annual <span class="text-primary">Overview</span>
+                        </h1>
+                        <p class="mt-1 text-[11px] sm:text-xs text-muted-foreground font-medium max-w-xl leading-relaxed">
+                            Full financial summary for <span class="text-foreground font-bold">{{ props.currentYear }}</span>.
+                            You've earned <span class="text-[--fin-gain] font-bold">{{ displayStats.find(s => s.label.toLowerCase() === 'year income')?.value }}</span>
+                            and spent <span class="text-[--fin-loss] font-bold">{{ displayStats.find(s => s.label.toLowerCase() === 'year expenses')?.value }}</span>
+                            with a net of <span :class="['font-bold', (displayStats.find(s => s.label.toLowerCase() === 'year net')?.rawValue ?? 0) >= 0 ? 'text-[--fin-gain]' : 'text-[--fin-loss]']">
+                                {{ displayStats.find(s => s.label.toLowerCase() === 'year net')?.value }}
+                            </span>.
+                        </p>
                     </div>
-                    <p class="text-[11px] font-semibold tracking-[0.08em] uppercase text-muted-foreground mb-2.5 font-sans">{{ stat.label }}</p>
-                    <p :class="['text-2xl lg:text-3xl font-bold font-mono tracking-tighter leading-none', stat.colorClass]">{{ stat.value }}</p>
                 </div>
             </div>
 
