@@ -23,9 +23,16 @@ class RegistrationTest extends TestCase
             'email' => 'test@example.com',
             'password' => 'password',
             'password_confirmation' => 'password',
+            'account_name' => 'Test Wallet',
+            'initial_balance' => 1000,
         ]);
 
         $this->assertAuthenticated();
         $response->assertRedirect(route('dashboard', absolute: false));
+
+        $this->assertDatabaseHas('accounts', [
+            'name' => 'Test Wallet',
+            'initial_balance' => 1000,
+        ]);
     }
 }

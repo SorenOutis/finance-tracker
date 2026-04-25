@@ -11,10 +11,10 @@ import LoadingScreen from '@/components/LoadingScreen.vue';
 import { login } from '@/routes';
 import { store } from '@/routes/register';
 import { ref, computed } from 'vue';
-import { ArrowRight, ArrowLeft, Check, Smartphone, Lock, User, Mail, Sparkles } from 'lucide-vue-next';
+import { ArrowRight, ArrowLeft, Check, Smartphone, Lock, User, Mail, Sparkles, Wallet, Coins } from 'lucide-vue-next';
 
 const step = ref(1);
-const totalSteps = 4;
+const totalSteps = 5;
 const authMethod = ref<'pin' | 'pattern' | null>(null);
 
 const form = useForm({
@@ -22,6 +22,8 @@ const form = useForm({
     email: '',
     password: '',
     password_confirmation: '',
+    account_name: 'Main Wallet',
+    initial_balance: '0',
 });
 
 const pin = ref(['', '', '', '', '', '']);
@@ -359,10 +361,9 @@ const submit = () => {
                 </div>
 
                 <div class="flex flex-col gap-4 mt-12">
-                    <Button @click="submit" :disabled="!form.password || form.password !== form.password_confirmation || (authMethod === 'pin' && form.password.length !== 6) || form.processing" size="lg" class="w-full h-14 rounded-2xl text-lg font-bold">
-                        <Spinner v-if="form.processing" class="mr-2" />
-                        Complete Registration
-                        <Check v-if="!form.processing" class="ml-2 w-5 h-5" />
+                    <Button @click="nextStep" :disabled="!form.password || form.password !== form.password_confirmation || (authMethod === 'pin' && form.password.length !== 6)" size="lg" class="w-full h-14 rounded-2xl text-lg font-bold">
+                        Continue
+                        <ArrowRight class="ml-2 w-5 h-5" />
                     </Button>
                     <button @click="prevStep" class="text-sm font-bold text-muted-foreground hover:text-foreground py-2 transition-colors">
                         Go Back
@@ -371,6 +372,45 @@ const submit = () => {
                 
                 <div v-if="form.errors.password" class="mt-4 text-center">
                     <InputError :message="form.errors.password" />
+                </div>
+            </div>
+
+            <!-- Step 5: Financial Onboarding -->
+            <div v-if="step === 5" class="animate-fade-up">
+                <h2 class="text-3xl font-black tracking-tight mb-2">Almost There!</h2>
+                <p class="text-muted-foreground mb-8">Let's set up your first wallet to start tracking.</p>
+                
+                <div class="grid gap-5">
+                    <div class="grid gap-2">
+                        <Label class="text-xs font-bold uppercase tracking-widest text-muted-foreground ml-1">Wallet Name</Label>
+                        <div class="relative">
+                            <Wallet class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                            <Input v-model="form.account_name" class="h-12 pl-11 rounded-xl bg-muted/30 border-transparent focus:bg-background transition-all" placeholder="e.g., Cash, Main Bank" />
+                        </div>
+                    </div>
+                    <div class="grid gap-2">
+                        <Label class="text-xs font-bold uppercase tracking-widest text-muted-foreground ml-1">Initial Balance (₱)</Label>
+                        <div class="relative">
+                            <Coins class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                            <Input v-model="form.initial_balance" type="number" step="0.01" class="h-12 pl-11 rounded-xl bg-muted/30 border-transparent focus:bg-background transition-all" placeholder="0.00" />
+                        </div>
+                        <p class="text-[10px] text-muted-foreground ml-1">You can always change this later.</p>
+                    </div>
+                </div>
+
+                <div class="flex flex-col gap-4 mt-12">
+                    <Button @click="submit" :disabled="!form.account_name || form.processing" size="lg" class="w-full h-14 rounded-2xl text-lg font-bold shadow-lg shadow-primary/20">
+                        <Spinner v-if="form.processing" class="mr-2" />
+                        Complete Setup
+                        <Check v-if="!form.processing" class="ml-2 w-5 h-5" />
+                    </Button>
+                    <button @click="prevStep" class="text-sm font-bold text-muted-foreground hover:text-foreground py-2 transition-colors">
+                        Go Back
+                    </button>
+                </div>
+
+                <div v-if="Object.keys(form.errors).length > 0" class="mt-4 text-center">
+                    <InputError v-for="(error, field) in form.errors" :key="field" :message="error" />
                 </div>
             </div>
         </div>
