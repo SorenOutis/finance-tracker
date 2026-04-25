@@ -39,8 +39,13 @@ class DashboardController extends Controller
             ->where('is_active', true)
             ->get()
             ->sum(function ($rt) {
-                if ($rt->frequency === 'weekly') return $rt->amount * 4;
-                if ($rt->frequency === 'yearly') return $rt->amount / 12;
+                if ($rt->frequency === 'weekly') {
+                    return $rt->amount * 4;
+                }
+                if ($rt->frequency === 'yearly') {
+                    return $rt->amount / 12;
+                }
+
                 return $rt->amount;
             });
 
@@ -49,8 +54,13 @@ class DashboardController extends Controller
             ->where('is_active', true)
             ->get()
             ->sum(function ($rt) {
-                if ($rt->frequency === 'weekly') return $rt->amount * 4;
-                if ($rt->frequency === 'yearly') return $rt->amount / 12;
+                if ($rt->frequency === 'weekly') {
+                    return $rt->amount * 4;
+                }
+                if ($rt->frequency === 'yearly') {
+                    return $rt->amount / 12;
+                }
+
                 return $rt->amount;
             });
 
