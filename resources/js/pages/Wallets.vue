@@ -236,8 +236,8 @@ const addExpense = (data: any) => {
 <!-- Header Section (Compact Hero) -->
 <div class="relative overflow-hidden rounded-[24px] bg-card border border-border/50 p-4 sm:p-5 mb-1.5 sm:mb-2 animate-fade-up stagger-1">
     <!-- Background abstract shapes -->
-    <div class="absolute -top-12 -right-12 w-32 h-32 bg-primary/5 rounded-full blur-2xl"></div>
-    <div class="absolute -bottom-12 -left-12 w-32 h-32 bg-secondary/5 rounded-full blur-2xl"></div>
+    <div class="absolute -top-12 -right-12 w-32 h-32 bg-primary/5 rounded-full blur-2xl pointer-events-none"></div>
+    <div class="absolute -bottom-12 -left-12 w-32 h-32 bg-secondary/5 rounded-full blur-2xl pointer-events-none"></div>
 
     <div class="relative flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div class="flex-1">
