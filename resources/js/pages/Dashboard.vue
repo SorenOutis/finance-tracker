@@ -606,7 +606,7 @@ const formatDate = (dateStr: string) => {
                         <div class="p-1.5 rounded-lg bg-white/20"><CalendarClock class="h-3 w-3" /></div>
                         <span class="text-[8px] sm:text-[9px] font-bold uppercase tracking-wider opacity-90 truncate max-w-[70px] sm:max-w-[80px]">{{ bill.name }}</span>
                     </div>
-                    <span class="text-[7px] sm:text-[8px] font-black px-1.2 py-0.3 rounded-full bg-white/20 uppercase">{{ bill.days_until === 0 ? 'Today' : `In ${bill.days_until}d` }}</span>
+                    <span class="text-[7px] sm:text-[8px] font-black px-1.2 py-0.3 rounded-full bg-white/20 uppercase">{{ bill.days_until === 0 ? 'Today' : bill.days_until === 1 ? 'Tomorrow' : bill.days_until < 0 ? `${Math.abs(bill.days_until)}d ago` : `In ${bill.days_until}d` }}</span>
                 </div>
                 
                 <p class="text-base sm:text-lg font-black font-mono tracking-tight leading-none">{{ formatCurrency(bill.amount) }}</p>

@@ -201,11 +201,11 @@ class DashboardController extends Controller
         $financialGoals = FinancialGoal::where('user_id', $user->id)->orderBy('created_at', 'desc')->get();
 
         $now = Carbon::today();
-        // Upcoming bills (next 30 days)
+        // All active recurring bills, soonest first
         $upcomingBills = RecurringTransaction::where('user_id', $user->id)
             ->where('type', 'expense')
             ->where('is_active', true)
-            ->whereBetween('next_due_date', [$now->toDateString(), $now->copy()->addDays(30)->toDateString()])
+            ->orderBy('next_due_date', 'asc')
             ->get()
             ->map(function ($bill) use ($now) {
                 return [
