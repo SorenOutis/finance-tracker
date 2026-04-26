@@ -102,10 +102,17 @@ const handleSubmit = () => {
     emit('submit', { ...form.value });
 };
 
-const scrollIntoView = (e: FocusEvent) => {
+const textFieldFocused = ref(false);
+
+const handleTextFocus = (e: FocusEvent) => {
+    textFieldFocused.value = true;
     setTimeout(() => {
         (e.target as HTMLElement)?.scrollIntoView({ block: 'center', behavior: 'smooth' });
     }, 300);
+};
+
+const handleTextBlur = () => {
+    textFieldFocused.value = false;
 };
 
 const applyQuickAmount = (n: number) => {
@@ -186,7 +193,7 @@ watch(() => props.open, (isOpen) => {
                         <label class="absolute left-3 top-2 text-[8px] font-bold uppercase tracking-wider text-muted-foreground/60 z-10">{{ form.type === 'income' ? 'Income Name' : 'Bill Name' }}</label>
                         <div class="relative">
                             <FileText class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 mt-1" :style="{ color: form.color }" />
-                            <input type="text" v-model="form.name" @focus="scrollIntoView" :placeholder="form.type === 'income' ? 'e.g., Monthly Salary' : 'e.g., Netflix Subscription'" class="w-full bg-muted/30 border border-transparent hover:border-primary/20 rounded-2xl pl-10 pr-4 py-3 pt-5 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-primary/10 transition-all placeholder:text-muted-foreground/40" />
+                            <input type="text" v-model="form.name" @focus="handleTextFocus" @blur="handleTextBlur" :placeholder="form.type === 'income' ? 'e.g., Monthly Salary' : 'e.g., Netflix Subscription'" class="w-full bg-muted/30 border border-transparent hover:border-primary/20 rounded-2xl pl-10 pr-4 py-3 pt-5 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-primary/10 transition-all placeholder:text-muted-foreground/40" />
                         </div>
                     </div>
 
@@ -231,7 +238,7 @@ watch(() => props.open, (isOpen) => {
                         </div>
                         <div class="relative group mb-2">
                             <Type class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" :style="{ color: form.color }" />
-                            <input type="text" v-model="form.category" @focus="scrollIntoView" :placeholder="form.type === 'income' ? 'e.g., Salary' : 'e.g., Entertainment'" class="w-full bg-muted/30 border border-transparent hover:border-primary/20 rounded-2xl pl-10 pr-4 py-3 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-primary/10 transition-all placeholder:text-muted-foreground/40" />
+                            <input type="text" v-model="form.category" @focus="handleTextFocus" @blur="handleTextBlur" :placeholder="form.type === 'income' ? 'e.g., Salary' : 'e.g., Entertainment'" class="w-full bg-muted/30 border border-transparent hover:border-primary/20 rounded-2xl pl-10 pr-4 py-3 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-primary/10 transition-all placeholder:text-muted-foreground/40" />
                         </div>
                         <div class="flex gap-1.5 overflow-x-auto pb-1 scrollbar-hide -mx-1 px-1">
                             <button v-for="cat in categorySuggestions" :key="cat"
@@ -250,7 +257,7 @@ watch(() => props.open, (isOpen) => {
                         <label class="absolute left-3 top-2 text-[8px] font-bold uppercase tracking-wider text-muted-foreground/60 z-10">Note (optional)</label>
                         <div class="relative">
                             <AlignLeft class="absolute left-3 top-5 w-4 h-4" :style="{ color: form.color }" />
-                            <textarea v-model="form.description" @focus="scrollIntoView" rows="2" placeholder="Add a note..." class="w-full bg-muted/30 border border-transparent hover:border-primary/20 rounded-2xl pl-10 pr-4 py-3 pt-5 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-primary/10 transition-all placeholder:text-muted-foreground/40 resize-none" />
+                            <textarea v-model="form.description" @focus="handleTextFocus" @blur="handleTextBlur" rows="2" placeholder="Add a note..." class="w-full bg-muted/30 border border-transparent hover:border-primary/20 rounded-2xl pl-10 pr-4 py-3 pt-5 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-primary/10 transition-all placeholder:text-muted-foreground/40 resize-none" />
                         </div>
                     </div>
 
@@ -289,7 +296,7 @@ watch(() => props.open, (isOpen) => {
                 </div>
 
                 <!-- Keypad -->
-                <div class="bg-muted/20 px-3 sm:px-6 pt-3 sm:pt-5 pb-3 sm:pb-6 rounded-t-[24px] sm:rounded-t-[40px] flex-shrink-0">
+                <div v-show="!textFieldFocused" class="bg-muted/20 px-3 sm:px-6 pt-3 sm:pt-5 pb-3 sm:pb-6 rounded-t-[24px] sm:rounded-t-[40px] flex-shrink-0">
                     <!-- Quick Amount Chips -->
                     <div class="flex gap-1.5 overflow-x-auto pb-2 sm:pb-3 mb-2 sm:mb-3 scrollbar-hide justify-center">
                         <button v-for="n in quickAmounts" :key="n" @click="applyQuickAmount(n)"
@@ -316,6 +323,16 @@ watch(() => props.open, (isOpen) => {
                     <!-- Submit Button -->
                     <button @click="handleSubmit" :disabled="!form.name || form.amount === '0'"
                         class="w-full bg-black text-white dark:bg-white dark:text-black rounded-[16px] py-3 sm:py-5 text-[10px] sm:text-sm font-black tracking-tight hover:opacity-90 active:scale-[0.98] transition-all shadow-xl shadow-black/10 flex items-center justify-center gap-1.5 disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100"
+                    >
+                        {{ title }}
+                        <ChevronRight class="w-3.5 h-3.5" />
+                    </button>
+                </div>
+
+                <!-- Compact Submit when typing -->
+                <div v-show="textFieldFocused" class="px-4 py-3 border-t border-border/40 flex-shrink-0">
+                    <button @mousedown.prevent="handleSubmit" :disabled="!form.name || form.amount === '0'"
+                        class="w-full bg-black text-white dark:bg-white dark:text-black rounded-[16px] py-3 text-xs font-black tracking-tight hover:opacity-90 active:scale-[0.98] transition-all flex items-center justify-center gap-1.5 disabled:opacity-40 disabled:cursor-not-allowed"
                     >
                         {{ title }}
                         <ChevronRight class="w-3.5 h-3.5" />

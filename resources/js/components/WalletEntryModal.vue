@@ -149,10 +149,17 @@ const handleSubmit = () => {
     emit('submit', { ...form.value });
 };
 
-const scrollIntoView = (e: FocusEvent) => {
+const textFieldFocused = ref(false);
+
+const handleTextFocus = (e: FocusEvent) => {
+    textFieldFocused.value = true;
     setTimeout(() => {
         (e.target as HTMLElement)?.scrollIntoView({ block: 'center', behavior: 'smooth' });
     }, 300);
+};
+
+const handleTextBlur = () => {
+    textFieldFocused.value = false;
 };
 
 const close = () => {
@@ -261,7 +268,7 @@ const typeLabel = computed(() => accountTypes.find(t => t.value === form.value.t
                             <label class="absolute left-2.5 top-1.5 text-[7px] sm:text-[8px] font-bold uppercase tracking-wider text-muted-foreground/60 z-10">Name</label>
                             <div class="relative">
                                 <Wallet class="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-primary mt-1" />
-                                <input type="text" v-model="form.name" @focus="scrollIntoView" placeholder="e.g., GCash" class="w-full bg-muted/30 border border-transparent hover:border-primary/20 rounded-xl pl-8 pr-3 py-2.5 pt-4 text-[12px] sm:text-sm font-bold focus:outline-none focus:ring-2 focus:ring-primary/10 transition-all" />
+                                <input type="text" v-model="form.name" @focus="handleTextFocus" @blur="handleTextBlur" placeholder="e.g., GCash" class="w-full bg-muted/30 border border-transparent hover:border-primary/20 rounded-xl pl-8 pr-3 py-2.5 pt-4 text-[12px] sm:text-sm font-bold focus:outline-none focus:ring-2 focus:ring-primary/10 transition-all" />
                             </div>
                         </div>
                         <div class="relative group">
@@ -305,14 +312,14 @@ const typeLabel = computed(() => accountTypes.find(t => t.value === form.value.t
                             <label class="absolute left-2.5 top-1.5 text-[7px] font-bold uppercase tracking-wider text-muted-foreground/60 z-10">Holder</label>
                             <div class="relative">
                                 <User class="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-primary mt-1" />
-                                <input type="text" v-model="form.holder_name" @focus="scrollIntoView" placeholder="Name" class="w-full bg-muted/30 border border-transparent hover:border-primary/20 rounded-xl pl-8 pr-3 py-2.5 pt-4 text-[12px] font-bold focus:outline-none focus:ring-2 focus:ring-primary/10 transition-all" />
+                                <input type="text" v-model="form.holder_name" @focus="handleTextFocus" @blur="handleTextBlur" placeholder="Name" class="w-full bg-muted/30 border border-transparent hover:border-primary/20 rounded-xl pl-8 pr-3 py-2.5 pt-4 text-[12px] font-bold focus:outline-none focus:ring-2 focus:ring-primary/10 transition-all" />
                             </div>
                         </div>
                         <div class="relative group">
                             <label class="absolute left-2.5 top-1.5 text-[7px] font-bold uppercase tracking-wider text-muted-foreground/60 z-10">Last 4</label>
                             <div class="relative">
                                 <Hash class="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-primary mt-1" />
-                                <input type="text" v-model="form.last4" maxlength="4" placeholder="••••" class="w-full bg-muted/30 border border-transparent hover:border-primary/20 rounded-xl pl-8 pr-3 py-2.5 pt-4 text-[12px] font-bold focus:outline-none focus:ring-2 focus:ring-primary/10 transition-all font-mono" />
+                                <input type="text" v-model="form.last4" @focus="handleTextFocus" @blur="handleTextBlur" maxlength="4" placeholder="••••" class="w-full bg-muted/30 border border-transparent hover:border-primary/20 rounded-xl pl-8 pr-3 py-2.5 pt-4 text-[12px] font-bold focus:outline-none focus:ring-2 focus:ring-primary/10 transition-all font-mono" />
                             </div>
                         </div>
                     </div>
@@ -329,7 +336,7 @@ const typeLabel = computed(() => accountTypes.find(t => t.value === form.value.t
                 </div>
 
                 <!-- Keypad -->
-                <div class="bg-muted/20 px-3 sm:px-6 pt-3 sm:pt-5 pb-3 sm:pb-6 rounded-t-[24px] sm:rounded-t-[40px] flex-shrink-0">
+                <div v-show="!textFieldFocused" class="bg-muted/20 px-3 sm:px-6 pt-3 sm:pt-5 pb-3 sm:pb-6 rounded-t-[24px] sm:rounded-t-[40px] flex-shrink-0">
                     <!-- Quick Amount Chips -->
                     <div class="flex gap-1.5 overflow-x-auto pb-2 sm:pb-3 mb-2 sm:mb-3 scrollbar-hide justify-center">
                         <button v-for="n in quickAmounts" :key="n" @click="applyQuickAmount(n)"
@@ -354,6 +361,16 @@ const typeLabel = computed(() => accountTypes.find(t => t.value === form.value.t
                     <!-- Submit Button -->
                     <button @click="handleSubmit" :disabled="!form.name"
                         class="w-full bg-black text-white dark:bg-white dark:text-black rounded-[16px] py-3 sm:py-5 text-[10px] sm:text-sm font-black tracking-tight hover:opacity-90 active:scale-[0.98] transition-all shadow-xl shadow-black/10 flex items-center justify-center gap-1.5 disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100"
+                    >
+                        {{ title }}
+                        <ChevronRight class="w-3.5 h-3.5" />
+                    </button>
+                </div>
+
+                <!-- Compact Submit when typing -->
+                <div v-show="textFieldFocused" class="px-4 py-3 border-t border-border/40 flex-shrink-0">
+                    <button @mousedown.prevent="handleSubmit" :disabled="!form.name"
+                        class="w-full bg-black text-white dark:bg-white dark:text-black rounded-[16px] py-3 text-xs font-black tracking-tight hover:opacity-90 active:scale-[0.98] transition-all flex items-center justify-center gap-1.5 disabled:opacity-40 disabled:cursor-not-allowed"
                     >
                         {{ title }}
                         <ChevronRight class="w-3.5 h-3.5" />
