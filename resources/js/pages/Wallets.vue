@@ -288,9 +288,9 @@ const addExpense = (data: any) => {
 </div>
 
 <!-- Wallet Cards Grid -->
-<div v-if="accounts.length" class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 animate-fade-up stagger-3">
+<div v-if="accounts.length" class="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3 animate-fade-up stagger-3">
     <div v-for="account in accounts" :key="account.id"
-        class="group relative overflow-hidden rounded-[20px] p-5 sm:p-6 text-white shadow-xl transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 hover:scale-[1.02] cursor-default"
+        class="group relative overflow-hidden rounded-[16px] sm:rounded-[20px] p-3 sm:p-6 text-white shadow-lg sm:shadow-xl transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 hover:scale-[1.02] cursor-default"
         :style="{ background: getCardGradient(account.type, account.color) }">
 
         <!-- Card pattern overlay -->
@@ -313,27 +313,27 @@ const addExpense = (data: any) => {
         <!-- Card content -->
         <div class="relative z-10">
             <!-- Name Header -->
-            <div class="flex items-center justify-between mb-6">
-                <div>
-                    <p class="text-[10px] font-semibold uppercase tracking-wider opacity-60 mb-0.5">
+            <div class="flex items-center justify-between mb-3 sm:mb-6">
+                <div class="min-w-0">
+                    <p class="text-[8px] sm:text-[10px] font-semibold uppercase tracking-wider opacity-60 mb-0.5 truncate">
                         {{ account.holder_name || 'Account Holder' }}
                     </p>
-                    <h3 class="text-lg sm:text-xl font-black tracking-tight leading-none">{{ account.name }}</h3>
+                    <h3 class="text-xs sm:text-xl font-black tracking-tight leading-none truncate">{{ account.name }}</h3>
                 </div>
             </div>
 
             <!-- Balance -->
-            <p class="text-2xl sm:text-3xl font-black font-mono tracking-tight leading-none">
+            <p class="text-base sm:text-3xl font-black font-mono tracking-tight leading-none">
                 {{ formatCurrency(account.balance) }}
             </p>
 
             <!-- Type badge (below balance) -->
-            <div class="flex items-center gap-1.5 mt-4 mb-1 opacity-90">
-                <div class="p-1 rounded-md bg-white/20">
-                    <component :is="getTypeIcon(account.type)" class="h-3 w-3" />
+            <div class="flex items-center gap-1 sm:gap-1.5 mt-2 sm:mt-4 mb-1 opacity-90">
+                <div class="p-0.5 sm:p-1 rounded-md bg-white/20">
+                    <component :is="getTypeIcon(account.type)" class="h-2.5 w-2.5 sm:h-3 sm:w-3" />
                 </div>
-                <span class="text-[10px] font-bold uppercase tracking-wider">{{ getTypeLabel(account.type) }}</span>
-                <span v-if="account.last4" class="text-[10px] font-mono opacity-70 ml-2">•••• {{ account.last4 }}</span>
+                <span class="text-[8px] sm:text-[10px] font-bold uppercase tracking-wider">{{ getTypeLabel(account.type) }}</span>
+                <span v-if="account.last4" class="text-[8px] sm:text-[10px] font-mono opacity-70 ml-1 sm:ml-2">•••• {{ account.last4 }}</span>
             </div>
 
             <!-- Credit limit indicator -->
@@ -349,13 +349,13 @@ const addExpense = (data: any) => {
             </div>
 
             <!-- Monthly in/out chips -->
-            <div class="flex items-center justify-between mt-5 pt-4 border-t border-white/15">
-                <div class="flex items-center gap-2">
-                    <span class="inline-flex items-center gap-1 rounded-full bg-white/15 px-2.5 py-1 text-[10px] font-bold">
-                        <ArrowDownRight class="h-2.5 w-2.5" /> {{ formatCurrency(account.month_income) }}
+            <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mt-3 sm:mt-5 pt-3 sm:pt-4 border-t border-white/15">
+                <div class="flex items-center gap-1 sm:gap-2 flex-wrap">
+                    <span class="inline-flex items-center gap-0.5 sm:gap-1 rounded-full bg-white/15 px-1.5 py-0.5 sm:px-2.5 sm:py-1 text-[8px] sm:text-[10px] font-bold">
+                        <ArrowDownRight class="h-2 w-2 sm:h-2.5 sm:w-2.5" /> {{ formatCurrency(account.month_income) }}
                     </span>
-                    <span class="inline-flex items-center gap-1 rounded-full bg-white/15 px-2.5 py-1 text-[10px] font-bold">
-                        <ArrowUpRight class="h-2.5 w-2.5" /> {{ formatCurrency(account.month_expense) }}
+                    <span class="inline-flex items-center gap-0.5 sm:gap-1 rounded-full bg-white/15 px-1.5 py-0.5 sm:px-2.5 sm:py-1 text-[8px] sm:text-[10px] font-bold">
+                        <ArrowUpRight class="h-2 w-2 sm:h-2.5 sm:w-2.5" /> {{ formatCurrency(account.month_expense) }}
                     </span>
                 </div>
                 <div class="flex items-center gap-1">

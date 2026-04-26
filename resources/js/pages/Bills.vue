@@ -211,19 +211,19 @@ const simpleGradient = (color: string | null, def: string) => {
 </div>
 
 <!-- Bills Grid -->
-<div v-if="bills.length" class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 animate-fade-up stagger-3">
+<div v-if="bills.length" class="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3 animate-fade-up stagger-3">
     <div v-for="bill in bills" :key="bill.id"
-        class="group relative overflow-hidden rounded-[24px] p-5 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 text-white shadow-lg"
+        class="group relative overflow-hidden rounded-[18px] sm:rounded-[24px] p-3 sm:p-5 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 text-white shadow-lg"
         :style="{ background: simpleGradient(bill.color, '#ef4444') }">
         
-        <div class="flex items-start justify-between mb-4">
-            <div class="flex items-center gap-3">
-                <div class="p-2.5 rounded-xl bg-white/20">
-                    <component :is="bill.type === 'income' ? Wallet : CalendarClock" class="h-5 w-5" />
+        <div class="flex items-start justify-between mb-3 sm:mb-4">
+            <div class="flex items-center gap-2 sm:gap-3 min-w-0">
+                <div class="p-1.5 sm:p-2.5 rounded-lg sm:rounded-xl bg-white/20 flex-shrink-0">
+                    <component :is="bill.type === 'income' ? Wallet : CalendarClock" class="h-3.5 w-3.5 sm:h-5 sm:w-5" />
                 </div>
-                <div>
-                    <h3 class="font-bold">{{ bill.name }}</h3>
-                    <p class="text-[10px] font-bold uppercase tracking-wider opacity-70">{{ bill.category || 'No Category' }}</p>
+                <div class="min-w-0">
+                    <h3 class="font-bold text-xs sm:text-base truncate">{{ bill.name }}</h3>
+                    <p class="text-[8px] sm:text-[10px] font-bold uppercase tracking-wider opacity-70 truncate">{{ bill.category || 'No Category' }}</p>
                 </div>
             </div>
             <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -236,22 +236,22 @@ const simpleGradient = (color: string | null, def: string) => {
             </div>
         </div>
 
-        <div class="space-y-4">
-            <div class="flex items-baseline gap-1">
-                <span class="text-2xl font-black font-mono">
+        <div class="space-y-3 sm:space-y-4">
+            <div class="flex items-baseline gap-1 flex-wrap">
+                <span class="text-base sm:text-2xl font-black font-mono">
                     {{ bill.type === 'income' ? '+' : '-' }}{{ formatCurrency(bill.amount) }}
                 </span>
-                <span class="text-[10px] font-bold opacity-70 uppercase tracking-widest">/ {{ bill.frequency }}</span>
+                <span class="text-[8px] sm:text-[10px] font-bold opacity-70 uppercase tracking-widest">/ {{ bill.frequency }}</span>
             </div>
 
-            <div class="flex items-center justify-between pt-4 border-t border-white/10">
+            <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between pt-3 sm:pt-4 border-t border-white/10">
                 <div class="flex flex-col">
-                    <span class="text-[9px] font-bold uppercase tracking-wider opacity-70 mb-0.5">Next Due</span>
-                    <span class="text-xs font-bold flex items-center gap-1.5">
-                        <Clock class="h-3 w-3" /> {{ formatDate(bill.next_due_date) }}
+                    <span class="text-[8px] sm:text-[9px] font-bold uppercase tracking-wider opacity-70 mb-0.5">Next Due</span>
+                    <span class="text-[10px] sm:text-xs font-bold flex items-center gap-1 sm:gap-1.5">
+                        <Clock class="h-2.5 w-2.5 sm:h-3 sm:w-3" /> {{ formatDate(bill.next_due_date) }}
                     </span>
                 </div>
-                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold bg-white/20">
+                <span class="self-start sm:self-auto inline-flex items-center px-1.5 sm:px-2.5 py-0.5 sm:py-1 rounded-full text-[8px] sm:text-[10px] font-bold bg-white/20">
                     {{ getStatusLabel(bill) }}
                 </span>
             </div>
