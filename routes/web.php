@@ -16,6 +16,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     })->name('onboarding.complete');
     Route::get('yearly', \App\Http\Controllers\YearlyController::class)->name('yearly');
     Route::get('analytics', \App\Http\Controllers\AnalyticsController::class)->name('analytics');
+    Route::get('history', \App\Http\Controllers\HistoryController::class)->name('history');
     Route::get('assets', \App\Http\Controllers\AssetsController::class)->name('assets');
     Route::get('settings', \App\Http\Controllers\SettingsController::class)->name('settings');
     Route::get('wallets', \App\Http\Controllers\WalletsController::class)->name('wallets');

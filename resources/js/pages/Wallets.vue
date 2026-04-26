@@ -3,10 +3,12 @@ import { Head, useForm, router } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
 import type { BreadcrumbItem } from '@/types';
 import { ref, computed } from 'vue';
+import { useStorage } from '@vueuse/core';
 import { formatCurrency } from '@/utils/currency';
 import {
-    CreditCard, Plus, Trash2, X, Pencil, Wallet, Smartphone, Landmark, Coins, Bitcoin, MoreHorizontal, ArrowDownRight, ArrowUpRight
+    CreditCard, Plus, Trash2, X, Pencil, Wallet, Smartphone, Landmark, Coins, Bitcoin, MoreHorizontal, ArrowDownRight, ArrowUpRight, CalendarClock, ChevronRight
 } from 'lucide-vue-next';
+import { Link } from '@inertiajs/vue3';
 import {
     Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter
 } from '@/components/ui/dialog';
@@ -28,7 +30,7 @@ interface Props {
 const props = defineProps<Props>();
 const breadcrumbs: BreadcrumbItem[] = [{ title: 'Wallets', href: '/wallets' }];
 
-const showAddModal = ref(false);
+const showAddModal = useStorage('wallets-add-modal', false);
 const showEditModal = ref(false);
 const showDeleteModal = ref(false);
 const showIncomeModal = ref(false);
@@ -253,11 +255,35 @@ const addExpense = (data: any) => {
             </p>
         </div>
 
-        <div class="flex-shrink-0 flex items-center gap-3">
+        <div class="flex-shrink-0 flex items-center gap-2">
             <button @click="showAddModal = true" class="group flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-xs font-bold text-primary-foreground transition-all hover:bg-primary/90 shadow-lg shadow-primary/20 active:scale-[0.98]">
                 <Plus class="h-3.5 w-3.5 transition-transform group-hover:rotate-90" /> Add Wallet
             </button>
         </div>
+    </div>
+
+    <!-- Quick links: Bills & Income -->
+    <div class="grid grid-cols-2 gap-2.5 sm:gap-3 mt-4 sm:mt-5">
+        <Link href="/bills" class="group relative flex items-center gap-3 rounded-2xl border border-border/40 bg-card p-3 sm:p-4 hover:border-rose-500/40 hover:bg-rose-500/5 transition-all">
+            <div class="flex h-10 w-10 sm:h-12 sm:w-12 flex-shrink-0 items-center justify-center rounded-xl bg-rose-500/10 text-rose-500 group-hover:bg-rose-500/15 transition-colors">
+                <CalendarClock class="h-4 w-4 sm:h-5 sm:w-5" />
+            </div>
+            <div class="flex-1 min-w-0">
+                <p class="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Recurring</p>
+                <p class="text-sm sm:text-base font-black tracking-tight">My Bills</p>
+            </div>
+            <ChevronRight class="h-4 w-4 text-muted-foreground group-hover:text-rose-500 group-hover:translate-x-0.5 transition-all" />
+        </Link>
+        <Link href="/incomes" class="group relative flex items-center gap-3 rounded-2xl border border-border/40 bg-card p-3 sm:p-4 hover:border-emerald-500/40 hover:bg-emerald-500/5 transition-all">
+            <div class="flex h-10 w-10 sm:h-12 sm:w-12 flex-shrink-0 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-500 group-hover:bg-emerald-500/15 transition-colors">
+                <ArrowDownRight class="h-4 w-4 sm:h-5 sm:w-5" />
+            </div>
+            <div class="flex-1 min-w-0">
+                <p class="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Recurring</p>
+                <p class="text-sm sm:text-base font-black tracking-tight">My Income</p>
+            </div>
+            <ChevronRight class="h-4 w-4 text-muted-foreground group-hover:text-emerald-500 group-hover:translate-x-0.5 transition-all" />
+        </Link>
     </div>
 </div>
 

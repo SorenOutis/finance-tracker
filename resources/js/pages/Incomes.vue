@@ -3,6 +3,7 @@ import { Head, useForm, router } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
 import type { BreadcrumbItem } from '@/types';
 import { ref, computed } from 'vue';
+import { useStorage } from '@vueuse/core';
 import { formatCurrency } from '@/utils/currency';
 import {
     Plus, Trash2, X, Pencil, CalendarClock, Clock, Wallet, TrendingUp, ArrowRight, CheckCircle2, AlertCircle
@@ -32,7 +33,7 @@ interface Props {
 const props = defineProps<Props>();
 const breadcrumbs: BreadcrumbItem[] = [{ title: 'Income', href: '/incomes' }];
 
-const showAddModal = ref(false);
+const showAddModal = useStorage('incomes-add-modal', false);
 const showEditModal = ref(false);
 const editingIncome = ref<IncomeItem | null>(null);
 
