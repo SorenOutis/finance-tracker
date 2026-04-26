@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import { Head, useForm, router } from '@inertiajs/vue3';
+import { Head, useForm, router, Link } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
 import type { BreadcrumbItem } from '@/types';
 import { ref, computed } from 'vue';
 import { useStorage } from '@vueuse/core';
 import { formatCurrency } from '@/utils/currency';
 import {
-    Plus, Trash2, X, Pencil, CalendarClock, Clock, Wallet, TrendingUp, ArrowRight, CheckCircle2, AlertCircle
+    Plus, Trash2, X, Pencil, CalendarClock, Clock, Wallet, TrendingUp, ArrowRight, CheckCircle2, AlertCircle, CreditCard, ChevronRight
 } from 'lucide-vue-next';
 import {
     Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter
@@ -190,6 +190,30 @@ const simpleGradient = (color: string | null, def: string) => {
                 <Plus class="h-3.5 w-3.5 transition-transform group-hover:rotate-90" /> Add Income
             </button>
         </div>
+    </div>
+
+    <!-- Quick links: Wallets & Bills -->
+    <div class="grid grid-cols-2 gap-2.5 sm:gap-3 mt-4 sm:mt-5">
+        <Link href="/wallets" class="group relative flex items-center gap-3 rounded-2xl border border-border/40 bg-card p-3 sm:p-4 hover:border-indigo-500/40 hover:bg-indigo-500/5 transition-all">
+            <div class="flex h-10 w-10 sm:h-12 sm:w-12 flex-shrink-0 items-center justify-center rounded-xl bg-indigo-500/10 text-indigo-500 group-hover:bg-indigo-500/15 transition-colors">
+                <CreditCard class="h-4 w-4 sm:h-5 sm:w-5" />
+            </div>
+            <div class="flex-1 min-w-0">
+                <p class="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Accounts</p>
+                <p class="text-sm sm:text-base font-black tracking-tight">My Wallets</p>
+            </div>
+            <ChevronRight class="h-4 w-4 text-muted-foreground group-hover:text-indigo-500 group-hover:translate-x-0.5 transition-all" />
+        </Link>
+        <Link href="/bills" class="group relative flex items-center gap-3 rounded-2xl border border-border/40 bg-card p-3 sm:p-4 hover:border-rose-500/40 hover:bg-rose-500/5 transition-all">
+            <div class="flex h-10 w-10 sm:h-12 sm:w-12 flex-shrink-0 items-center justify-center rounded-xl bg-rose-500/10 text-rose-500 group-hover:bg-rose-500/15 transition-colors">
+                <CalendarClock class="h-4 w-4 sm:h-5 sm:w-5" />
+            </div>
+            <div class="flex-1 min-w-0">
+                <p class="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Recurring</p>
+                <p class="text-sm sm:text-base font-black tracking-tight">My Bills</p>
+            </div>
+            <ChevronRight class="h-4 w-4 text-muted-foreground group-hover:text-rose-500 group-hover:translate-x-0.5 transition-all" />
+        </Link>
     </div>
 </div>
 
