@@ -210,26 +210,16 @@ const simpleGradient = (color: string | null, def: string) => {
     </div>
 
     <!-- Quick links: Wallets & Income -->
-    <div class="grid grid-cols-2 gap-2.5 sm:gap-3 mt-4 sm:mt-5">
-        <Link href="/wallets" class="group relative flex items-center gap-3 rounded-2xl border border-border/40 bg-card p-3 sm:p-4 hover:border-indigo-500/40 hover:bg-indigo-500/5 transition-all">
-            <div class="flex h-10 w-10 sm:h-12 sm:w-12 flex-shrink-0 items-center justify-center rounded-xl bg-indigo-500/10 text-indigo-500 group-hover:bg-indigo-500/15 transition-colors">
-                <CreditCard class="h-4 w-4 sm:h-5 sm:w-5" />
-            </div>
-            <div class="flex-1 min-w-0">
-                <p class="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Accounts</p>
-                <p class="text-sm sm:text-base font-black tracking-tight">My Wallets</p>
-            </div>
-            <ChevronRight class="h-4 w-4 text-muted-foreground group-hover:text-indigo-500 group-hover:translate-x-0.5 transition-all" />
+    <div class="flex gap-2 mt-3">
+        <Link href="/wallets" class="group flex items-center gap-1.5 rounded-full border border-border/60 bg-muted/30 hover:bg-muted/60 px-3 py-1.5 text-[11px] font-bold text-foreground transition-all">
+            <CreditCard class="h-3.5 w-3.5 text-muted-foreground" />
+            <span>Wallets</span>
+            <ChevronRight class="h-3 w-3 text-muted-foreground group-hover:translate-x-0.5 transition-transform" />
         </Link>
-        <Link href="/incomes" class="group relative flex items-center gap-3 rounded-2xl border border-border/40 bg-card p-3 sm:p-4 hover:border-emerald-500/40 hover:bg-emerald-500/5 transition-all">
-            <div class="flex h-10 w-10 sm:h-12 sm:w-12 flex-shrink-0 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-500 group-hover:bg-emerald-500/15 transition-colors">
-                <ArrowDownRight class="h-4 w-4 sm:h-5 sm:w-5" />
-            </div>
-            <div class="flex-1 min-w-0">
-                <p class="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Recurring</p>
-                <p class="text-sm sm:text-base font-black tracking-tight">My Income</p>
-            </div>
-            <ChevronRight class="h-4 w-4 text-muted-foreground group-hover:text-emerald-500 group-hover:translate-x-0.5 transition-all" />
+        <Link href="/incomes" class="group flex items-center gap-1.5 rounded-full border border-border/60 bg-muted/30 hover:bg-muted/60 px-3 py-1.5 text-[11px] font-bold text-foreground transition-all">
+            <ArrowDownRight class="h-3.5 w-3.5 text-muted-foreground" />
+            <span>Income</span>
+            <ChevronRight class="h-3 w-3 text-muted-foreground group-hover:translate-x-0.5 transition-transform" />
         </Link>
     </div>
 </div>
