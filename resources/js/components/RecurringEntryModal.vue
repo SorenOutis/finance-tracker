@@ -3,7 +3,7 @@ import { ref, computed, watch } from 'vue';
 import { 
     X, ChevronRight, Wallet, CalendarClock, Clock, 
     TrendingUp, TrendingDown, Delete, Palette,
-    Type, Hash, Calendar, FileText
+    Type, Hash, Calendar, FileText, Tag, Sparkles, AlignLeft
 } from 'lucide-vue-next';
 import {
     Dialog,
@@ -36,14 +36,19 @@ const emit = defineEmits<{
 }>();
 
 const frequencies = [
-    { value: 'weekly', label: 'Weekly' },
-    { value: 'monthly', label: 'Monthly' },
-    { value: 'yearly', label: 'Yearly' },
+    { value: 'weekly', label: 'Weekly', sub: 'Every 7 days' },
+    { value: 'monthly', label: 'Monthly', sub: 'Every month' },
+    { value: 'yearly', label: 'Yearly', sub: 'Once a year' },
 ];
 
 const presetColors = [
     '#EF4444', '#F59E0B', '#10B981', '#3B82F6', '#6366F1', '#8B5CF6', '#EC4899', '#18181B', '#6B7280'
 ];
+
+const expenseCategories = ['Subscription', 'Rent', 'Utilities', 'Internet', 'Insurance', 'Loan', 'Food', 'Transport'];
+const incomeCategories = ['Salary', 'Freelance', 'Business', 'Investment', 'Allowance', 'Bonus', 'Rental', 'Other'];
+
+const quickAmounts = [100, 500, 1000, 5000, 10000];
 
 const form = ref<RecurringData>({
     name: '',
@@ -97,6 +102,32 @@ const handleSubmit = () => {
     emit('submit', { ...form.value });
 };
 
+const scrollIntoView = (e: FocusEvent) => {
+    setTimeout(() => {
+        (e.target as HTMLElement)?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    }, 300);
+};
+
+const applyQuickAmount = (n: number) => {
+    form.value.amount = n.toString();
+};
+
+const categorySuggestions = computed(() => form.value.type === 'income' ? incomeCategories : expenseCategories);
+
+const daysUntilDue = computed(() => {
+    if (!form.value.next_due_date) return null;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const due = new Date(form.value.next_due_date);
+    due.setHours(0, 0, 0, 0);
+    const diff = Math.round((due.getTime() - today.getTime()) / 86400000);
+    if (diff === 0) return 'Today';
+    if (diff === 1) return 'Tomorrow';
+    if (diff === -1) return 'Yesterday';
+    if (diff < 0) return `${Math.abs(diff)} days ago`;
+    return `In ${diff} days`;
+});
+
 const close = () => {
     emit('update:open', false);
 };
@@ -134,10 +165,10 @@ watch(() => props.open, (isOpen) => {
 
 <template>
     <Dialog :open="open" @update:open="close">
-        <DialogContent class="p-0 overflow-hidden border-none bg-background sm:max-w-[420px] max-w-[92vw] w-full fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-[32px] shadow-2xl duration-300">
+        <DialogContent class="block p-0 overflow-hidden border-none bg-background w-[calc(100vw-2rem)] sm:w-full sm:max-w-[420px] rounded-[32px] shadow-2xl duration-300 left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
             <div class="flex flex-col h-auto max-h-[95vh] sm:max-h-[85vh]">
                 <!-- Header -->
-                <div class="py-3 px-6 sm:p-6 text-center relative border-b border-border/40 transition-colors duration-500 flex-shrink-0" :style="{ borderBottomColor: form.color + '20' }">
+                <div class="py-3 px-6 sm:p-6 text-center relative border-b border-border/40 transition-colors duration-500 flex-shrink-0" :style="{ borderBottomColor: form.color + '40' }">
                     <button @click="close" class="absolute right-4 top-3 sm:top-4 p-1.5 rounded-full hover:bg-muted/50 transition-colors z-20">
                         <X class="w-4 h-4 text-muted-foreground" />
                     </button>
@@ -149,71 +180,108 @@ watch(() => props.open, (isOpen) => {
                     </div>
                 </div>
 
-                <div class="flex-1 overflow-y-auto px-6 py-6 scrollbar-hide">
-                    <!-- Info Grid -->
-                    <div class="grid grid-cols-1 gap-3 mb-4">
-                        <div class="relative group">
-                            <label class="absolute left-3 top-2.5 text-[8px] font-bold uppercase tracking-wider text-muted-foreground/60 z-10">Bill Name</label>
-                            <div class="relative">
-                                <FileText class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-primary mt-1" />
-                                <input type="text" v-model="form.name" placeholder="e.g., Netflix Subscription" class="w-full bg-muted/30 border border-transparent hover:border-primary/20 rounded-2xl pl-10 pr-4 py-4 pt-6 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-primary/10 transition-all placeholder:text-muted-foreground/40" />
-                            </div>
+                <div class="flex-1 overflow-y-auto px-5 sm:px-6 py-4 sm:py-5 scrollbar-hide">
+                    <!-- Name -->
+                    <div class="relative group mb-3">
+                        <label class="absolute left-3 top-2 text-[8px] font-bold uppercase tracking-wider text-muted-foreground/60 z-10">{{ form.type === 'income' ? 'Income Name' : 'Bill Name' }}</label>
+                        <div class="relative">
+                            <FileText class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 mt-1" :style="{ color: form.color }" />
+                            <input type="text" v-model="form.name" @focus="scrollIntoView" :placeholder="form.type === 'income' ? 'e.g., Monthly Salary' : 'e.g., Netflix Subscription'" class="w-full bg-muted/30 border border-transparent hover:border-primary/20 rounded-2xl pl-10 pr-4 py-3 pt-5 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-primary/10 transition-all placeholder:text-muted-foreground/40" />
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-2 gap-3 mb-6">
-                        <div class="relative group">
-                            <label class="absolute left-3 top-2.5 text-[8px] font-bold uppercase tracking-wider text-muted-foreground/60 z-10">Frequency</label>
-                            <div class="relative">
-                                <Clock class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-primary mt-1" />
-                                <select v-model="form.frequency" class="w-full bg-muted/30 border border-transparent hover:border-primary/20 rounded-2xl pl-10 pr-4 py-4 pt-6 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-primary/10 transition-all appearance-none cursor-pointer">
-                                    <option v-for="f in frequencies" :key="f.value" :value="f.value">{{ f.label }}</option>
-                                </select>
-                            </div>
+                    <!-- Frequency Chips -->
+                    <div class="mb-3">
+                        <div class="flex items-center gap-2 mb-2 ml-1">
+                            <Clock class="w-3 h-3 text-muted-foreground" />
+                            <p class="text-[8px] sm:text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Frequency</p>
                         </div>
-                        <div class="relative group">
-                            <label class="absolute left-3 top-2.5 text-[8px] font-bold uppercase tracking-wider text-muted-foreground/60 z-10">Next Due Date</label>
-                            <div class="relative">
-                                <Calendar class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-primary mt-1" />
-                                <input type="date" v-model="form.next_due_date" class="w-full bg-muted/30 border border-transparent hover:border-primary/20 rounded-2xl pl-10 pr-4 py-4 pt-6 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-primary/10 transition-all appearance-none" />
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Category & Color -->
-                    <div class="grid grid-cols-2 gap-3 mb-6">
-                        <div class="relative group">
-                            <label class="absolute left-3 top-2.5 text-[8px] font-bold uppercase tracking-wider text-muted-foreground/60 z-10">Category</label>
-                            <div class="relative">
-                                <Type class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-primary mt-1" />
-                                <input type="text" v-model="form.category" placeholder="e.g., Entertainment" class="w-full bg-muted/30 border border-transparent hover:border-primary/20 rounded-2xl pl-10 pr-4 py-4 pt-6 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-primary/10 transition-all placeholder:text-muted-foreground/40" />
-                            </div>
-                        </div>
-                        <div class="relative group">
-                            <label class="absolute left-3 top-2.5 text-[8px] font-bold uppercase tracking-wider text-muted-foreground/60 z-10">Color Theme</label>
-                            <div class="flex items-center gap-1.5 h-full pt-4 ml-1">
-                                <button v-for="color in presetColors.slice(0, 5)" :key="color"
-                                    @click="form.color = color"
-                                    :class="[
-                                        'w-5 h-5 rounded-full flex-shrink-0 transition-all duration-300 border-2',
-                                        form.color === color ? 'border-primary scale-110' : 'border-transparent'
-                                    ]"
-                                    :style="{ backgroundColor: color }"
-                                ></button>
-                                <div class="relative w-5 h-5 rounded-full border-2 border-dashed border-border flex items-center justify-center hover:border-primary transition-colors cursor-pointer group flex-shrink-0">
-                                    <input v-model="form.color" type="color" class="absolute inset-0 opacity-0 cursor-pointer w-full h-full" />
-                                    <Palette class="w-3 h-3 text-muted-foreground group-hover:text-primary" />
-                                </div>
-                            </div>
+                        <div class="grid grid-cols-3 gap-1.5">
+                            <button v-for="f in frequencies" :key="f.value"
+                                @click="form.frequency = f.value as any"
+                                :class="[
+                                    'flex flex-col items-center justify-center px-2 py-2 rounded-xl text-[11px] font-bold transition-all duration-200 active:scale-95 border',
+                                    form.frequency === f.value
+                                        ? 'text-white shadow-md'
+                                        : 'bg-muted/30 text-muted-foreground border-transparent hover:border-primary/20'
+                                ]"
+                                :style="form.frequency === f.value ? { backgroundColor: form.color, borderColor: form.color } : {}"
+                            >
+                                <span>{{ f.label }}</span>
+                                <span class="text-[8px] font-medium opacity-70 mt-0.5">{{ f.sub }}</span>
+                            </button>
                         </div>
                     </div>
 
-                    <div class="flex items-center justify-between px-2 mb-2">
-                        <div class="flex items-center gap-3">
+                    <!-- Next Due Date with countdown -->
+                    <div class="relative group mb-3">
+                        <label class="absolute left-3 top-2 text-[8px] font-bold uppercase tracking-wider text-muted-foreground/60 z-10">Next Due Date</label>
+                        <div class="relative">
+                            <Calendar class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 mt-1" :style="{ color: form.color }" />
+                            <input type="date" v-model="form.next_due_date" class="w-full bg-muted/30 border border-transparent hover:border-primary/20 rounded-2xl pl-10 pr-24 py-3 pt-5 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-primary/10 transition-all appearance-none" />
+                            <span v-if="daysUntilDue" class="absolute right-3 top-1/2 -translate-y-1/2 mt-1 px-2 py-0.5 rounded-md text-[9px] font-bold tracking-wider" :style="{ backgroundColor: form.color + '20', color: form.color }">{{ daysUntilDue }}</span>
+                        </div>
+                    </div>
+
+                    <!-- Category with quick suggestions -->
+                    <div class="mb-3">
+                        <div class="flex items-center gap-2 mb-2 ml-1">
+                            <Tag class="w-3 h-3 text-muted-foreground" />
+                            <p class="text-[8px] sm:text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Category</p>
+                        </div>
+                        <div class="relative group mb-2">
+                            <Type class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" :style="{ color: form.color }" />
+                            <input type="text" v-model="form.category" @focus="scrollIntoView" :placeholder="form.type === 'income' ? 'e.g., Salary' : 'e.g., Entertainment'" class="w-full bg-muted/30 border border-transparent hover:border-primary/20 rounded-2xl pl-10 pr-4 py-3 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-primary/10 transition-all placeholder:text-muted-foreground/40" />
+                        </div>
+                        <div class="flex gap-1.5 overflow-x-auto pb-1 scrollbar-hide -mx-1 px-1">
+                            <button v-for="cat in categorySuggestions" :key="cat"
+                                @click="form.category = cat"
+                                :class="[
+                                    'flex-shrink-0 px-2.5 py-1 rounded-lg text-[10px] font-bold transition-all active:scale-95',
+                                    form.category === cat ? 'text-white' : 'bg-muted/40 text-muted-foreground hover:bg-muted/60'
+                                ]"
+                                :style="form.category === cat ? { backgroundColor: form.color } : {}"
+                            >{{ cat }}</button>
+                        </div>
+                    </div>
+
+                    <!-- Description -->
+                    <div class="relative group mb-3">
+                        <label class="absolute left-3 top-2 text-[8px] font-bold uppercase tracking-wider text-muted-foreground/60 z-10">Note (optional)</label>
+                        <div class="relative">
+                            <AlignLeft class="absolute left-3 top-5 w-4 h-4" :style="{ color: form.color }" />
+                            <textarea v-model="form.description" @focus="scrollIntoView" rows="2" placeholder="Add a note..." class="w-full bg-muted/30 border border-transparent hover:border-primary/20 rounded-2xl pl-10 pr-4 py-3 pt-5 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-primary/10 transition-all placeholder:text-muted-foreground/40 resize-none" />
+                        </div>
+                    </div>
+
+                    <!-- Color Theme -->
+                    <div class="mb-3">
+                        <div class="flex items-center gap-2 mb-2 ml-1">
+                            <Palette class="w-3 h-3 text-muted-foreground" />
+                            <p class="text-[8px] sm:text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Color Theme</p>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <button v-for="color in presetColors" :key="color"
+                                @click="form.color = color"
+                                :class="[
+                                    'w-7 h-7 rounded-full flex-shrink-0 transition-all duration-300 border-2',
+                                    form.color === color ? 'border-foreground scale-110 shadow-lg' : 'border-transparent hover:scale-105'
+                                ]"
+                                :style="{ backgroundColor: color }"
+                            ></button>
+                            <label class="relative w-7 h-7 rounded-full border-2 border-dashed border-border flex items-center justify-center hover:border-primary transition-colors cursor-pointer flex-shrink-0">
+                                <input v-model="form.color" type="color" class="absolute inset-0 opacity-0 cursor-pointer w-full h-full" />
+                                <Palette class="w-3 h-3 text-muted-foreground" />
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center justify-between px-1">
+                        <label for="is_active_recurring" class="flex items-center gap-2 cursor-pointer">
                             <input v-model="form.is_active" type="checkbox" id="is_active_recurring" class="w-4 h-4 rounded border-border bg-card text-primary focus:ring-primary/20 transition-all cursor-pointer" />
-                            <label for="is_active_recurring" class="text-[10px] font-bold uppercase tracking-wider text-muted-foreground cursor-pointer">Active Subscription</label>
-                        </div>
-                        <div v-if="!fixedType" class="flex items-center gap-2">
+                            <span class="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Active</span>
+                        </label>
+                        <div v-if="!fixedType" class="flex items-center gap-1">
                              <button @click="form.type = 'expense'" :class="['px-3 py-1 rounded-lg text-[9px] font-bold transition-all', form.type === 'expense' ? 'bg-destructive/10 text-destructive' : 'text-muted-foreground']">Expense</button>
                              <button @click="form.type = 'income'" :class="['px-3 py-1 rounded-lg text-[9px] font-bold transition-all', form.type === 'income' ? 'bg-emerald-500/10 text-emerald-600' : 'text-muted-foreground']">Income</button>
                         </div>
@@ -221,14 +289,23 @@ watch(() => props.open, (isOpen) => {
                 </div>
 
                 <!-- Keypad -->
-                <div class="bg-muted/20 p-3 sm:p-6 pt-4 sm:pt-8 rounded-t-[24px] sm:rounded-t-[40px] flex-shrink-0">
-                    <div class="grid grid-cols-3 gap-y-1 sm:gap-y-4 gap-x-4 sm:gap-x-8 max-w-[220px] sm:max-w-xs mx-auto mb-2 sm:mb-8">
+                <div class="bg-muted/20 px-3 sm:px-6 pt-3 sm:pt-5 pb-3 sm:pb-6 rounded-t-[24px] sm:rounded-t-[40px] flex-shrink-0">
+                    <!-- Quick Amount Chips -->
+                    <div class="flex gap-1.5 overflow-x-auto pb-2 sm:pb-3 mb-2 sm:mb-3 scrollbar-hide justify-center">
+                        <button v-for="n in quickAmounts" :key="n" @click="applyQuickAmount(n)"
+                            class="flex-shrink-0 px-2.5 py-1 rounded-lg bg-muted/40 hover:bg-primary/10 hover:text-primary text-[10px] font-bold tracking-wider transition-all active:scale-95"
+                        >
+                            ₱{{ n >= 1000 ? (n/1000) + 'K' : n }}
+                        </button>
+                    </div>
+
+                    <div class="grid grid-cols-3 gap-y-0.5 sm:gap-y-2 gap-x-2 sm:gap-x-6 max-w-[260px] sm:max-w-xs mx-auto mb-2 sm:mb-4">
                         <button v-for="key in ['1', '2', '3', '4', '5', '6', '7', '8', '9', '.', '0', 'backspace']" :key="key"
                             @click="handleKeypress(key)"
-                            class="h-8 sm:h-12 flex items-center justify-center text-base sm:text-2xl font-bold hover:bg-muted/50 rounded-full transition-all active:scale-90"
+                            class="h-9 sm:h-11 flex items-center justify-center text-base sm:text-xl font-bold hover:bg-muted/50 rounded-full transition-all active:scale-90"
                         >
                             <template v-if="key === 'backspace'">
-                                <Delete class="w-6 h-6 text-muted-foreground" />
+                                <Delete class="w-5 h-5 text-muted-foreground" />
                             </template>
                             <template v-else>
                                 {{ key }}
@@ -237,8 +314,8 @@ watch(() => props.open, (isOpen) => {
                     </div>
 
                     <!-- Submit Button -->
-                    <button @click="handleSubmit" 
-                        class="w-full bg-black text-white dark:bg-white dark:text-black rounded-[16px] py-3 sm:py-5 text-[10px] sm:text-sm font-black tracking-tight hover:opacity-90 active:scale-[0.98] transition-all shadow-xl shadow-black/10 flex items-center justify-center gap-1.5"
+                    <button @click="handleSubmit" :disabled="!form.name || form.amount === '0'"
+                        class="w-full bg-black text-white dark:bg-white dark:text-black rounded-[16px] py-3 sm:py-5 text-[10px] sm:text-sm font-black tracking-tight hover:opacity-90 active:scale-[0.98] transition-all shadow-xl shadow-black/10 flex items-center justify-center gap-1.5 disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100"
                     >
                         {{ title }}
                         <ChevronRight class="w-3.5 h-3.5" />
