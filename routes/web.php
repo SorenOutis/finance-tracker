@@ -22,6 +22,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('wallets', \App\Http\Controllers\WalletsController::class)->name('wallets');
     Route::get('bills', [\App\Http\Controllers\RecurringTransactionController::class, 'index'])->name('bills');
     Route::get('incomes', [\App\Http\Controllers\RecurringTransactionController::class, 'incomes'])->name('incomes');
+    Route::get('expenses', [\App\Http\Controllers\ExpenseController::class, 'page'])->name('expenses');
 
     Route::resource('incomes', \App\Http\Controllers\IncomeController::class)->only(['store', 'destroy']);
     Route::resource('expenses', \App\Http\Controllers\ExpenseController::class)->only(['store', 'destroy']);

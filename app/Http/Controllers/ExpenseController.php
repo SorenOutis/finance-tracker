@@ -2,11 +2,44 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Account;
 use App\Models\Expense;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 
 class ExpenseController extends Controller
 {
+    public function page(Request $request)
+    {
+        $user = $request->user();
+
+        $accountMap = Account::where('user_id', $user->id)
+            ->get(['id', 'name', 'color', 'type'])
+            ->keyBy('id');
+
+        $expenses = Expense::where('user_id', $user->id)
+            ->orderBy('date', 'desc')
+            ->orderBy('id', 'desc')
+            ->get()
+            ->map(fn ($e) => [
+                'id' => $e->id,
+                'amount' => (float) $e->amount,
+                'date' => $e->date->toDateString(),
+                'category' => $e->category,
+                'description' => $e->description,
+                'account' => $accountMap[$e->account_id] ?? null,
+            ]);
+
+        $accounts = Account::where('user_id', $user->id)
+            ->get(['id', 'name', 'type'])
+            ->map(fn ($a) => ['id' => $a->id, 'name' => $a->name, 'type' => $a->type]);
+
+        return Inertia::render('Expenses', [
+            'expenses' => $expenses,
+            'accounts' => $accounts,
+        ]);
+    }
+
     public function store(Request $request)
     {
         $validated = $request->validate([

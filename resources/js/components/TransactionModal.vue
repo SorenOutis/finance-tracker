@@ -142,7 +142,7 @@ watch(() => props.open, (isOpen) => {
 
 <template>
     <Dialog :open="open" @update:open="close">
-        <DialogContent class="p-0 overflow-hidden border-none bg-background sm:max-w-[420px] max-w-[92vw] w-full fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-[32px] shadow-2xl duration-300">
+        <DialogContent class="p-0 overflow-hidden border-none bg-background sm:max-w-[420px] max-w-[92vw] w-full rounded-[32px] shadow-2xl duration-300">
             <div class="flex flex-col h-auto max-h-[95vh] sm:max-h-[85vh]">
                 <!-- Header -->
                 <div class="py-3 px-6 sm:p-6 text-center relative flex-shrink-0">

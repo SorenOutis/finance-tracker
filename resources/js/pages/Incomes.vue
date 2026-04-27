@@ -6,7 +6,7 @@ import { ref, computed } from 'vue';
 import { useStorage } from '@vueuse/core';
 import { formatCurrency } from '@/utils/currency';
 import {
-    Plus, Trash2, X, Pencil, CalendarClock, Clock, Wallet, TrendingUp, ArrowRight, CheckCircle2, AlertCircle, CreditCard, ChevronRight
+    Plus, Trash2, X, Pencil, CalendarClock, Clock, Wallet, TrendingUp, ArrowRight, CheckCircle2, AlertCircle, CreditCard, ChevronRight, ReceiptText
 } from 'lucide-vue-next';
 import {
     Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter
@@ -192,8 +192,8 @@ const simpleGradient = (color: string | null, def: string) => {
         </div>
     </div>
 
-    <!-- Quick links: Wallets & Bills -->
-    <div class="flex gap-2 mt-3">
+    <!-- Quick links: Wallets, Bills, Expenses -->
+    <div class="flex flex-wrap gap-2 mt-3">
         <Link href="/wallets" class="group flex items-center gap-1.5 rounded-full border border-border/60 bg-muted/30 hover:bg-muted/60 px-3 py-1.5 text-[11px] font-bold text-foreground transition-all">
             <CreditCard class="h-3.5 w-3.5 text-muted-foreground" />
             <span>Wallets</span>
@@ -202,6 +202,11 @@ const simpleGradient = (color: string | null, def: string) => {
         <Link href="/bills" class="group flex items-center gap-1.5 rounded-full border border-border/60 bg-muted/30 hover:bg-muted/60 px-3 py-1.5 text-[11px] font-bold text-foreground transition-all">
             <CalendarClock class="h-3.5 w-3.5 text-muted-foreground" />
             <span>Bills</span>
+            <ChevronRight class="h-3 w-3 text-muted-foreground group-hover:translate-x-0.5 transition-transform" />
+        </Link>
+        <Link href="/expenses" class="group flex items-center gap-1.5 rounded-full border border-border/60 bg-muted/30 hover:bg-muted/60 px-3 py-1.5 text-[11px] font-bold text-foreground transition-all">
+            <ReceiptText class="h-3.5 w-3.5 text-muted-foreground" />
+            <span>Expenses</span>
             <ChevronRight class="h-3 w-3 text-muted-foreground group-hover:translate-x-0.5 transition-transform" />
         </Link>
     </div>

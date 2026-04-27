@@ -6,7 +6,7 @@ import { ref, computed } from 'vue';
 import { useStorage } from '@vueuse/core';
 import { formatCurrency } from '@/utils/currency';
 import {
-    CreditCard, Plus, Trash2, X, Pencil, Wallet, Smartphone, Landmark, Coins, Bitcoin, MoreHorizontal, ArrowDownRight, ArrowUpRight, CalendarClock, ChevronRight
+    CreditCard, Plus, Trash2, X, Pencil, Wallet, Smartphone, Landmark, Coins, Bitcoin, MoreHorizontal, ArrowDownRight, ArrowUpRight, CalendarClock, ChevronRight, ReceiptText
 } from 'lucide-vue-next';
 import { Link } from '@inertiajs/vue3';
 import {
@@ -262,11 +262,16 @@ const addExpense = (data: any) => {
         </div>
     </div>
 
-    <!-- Quick links: Bills & Income -->
-    <div class="flex gap-2 mt-3">
+    <!-- Quick links: Bills, Expenses, Income -->
+    <div class="flex flex-wrap gap-2 mt-3">
         <Link href="/bills" class="group flex items-center gap-1.5 rounded-full border border-border/60 bg-muted/30 hover:bg-muted/60 px-3 py-1.5 text-[11px] font-bold text-foreground transition-all">
             <CalendarClock class="h-3.5 w-3.5 text-muted-foreground" />
             <span>Bills</span>
+            <ChevronRight class="h-3 w-3 text-muted-foreground group-hover:translate-x-0.5 transition-transform" />
+        </Link>
+        <Link href="/expenses" class="group flex items-center gap-1.5 rounded-full border border-border/60 bg-muted/30 hover:bg-muted/60 px-3 py-1.5 text-[11px] font-bold text-foreground transition-all">
+            <ReceiptText class="h-3.5 w-3.5 text-muted-foreground" />
+            <span>Expenses</span>
             <ChevronRight class="h-3 w-3 text-muted-foreground group-hover:translate-x-0.5 transition-transform" />
         </Link>
         <Link href="/incomes" class="group flex items-center gap-1.5 rounded-full border border-border/60 bg-muted/30 hover:bg-muted/60 px-3 py-1.5 text-[11px] font-bold text-foreground transition-all">

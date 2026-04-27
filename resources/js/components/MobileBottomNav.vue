@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Link, router } from '@inertiajs/vue3';
-import { LayoutGrid, History, CreditCard, User, Plus, Wallet, CalendarClock, ArrowDownRight, X } from 'lucide-vue-next';
+import { LayoutGrid, History, CreditCard, User, Plus, Wallet, CalendarClock, ArrowDownRight, ArrowUpRight, X } from 'lucide-vue-next';
 import { ref } from 'vue';
 import { dashboard } from '@/routes';
 import { useCurrentUrl } from '@/composables/useCurrentUrl';
@@ -18,6 +18,7 @@ const showAddSheet = ref(false);
 
 const quickAddOptions = [
     { key: 'wallets-add-modal', href: '/wallets', label: 'Wallet', sub: 'Account or card', icon: Wallet, accent: 'indigo' },
+    { key: 'expenses-add-modal', href: '/expenses', label: 'Expense', sub: 'One-time spend', icon: ArrowUpRight, accent: 'amber' },
     { key: 'bills-add-modal', href: '/bills', label: 'Bill', sub: 'Recurring expense', icon: CalendarClock, accent: 'rose' },
     { key: 'incomes-add-modal', href: '/incomes', label: 'Income', sub: 'Recurring earning', icon: ArrowDownRight, accent: 'emerald' },
 ];
@@ -26,6 +27,7 @@ const accentClasses: Record<string, { bg: string; bgHover: string; iconBg: strin
     indigo:  { bg: 'bg-indigo-500/10',  bgHover: 'hover:bg-indigo-500/15',  iconBg: 'bg-indigo-500/20',  iconText: 'text-indigo-500',  border: 'hover:border-indigo-500/40' },
     rose:    { bg: 'bg-rose-500/10',    bgHover: 'hover:bg-rose-500/15',    iconBg: 'bg-rose-500/20',    iconText: 'text-rose-500',    border: 'hover:border-rose-500/40' },
     emerald: { bg: 'bg-emerald-500/10', bgHover: 'hover:bg-emerald-500/15', iconBg: 'bg-emerald-500/20', iconText: 'text-emerald-500', border: 'hover:border-emerald-500/40' },
+    amber:   { bg: 'bg-amber-500/10',   bgHover: 'hover:bg-amber-500/15',   iconBg: 'bg-amber-500/20',   iconText: 'text-amber-500',   border: 'hover:border-amber-500/40' },
 };
 
 const triggerAdd = (option: typeof quickAddOptions[number]) => {
@@ -99,7 +101,7 @@ const triggerAdd = (option: typeof quickAddOptions[number]) => {
                         <X class="h-4 w-4 text-muted-foreground" />
                     </button>
                 </div>
-                <div class="grid grid-cols-3 gap-2">
+                <div class="grid grid-cols-2 gap-2">
                     <button v-for="opt in quickAddOptions" :key="opt.key"
                         @click="triggerAdd(opt)"
                         :class="['flex flex-col items-center justify-center gap-2 rounded-2xl border border-border/40 p-3 transition-all active:scale-95', accentClasses[opt.accent].bg, accentClasses[opt.accent].bgHover, accentClasses[opt.accent].border]"
