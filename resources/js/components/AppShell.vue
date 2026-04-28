@@ -2,6 +2,7 @@
 import { usePage } from '@inertiajs/vue3';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import MobileBottomNav from '@/components/MobileBottomNav.vue';
+import DesktopQuickAddFab from '@/components/DesktopQuickAddFab.vue';
 import CommandPalette from '@/components/CommandPalette.vue';
 import type { AppShellVariant } from '@/types';
 
@@ -18,10 +19,12 @@ const isOpen = usePage().props.sidebarOpen;
     <div v-if="variant === 'header'" class="flex min-h-screen w-full flex-col">
         <slot />
         <MobileBottomNav />
+        <DesktopQuickAddFab />
     </div>
     <SidebarProvider v-else :default-open="isOpen">
         <slot />
         <MobileBottomNav />
+        <DesktopQuickAddFab />
     </SidebarProvider>
     <CommandPalette />
 </template>
