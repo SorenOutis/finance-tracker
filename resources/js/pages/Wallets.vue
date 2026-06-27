@@ -1,19 +1,19 @@
 <script setup lang="ts">
 import { Head, useForm, router } from '@inertiajs/vue3';
+import { Link } from '@inertiajs/vue3';
+import { useStorage } from '@vueuse/core';
+import {
+    CreditCard, Plus, Trash2, Pencil, Wallet, Smartphone, Landmark, Coins, Bitcoin, MoreHorizontal, ArrowDownRight, ArrowUpRight, CalendarClock, ChevronRight, ReceiptText
+} from 'lucide-vue-next';
+import { ref } from 'vue';
+import TransactionModal from '@/components/TransactionModal.vue';
+import {
+    Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription
+} from '@/components/ui/dialog';
+import WalletEntryModal from '@/components/WalletEntryModal.vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 import type { BreadcrumbItem } from '@/types';
-import { ref, computed } from 'vue';
-import { useStorage } from '@vueuse/core';
 import { formatCurrency } from '@/utils/currency';
-import {
-    CreditCard, Plus, Trash2, X, Pencil, Wallet, Smartphone, Landmark, Coins, Bitcoin, MoreHorizontal, ArrowDownRight, ArrowUpRight, CalendarClock, ChevronRight, ReceiptText
-} from 'lucide-vue-next';
-import { Link } from '@inertiajs/vue3';
-import {
-    Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter
-} from '@/components/ui/dialog';
-import TransactionModal from '@/components/TransactionModal.vue';
-import WalletEntryModal from '@/components/WalletEntryModal.vue';
 
 interface AccountItem {
     id: number; name: string; type: string; color: string | null;
@@ -27,7 +27,7 @@ interface Props {
     totalBalance: number;
 }
 
-const props = defineProps<Props>();
+defineProps<Props>();
 const breadcrumbs: BreadcrumbItem[] = [{ title: 'Wallets', href: '/wallets' }];
 
 const showAddModal = useStorage('wallets-add-modal', false);
@@ -101,9 +101,7 @@ const defaultColors: Record<string, string> = {
     other: '#6366F1',
 };
 
-const presetColors = [
-    '#6366F1', '#007DFE', '#00B274', '#F59E0B', '#EF4444', '#EC4899', '#8B5CF6', '#18181B', '#6B7280'
-];
+
 
 const getCardGradient = (type: string, color: string | null) => {
     const base = color || defaultColors[type] || '#6366F1';

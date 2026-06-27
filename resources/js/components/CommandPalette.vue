@@ -1,16 +1,6 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue';
-import { useMagicKeys } from '@vueuse/core';
 import { router } from '@inertiajs/vue3';
-import {
-    CommandDialog,
-    CommandEmpty,
-    CommandGroup,
-    CommandInput,
-    CommandItem,
-    CommandList,
-    CommandSeparator,
-} from '@/components/ui/command';
+import { useMagicKeys } from '@vueuse/core';
 import {
     LayoutDashboard,
     LineChart,
@@ -20,6 +10,16 @@ import {
     PlusCircle,
     TrendingDown,
 } from 'lucide-vue-next';
+import { ref, watch } from 'vue';
+import {
+    CommandDialog,
+    CommandEmpty,
+    CommandGroup,
+    CommandInput,
+    CommandItem,
+    CommandList,
+    CommandSeparator,
+} from '@/components/ui/command';
 
 const open = ref(false);
 const keys = useMagicKeys({

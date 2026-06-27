@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import { Head, useForm, router } from '@inertiajs/vue3';
-import AppLayout from '@/layouts/AppLayout.vue';
-import { assets } from '@/routes';
-import type { BreadcrumbItem } from '@/types';
-import { ref, computed, onMounted } from 'vue';
-
 import { useStorage } from '@vueuse/core';
-import { formatCurrency } from '@/utils/currency';
 import { Landmark, CreditCard, Scale, Plus, Check, Trash2 } from 'lucide-vue-next';
+import { ref, computed, onMounted } from 'vue';
+import AppLayout from '@/layouts/AppLayout.vue';
+import { assets as assetsRoute } from '@/routes';
+import type { BreadcrumbItem } from '@/types';
+
+import { formatCurrency } from '@/utils/currency';
 
 interface AssetItem {
     id: number;
@@ -40,7 +40,7 @@ const props = defineProps<Props>();
 const breadcrumbs: BreadcrumbItem[] = [
     {
         title: 'Assets',
-        href: assets(),
+        href: assetsRoute(),
     },
 ];
 
@@ -161,22 +161,6 @@ onMounted(() => {
     };
     requestAnimationFrame(animate);
 });
-
-// Stat cards
-const statCards = computed(() => [
-    {
-        label: 'Total Assets',
-        value: formatCurrency(props.totalAssets),
-        icon: Landmark,
-        tint: 'stat-tint-income',
-    },
-    {
-        label: 'Total Liabilities',
-        value: formatCurrency(props.totalLiabilities),
-        icon: CreditCard,
-        tint: 'stat-tint-expense',
-    },
-]);
 </script>
 
 <template>

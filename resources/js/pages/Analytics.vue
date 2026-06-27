@@ -1,16 +1,16 @@
 <script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3';
+import { Chart as ChartJS, registerables } from 'chart.js';
+import gsap from 'gsap';
+import { TrendingUp, TrendingDown, BarChart3, PieChart, ArrowRight } from 'lucide-vue-next';
+import { computed } from 'vue';
+import { onMounted } from 'vue';
+import { Line as LineChart, Bar as BarChart, Doughnut as DoughnutChart } from 'vue-chartjs';
+import { useChartDefaults } from '@/composables/useChartDefaults';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { analytics, yearly } from '@/routes';
 import type { BreadcrumbItem } from '@/types';
-import { computed } from 'vue';
 import { formatCurrency } from '@/utils/currency';
-import { useChartDefaults } from '@/composables/useChartDefaults';
-import { Chart as ChartJS, registerables } from 'chart.js';
-import { Line as LineChart, Bar as BarChart, Doughnut as DoughnutChart } from 'vue-chartjs';
-import { TrendingUp, TrendingDown, BarChart3, PieChart, ArrowUpRight, ArrowDownRight, ArrowRight } from 'lucide-vue-next';
-import { onMounted } from 'vue';
-import gsap from 'gsap';
 
 ChartJS.register(...registerables);
 
@@ -46,38 +46,7 @@ const { chartColors, lineChartOptions, barChartOptions, doughnutChartOptions, is
 const totalYearIncome = computed(() => props.trendData?.reduce((sum, d) => sum + d.income, 0) ?? 0);
 const totalYearExpenses = computed(() => props.trendData?.reduce((sum, d) => sum + d.expenses, 0) ?? 0);
 const totalYearNet = computed(() => totalYearIncome.value - totalYearExpenses.value);
-const avgMonthlyExpense = computed(() => {
-    const monthsWithData = props.trendData?.filter(d => d.expenses > 0).length ?? 0;
-    return monthsWithData > 0 ? totalYearExpenses.value / monthsWithData : 0;
-});
 
-const summaryStats = computed(() => [
-    {
-        label: 'Total Income',
-        value: formatCurrency(totalYearIncome.value),
-        icon: TrendingUp,
-        tint: 'stat-tint-income',
-    },
-    {
-        label: 'Total Expenses',
-        value: formatCurrency(totalYearExpenses.value),
-        icon: TrendingDown,
-        tint: 'stat-tint-expense',
-    },
-    {
-        label: 'Net Profit',
-        value: formatCurrency(totalYearNet.value),
-        icon: totalYearNet.value >= 0 ? ArrowUpRight : ArrowDownRight,
-        tint: totalYearNet.value >= 0 ? 'stat-tint-positive' : 'stat-tint-negative',
-        colorClass: totalYearNet.value >= 0 ? 'text-[--fin-gain]' : 'text-[--fin-loss]',
-    },
-    {
-        label: 'Avg Monthly Spend',
-        value: formatCurrency(avgMonthlyExpense.value),
-        icon: BarChart3,
-        tint: 'stat-tint-accent',
-    },
-]);
 
 // Best/worst months
 const bestMonth = computed(() => {

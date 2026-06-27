@@ -1,5 +1,5 @@
 import type { ChartOptions } from 'chart.js'
-import { ref, computed, watch } from 'vue'
+import { ref, computed } from 'vue'
 
 export function useChartDefaults() {
   const isDark = ref(false)

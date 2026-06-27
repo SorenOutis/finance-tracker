@@ -1,24 +1,18 @@
 <script setup lang="ts">
 import { Head, useForm } from '@inertiajs/vue3';
-import AppLayout from '@/layouts/AppLayout.vue';
-import { dashboard } from '@/routes';
-import type { BreadcrumbItem } from '@/types';
-import { ref, computed, watch, onMounted } from 'vue';
+import { router } from '@inertiajs/vue3';
 import { useStorage } from '@vueuse/core';
-import { formatCurrency } from '@/utils/currency';
+import { Chart as ChartJS, registerables } from 'chart.js';
+import gsap from 'gsap';
 import {
-    Wallet, TrendingDown, TrendingUp, DollarSign, PieChart, Plus, ArrowUpRight, ArrowDownRight,
-    Target, CalendarClock, Download, Flame, Activity, Clock, Zap, AlertCircle, Trash2, X,
+    Wallet, TrendingDown, DollarSign, PieChart, Plus, ArrowUpRight, ArrowDownRight,
+    Target, CalendarClock, Flame, Activity, Zap, AlertCircle, X,
     CreditCard, Smartphone, Landmark, Coins, Bitcoin, MoreHorizontal, Sun, SunDim, Moon
 } from 'lucide-vue-next';
-import { router } from '@inertiajs/vue3';
-import TransactionModal from '@/components/TransactionModal.vue';
-import RecurringEntryModal from '@/components/RecurringEntryModal.vue';
-import { useChartDefaults } from '@/composables/useChartDefaults';
-import { useNumberAnimation } from '@/composables/useNumberAnimation';
-import gsap from 'gsap';
-import { Chart as ChartJS, registerables } from 'chart.js';
+import { ref, computed, watch, onMounted } from 'vue';
 import { Line as LineChart } from 'vue-chartjs';
+import RecurringEntryModal from '@/components/RecurringEntryModal.vue';
+import TransactionModal from '@/components/TransactionModal.vue';
 import {
     Dialog,
     DialogContent,
@@ -27,6 +21,12 @@ import {
     DialogDescription,
     DialogFooter
 } from '@/components/ui/dialog';
+import { useChartDefaults } from '@/composables/useChartDefaults';
+import { useNumberAnimation } from '@/composables/useNumberAnimation';
+import AppLayout from '@/layouts/AppLayout.vue';
+import { dashboard as dashboardRoute } from '@/routes';
+import type { BreadcrumbItem } from '@/types';
+import { formatCurrency } from '@/utils/currency';
 
 ChartJS.register(...registerables);
 
@@ -42,7 +42,7 @@ interface TransactionStats { total: number; incomeCount: number; expenseCount: n
 interface ActivityItem { id: number; type: string; amount: number; category?: string; description?: string; date: string; timestamp: number; }
 interface YtdData { income: number; expense: number; net: number; dayOfYear: number; daysInYear: number; }
 interface GoalItem { id: number; name: string; target_amount: number; current_amount: number; deadline?: string; color: string; }
-interface RecurringItem { id: number; name: string; amount: number; type: string; category?: string; frequency: string; next_due_date: string; color: string | null; }
+
 interface BillItem { id: number; name: string; amount: number; next_due_date: string; days_until: number; frequency: string; color: string | null; }
 interface RecurringIncome { id: number; name: string; amount: number; frequency: string; next_due_date: string; color: string | null; }
 interface AccountItem { id: number; name: string; type: string; color: string | null; balance: number; last4: string | null; holder_name: string | null; month_income: number; month_expense: number; }
@@ -58,7 +58,7 @@ interface Props {
 }
 
 const props = defineProps<Props>();
-const breadcrumbs: BreadcrumbItem[] = [{ title: 'Dashboard', href: dashboard() }];
+const breadcrumbs: BreadcrumbItem[] = [{ title: 'Dashboard', href: dashboardRoute() }];
 const { chartColors, isDark } = useChartDefaults();
 
 // Date handling
@@ -69,7 +69,7 @@ const currentMonth = computed(() => new Date(selectedDate.value));
 const fmtMonthYear = (d: Date) => d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
 const fmtYearMonth = (d: Date) => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
 
-watch(selectedDate, () => { router.get(dashboard(), { date: selectedDate.value }, { preserveState: true, preserveScroll: true }); });
+watch(selectedDate, () => { router.get(dashboardRoute(), { date: selectedDate.value }, { preserveState: true, preserveScroll: true }); });
 
 // MoM changes
 const incomeChange = computed(() => props.dashboard.prevMonthIncome === 0 ? null : ((props.dashboard.totalIncome - props.dashboard.prevMonthIncome) / props.dashboard.prevMonthIncome) * 100);
@@ -311,10 +311,7 @@ const addRecurring = (data: any) => {
         }
     });
 };
-const deleteRecurring = (id: number) => { router.delete(`/recurring-transactions/${id}`, { preserveScroll: true }); };
 const deleteEntry = (id: number, type: 'income' | 'expense') => { router.delete(`/${type}s/${id}`, { preserveScroll: true }); };
-
-const exportCsv = () => { window.location.href = `/export/csv?month=${fmtYearMonth(currentMonth.value)}`; };
 
 const greeting = computed(() => { const h = new Date().getHours(); return h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening'; });
 const greetingIcon = computed(() => { const h = new Date().getHours(); return h < 12 ? Sun : h < 17 ? SunDim : Moon; });

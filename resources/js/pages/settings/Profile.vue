@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Form, Head, Link, useForm, usePage } from '@inertiajs/vue3';
+import { LogOut } from 'lucide-vue-next';
 import { computed } from 'vue';
 import ProfileController from '@/actions/App/Http/Controllers/Settings/ProfileController';
 import DeleteUser from '@/components/DeleteUser.vue';
@@ -12,7 +13,6 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import SettingsLayout from '@/layouts/settings/Layout.vue';
 import { edit } from '@/routes/profile';
 import { send } from '@/routes/verification';
-import { LogOut } from 'lucide-vue-next';
 import type { BreadcrumbItem } from '@/types';
 
 type Props = {

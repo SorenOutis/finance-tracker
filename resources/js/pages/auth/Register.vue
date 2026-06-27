@@ -1,25 +1,22 @@
 <script setup lang="ts">
-import { Form, Head, useForm } from '@inertiajs/vue3';
-import InputError from '@/components/InputError.vue';
-import TextLink from '@/components/TextLink.vue';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Spinner } from '@/components/ui/spinner';
-import { login } from '@/routes';
-import { ref, computed, watch } from 'vue';
+import { Head, useForm } from '@inertiajs/vue3';
 import { 
     ArrowRight, 
     ArrowLeft, 
     Check, 
     User, 
     Mail, 
-    Lock, 
     Wallet, 
     Coins, 
     Globe,
     Smartphone
 } from 'lucide-vue-next';
+import { ref, computed, watch } from 'vue';
+import InputError from '@/components/InputError.vue';
+import TextLink from '@/components/TextLink.vue';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
     Select,
     SelectContent,
@@ -27,6 +24,8 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import { Spinner } from '@/components/ui/spinner';
+import { login } from '@/routes';
 
 const step = ref(1);
 const totalSteps = 3;

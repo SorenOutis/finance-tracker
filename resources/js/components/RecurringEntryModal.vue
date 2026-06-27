@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { ref, computed, watch, nextTick } from 'vue';
 import {
-    X, ChevronRight, Calendar, FileText, Tag, Palette, Clock,
+    X, ChevronRight, Calendar, FileText, Palette,
     AlignLeft, ArrowDownRight, ArrowUpRight, Check, Repeat,
 } from 'lucide-vue-next';
+import { ref, computed, watch, nextTick } from 'vue';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 
 interface RecurringData {

@@ -1,14 +1,14 @@
 <script setup lang="ts">
 import { Head } from '@inertiajs/vue3';
+import { Chart as ChartJS, registerables } from 'chart.js';
+import { Calendar, TrendingUp, TrendingDown, DollarSign, ArrowUpRight, ArrowDownRight } from 'lucide-vue-next';
+import { computed } from 'vue';
+import { Bar as BarChart } from 'vue-chartjs';
+import { useChartDefaults } from '@/composables/useChartDefaults';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { yearly } from '@/routes';
 import type { BreadcrumbItem } from '@/types';
-import { computed } from 'vue';
 import { formatCurrency } from '@/utils/currency';
-import { useChartDefaults } from '@/composables/useChartDefaults';
-import { Chart as ChartJS, registerables } from 'chart.js';
-import { Bar as BarChart } from 'vue-chartjs';
-import { Calendar, TrendingUp, TrendingDown, DollarSign, ArrowUpRight, ArrowDownRight } from 'lucide-vue-next';
 
 ChartJS.register(...registerables);
 
@@ -39,7 +39,7 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-const { chartColors, barChartOptions, isDark } = useChartDefaults();
+const { chartColors, barChartOptions } = useChartDefaults();
 
 const getStatIcon = (label: string) => {
     switch (label.toLowerCase()) {

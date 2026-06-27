@@ -1,14 +1,14 @@
 <script setup lang="ts">
 import { Head, useForm, router, Link } from '@inertiajs/vue3';
-import AppLayout from '@/layouts/AppLayout.vue';
-import type { BreadcrumbItem } from '@/types';
-import { computed } from 'vue';
 import { useStorage } from '@vueuse/core';
-import { formatCurrency } from '@/utils/currency';
 import {
     Plus, Trash2, ArrowUpRight, CalendarClock, CreditCard, ArrowDownRight, ChevronRight, ReceiptText, Inbox,
 } from 'lucide-vue-next';
+import { computed } from 'vue';
 import TransactionModal from '@/components/TransactionModal.vue';
+import AppLayout from '@/layouts/AppLayout.vue';
+import type { BreadcrumbItem } from '@/types';
+import { formatCurrency } from '@/utils/currency';
 
 interface AccountRef { id: number; name: string; color?: string | null; type?: string; }
 interface ExpenseItem {

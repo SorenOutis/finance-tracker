@@ -1,14 +1,12 @@
 <script setup lang="ts">
 import { Head, useForm, usePage } from '@inertiajs/vue3';
+import { Mail, Sparkles, Smartphone } from 'lucide-vue-next';
+import { ref, onMounted } from 'vue';
 import InputError from '@/components/InputError.vue';
 import TextLink from '@/components/TextLink.vue';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Spinner } from '@/components/ui/spinner';
 import { register } from '@/routes';
-import { ref, onMounted } from 'vue';
-import { Mail, Sparkles, Smartphone } from 'lucide-vue-next';
 
 defineProps<{
     status?: string;

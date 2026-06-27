@@ -1,19 +1,19 @@
 <script setup lang="ts">
-import AppLayout from '@/layouts/app/AppSidebarLayout.vue';
-import type { BreadcrumbItem } from '@/types';
-import { onMounted, ref } from 'vue';
-import { useLocalStorage } from '@/plugins/localStorage';
 import { usePage } from '@inertiajs/vue3';
-import gsap from 'gsap';
-import LoadingScreen from '@/components/LoadingScreen.vue';
 import { useSessionStorage } from '@vueuse/core';
+import gsap from 'gsap';
+import { onMounted, ref } from 'vue';
+import LoadingScreen from '@/components/LoadingScreen.vue';
+import AppLayout from '@/layouts/app/AppSidebarLayout.vue';
+import { useLocalStorage } from '@/plugins/localStorage';
+import type { BreadcrumbItem } from '@/types';
 
 
 type Props = {
     breadcrumbs?: BreadcrumbItem[];
 };
 
-const props = withDefaults(defineProps<Props>(), {
+withDefaults(defineProps<Props>(), {
     breadcrumbs: () => [],
 });
 

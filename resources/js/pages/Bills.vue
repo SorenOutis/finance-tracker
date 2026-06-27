@@ -1,17 +1,15 @@
 <script setup lang="ts">
 import { Head, useForm, router, Link } from '@inertiajs/vue3';
+import { useStorage } from '@vueuse/core';
+import {
+    Plus, Trash2, Pencil, CalendarClock, Clock, Wallet, CreditCard, ArrowDownRight, ChevronRight, ReceiptText
+} from 'lucide-vue-next';
+import { ref } from 'vue';
+import RecurringEntryModal from '@/components/RecurringEntryModal.vue';
+
 import AppLayout from '@/layouts/AppLayout.vue';
 import type { BreadcrumbItem } from '@/types';
-import { ref, computed } from 'vue';
-import { useStorage } from '@vueuse/core';
 import { formatCurrency } from '@/utils/currency';
-import {
-    Plus, Trash2, X, Pencil, CalendarClock, Clock, Wallet, TrendingDown, ArrowRight, CheckCircle2, AlertCircle, CreditCard, ArrowDownRight, ChevronRight, ReceiptText
-} from 'lucide-vue-next';
-import {
-    Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter
-} from '@/components/ui/dialog';
-import RecurringEntryModal from '@/components/RecurringEntryModal.vue';
 
 interface BillItem {
     id: number;
@@ -30,7 +28,7 @@ interface Props {
     bills: BillItem[];
 }
 
-const props = defineProps<Props>();
+defineProps<Props>();
 const breadcrumbs: BreadcrumbItem[] = [{ title: 'Bills', href: '/bills' }];
 
 const showAddModal = useStorage('bills-add-modal', false);
@@ -62,15 +60,7 @@ const editForm = useForm({
     color: '#3b82f6',
 });
 
-const frequencies = [
-    { value: 'weekly', label: 'Weekly' },
-    { value: 'monthly', label: 'Monthly' },
-    { value: 'yearly', label: 'Yearly' },
-];
 
-const presetColors = [
-    '#EF4444', '#F59E0B', '#10B981', '#3B82F6', '#6366F1', '#8B5CF6', '#EC4899', '#18181B', '#6B7280'
-];
 
 const addBill = (data: any) => {
     billForm.name = data.name;
@@ -133,18 +123,7 @@ const deleteBill = (id: number) => {
     }
 };
 
-const getStatusColor = (bill: BillItem) => {
-    if (!bill.is_active) return 'bg-muted text-muted-foreground';
-    const due = new Date(bill.next_due_date);
-    const today = new Date();
-    today.setHours(0,0,0,0);
-    
-    const diff = Math.ceil((due.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-    
-    if (diff < 0) return 'bg-destructive/10 text-destructive';
-    if (diff <= 3) return 'bg-amber-500/10 text-amber-600';
-    return 'bg-primary/10 text-primary';
-};
+
 
 const getStatusLabel = (bill: BillItem) => {
     if (!bill.is_active) return 'Inactive';

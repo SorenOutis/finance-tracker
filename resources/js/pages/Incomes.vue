@@ -1,17 +1,15 @@
 <script setup lang="ts">
 import { Head, useForm, router, Link } from '@inertiajs/vue3';
+import { useStorage } from '@vueuse/core';
+import {
+    Plus, Trash2, Pencil, CalendarClock, Clock, Wallet, TrendingUp, CreditCard, ChevronRight, ReceiptText
+} from 'lucide-vue-next';
+import { ref } from 'vue';
+import RecurringEntryModal from '@/components/RecurringEntryModal.vue';
+
 import AppLayout from '@/layouts/AppLayout.vue';
 import type { BreadcrumbItem } from '@/types';
-import { ref, computed } from 'vue';
-import { useStorage } from '@vueuse/core';
 import { formatCurrency } from '@/utils/currency';
-import {
-    Plus, Trash2, X, Pencil, CalendarClock, Clock, Wallet, TrendingUp, ArrowRight, CheckCircle2, AlertCircle, CreditCard, ChevronRight, ReceiptText
-} from 'lucide-vue-next';
-import {
-    Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter
-} from '@/components/ui/dialog';
-import RecurringEntryModal from '@/components/RecurringEntryModal.vue';
 
 interface IncomeItem {
     id: number;
@@ -30,7 +28,7 @@ interface Props {
     incomes: IncomeItem[];
 }
 
-const props = defineProps<Props>();
+defineProps<Props>();
 const breadcrumbs: BreadcrumbItem[] = [{ title: 'Income', href: '/incomes' }];
 
 const showAddModal = useStorage('incomes-add-modal', false);
@@ -62,15 +60,7 @@ const editForm = useForm({
     color: '#10b981',
 });
 
-const frequencies = [
-    { value: 'weekly', label: 'Weekly' },
-    { value: 'monthly', label: 'Monthly' },
-    { value: 'yearly', label: 'Yearly' },
-];
 
-const presetColors = [
-    '#10B981', '#3B82F6', '#6366F1', '#8B5CF6', '#EC4899', '#EF4444', '#F59E0B', '#18181B', '#6B7280'
-];
 
 const addIncome = (data: any) => {
     incomeForm.name = data.name;
@@ -133,10 +123,7 @@ const deleteIncome = (id: number) => {
     }
 };
 
-const getStatusColor = (income: IncomeItem) => {
-    if (!income.is_active) return 'bg-muted text-muted-foreground';
-    return 'bg-primary/10 text-primary';
-};
+
 
 const getStatusLabel = (income: IncomeItem) => {
     if (!income.is_active) return 'Inactive';

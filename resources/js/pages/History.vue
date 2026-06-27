@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { Head, router } from '@inertiajs/vue3';
-import AppLayout from '@/layouts/AppLayout.vue';
-import { ref, computed, watch } from 'vue';
-import { formatCurrency } from '@/utils/currency';
 import {
     Search, ArrowDownRight, ArrowUpRight, History as HistoryIcon, Trash2, Inbox,
 } from 'lucide-vue-next';
+import { ref, computed, watch } from 'vue';
+import AppLayout from '@/layouts/AppLayout.vue';
 import type { BreadcrumbItem } from '@/types';
+import { formatCurrency } from '@/utils/currency';
 
 interface AccountRef { id: number; name: string; color: string | null; type: string; }
 interface HistoryItem {

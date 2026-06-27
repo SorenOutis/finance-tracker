@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { Head, useForm } from '@inertiajs/vue3';
+import { LogOut, Settings2, User } from 'lucide-vue-next';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { settings } from '@/routes';
 import type { BreadcrumbItem } from '@/types';
-import { LogOut, Settings2, Shield, User } from 'lucide-vue-next';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {

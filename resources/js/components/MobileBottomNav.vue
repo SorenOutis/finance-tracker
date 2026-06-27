@@ -2,8 +2,8 @@
 import { Link, router } from '@inertiajs/vue3';
 import { LayoutGrid, History, CreditCard, User, Plus, Wallet, CalendarClock, ArrowDownRight, ArrowUpRight, X } from 'lucide-vue-next';
 import { ref } from 'vue';
-import { dashboard } from '@/routes';
 import { useCurrentUrl } from '@/composables/useCurrentUrl';
+import { dashboard } from '@/routes';
 
 const { isCurrentUrl } = useCurrentUrl();
 

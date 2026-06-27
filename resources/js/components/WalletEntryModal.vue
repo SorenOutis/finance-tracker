@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import { ref, computed, watch, nextTick } from 'vue';
 import {
     X, ChevronRight, Wallet, Smartphone, Landmark,
     Coins, Bitcoin, MoreHorizontal, Palette,
     User, Hash, CreditCard, Check,
 } from 'lucide-vue-next';
+import { ref, computed, watch, nextTick } from 'vue';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 
 interface WalletData {

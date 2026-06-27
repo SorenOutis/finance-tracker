@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3';
-import { dashboard, login, register } from '@/routes';
+import gsap from 'gsap';
 import {
     ArrowUpRight,
     TrendingDown,
@@ -9,9 +9,9 @@ import {
     Moon,
     ArrowRight
 } from 'lucide-vue-next';
-import { useAppearance } from '@/composables/useAppearance';
 import { onMounted, ref } from 'vue';
-import gsap from 'gsap';
+import { useAppearance } from '@/composables/useAppearance';
+import { dashboard, login, register } from '@/routes';
 
 const { appearance, updateAppearance } = useAppearance();
 
