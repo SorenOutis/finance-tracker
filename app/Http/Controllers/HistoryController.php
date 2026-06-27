@@ -25,7 +25,7 @@ class HistoryController extends Controller
             }
             $qb->where(function ($w) use ($q) {
                 $w->where('category', 'like', "%{$q}%")
-                  ->orWhere('description', 'like', "%{$q}%");
+                    ->orWhere('description', 'like', "%{$q}%");
             });
         };
 
