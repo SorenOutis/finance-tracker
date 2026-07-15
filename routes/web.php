@@ -19,6 +19,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('history', \App\Http\Controllers\HistoryController::class)->name('history');
     Route::get('assets', \App\Http\Controllers\AssetsController::class)->name('assets');
     Route::get('settings', \App\Http\Controllers\SettingsController::class)->name('settings');
+    Route::get('enhancement-designs', function () {
+        return \Inertia\Inertia::render('EnhancementDesigns');
+    })->name('enhancement-designs');
     Route::get('wallets', \App\Http\Controllers\WalletsController::class)->name('wallets');
     Route::get('bills', [\App\Http\Controllers\RecurringTransactionController::class, 'index'])->name('bills');
     Route::get('incomes', [\App\Http\Controllers\RecurringTransactionController::class, 'incomes'])->name('incomes');
@@ -49,6 +52,68 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Export
     Route::get('export/csv', [\App\Http\Controllers\ExportController::class, 'csv'])->name('export.csv');
+
+    // ============================================================
+    // Enhancement: Custom Categories
+    // ============================================================
+    Route::get('categories', [\App\Http\Controllers\CategoryController::class, 'index'])->name('categories');
+    Route::post('categories', [\App\Http\Controllers\CategoryController::class, 'store'])->name('categories.store');
+    Route::patch('categories/{category}', [\App\Http\Controllers\CategoryController::class, 'update'])->name('categories.update');
+    Route::delete('categories/{category}', [\App\Http\Controllers\CategoryController::class, 'destroy'])->name('categories.destroy');
+    Route::post('categories/seed-defaults', [\App\Http\Controllers\CategoryController::class, 'seedDefaults'])->name('categories.seed-defaults');
+
+    // ============================================================
+    // Enhancement: Notifications (JSON endpoint)
+    // ============================================================
+    Route::get('notifications', [\App\Http\Controllers\NotificationController::class, 'index'])->name('notifications');
+
+    // ============================================================
+    // Enhancement: Financial Calendar
+    // ============================================================
+    Route::get('calendar', function () {
+        return \Inertia\Inertia::render('Calendar');
+    })->name('calendar');
+
+    // ============================================================
+    // Enhancement: Data Import
+    // ============================================================
+    Route::get('import', [\App\Http\Controllers\ImportController::class, 'index'])->name('import');
+    Route::post('import/preview', [\App\Http\Controllers\ImportController::class, 'preview'])->name('import.preview');
+    Route::post('import/process', [\App\Http\Controllers\ImportController::class, 'import'])->name('import.process');
+
+    // ============================================================
+    // Enhancement: Savings Envelopes
+    // ============================================================
+    Route::get('envelopes', [\App\Http\Controllers\EnvelopeController::class, 'index'])->name('envelopes');
+    Route::post('envelopes', [\App\Http\Controllers\EnvelopeController::class, 'store'])->name('envelopes.store');
+    Route::patch('envelopes/{envelope}', [\App\Http\Controllers\EnvelopeController::class, 'update'])->name('envelopes.update');
+    Route::delete('envelopes/{envelope}', [\App\Http\Controllers\EnvelopeController::class, 'destroy'])->name('envelopes.destroy');
+    Route::post('envelopes/{envelope}/allocate', [\App\Http\Controllers\EnvelopeController::class, 'allocate'])->name('envelopes.allocate');
+    Route::post('envelopes/{envelope}/withdraw', [\App\Http\Controllers\EnvelopeController::class, 'withdraw'])->name('envelopes.withdraw');
+
+    // ============================================================
+    // Enhancement: AI Category Suggestion (JSON endpoint)
+    // ============================================================
+    Route::post('suggest-category', function (\Illuminate\Http\Request $request) {
+        $request->validate([
+            'description' => 'required|string|max:500',
+            'type' => 'nullable|in:income,expense',
+        ]);
+
+        $service = new \App\Services\CategorySuggestionService();
+        $suggestion = $service->suggest(
+            $request->input('description'),
+            $request->input('type')
+        );
+
+        return response()->json(['suggestion' => $suggestion]);
+    })->name('suggest-category');
+
+    // ============================================================
+    // Enhancement: Receipt Photo Upload
+    // ============================================================
+    Route::post('expenses/{expense}/receipt', [\App\Http\Controllers\ExpenseController::class, 'uploadReceipt'])->name('expenses.receipt');
+    Route::delete('expenses/{expense}/receipt', [\App\Http\Controllers\ExpenseController::class, 'deleteReceipt'])->name('expenses.receipt-destroy');
 });
 
 require __DIR__.'/settings.php';

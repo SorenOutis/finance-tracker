@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Account;
 use App\Models\Expense;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 
 class ExpenseController extends Controller
@@ -27,6 +28,7 @@ class ExpenseController extends Controller
                 'date' => $e->date->toDateString(),
                 'category' => $e->category,
                 'description' => $e->description,
+                'receipt_url' => $e->receipt_url,
                 'account' => $accountMap[$e->account_id] ?? null,
             ]);
 
@@ -50,12 +52,55 @@ class ExpenseController extends Controller
             'account_id' => 'nullable|exists:accounts,id',
         ]);
 
-        Expense::create([
+        $expense = Expense::create([
             'user_id' => auth()->id(),
             ...$validated,
         ]);
 
+        // Handle receipt photo upload
+        if ($request->hasFile('receipt_photo')) {
+            $path = $request->file('receipt_photo')->store('receipts/'.$expense->id, 'public');
+            $expense->update(['receipt_photo_path' => $path]);
+        }
+
         return redirect()->back();
+    }
+
+    public function uploadReceipt(Request $request, Expense $expense)
+    {
+        if ($expense->user_id !== auth()->id()) {
+            abort(403);
+        }
+
+        $request->validate([
+            'receipt_photo' => 'required|image|max:10240', // max 10MB
+        ]);
+
+        // Delete old receipt if exists
+        if ($expense->receipt_photo_path) {
+            Storage::disk('public')->delete($expense->receipt_photo_path);
+        }
+
+        $path = $request->file('receipt_photo')->store('receipts/'.$expense->id, 'public');
+        $expense->update(['receipt_photo_path' => $path]);
+
+        return response()->json([
+            'receipt_url' => Storage::disk('public')->url($path),
+        ]);
+    }
+
+    public function deleteReceipt(Expense $expense)
+    {
+        if ($expense->user_id !== auth()->id()) {
+            abort(403);
+        }
+
+        if ($expense->receipt_photo_path) {
+            Storage::disk('public')->delete($expense->receipt_photo_path);
+            $expense->update(['receipt_photo_path' => null]);
+        }
+
+        return response()->json(['success' => true]);
     }
 
     public function index()

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
-import { LayoutGrid, LineChart, CalendarClock, CreditCard, Wallet, History, ReceiptText } from 'lucide-vue-next';
+import { LayoutGrid, LineChart, CalendarClock, CreditCard, Wallet, History, ReceiptText, Sparkles, Tags, CalendarDays, Download, PiggyBank } from 'lucide-vue-next';
 import AppLogo from '@/components/AppLogo.vue';
 import NavFooter from '@/components/NavFooter.vue';
 import NavMain from '@/components/NavMain.vue';
@@ -52,6 +52,31 @@ const mainNavItems: NavItem[] = [
         title: 'Analytics',
         href: analytics(),
         icon: LineChart,
+    },
+    {
+        title: 'Categories',
+        href: '/categories',
+        icon: Tags,
+    },
+    {
+        title: 'Calendar',
+        href: '/calendar',
+        icon: CalendarDays,
+    },
+    {
+        title: 'Envelopes',
+        href: '/envelopes',
+        icon: PiggyBank,
+    },
+    {
+        title: 'Import',
+        href: '/import',
+        icon: Download,
+    },
+    {
+        title: 'Enhancements',
+        href: '/enhancement-designs',
+        icon: Sparkles,
     },
 ];
 

@@ -3,9 +3,10 @@ import {
     X, Calendar, FileText, ChevronRight,
     Wallet, ShoppingCart, Car, Home,
     Utensils, Coffee, Zap, Heart,
-    Landmark, MoreHorizontal,
+    Landmark, MoreHorizontal, Camera, Image,
     ArrowDownRight, ArrowUpRight,
 } from 'lucide-vue-next';
+import ReceiptScanner from '@/components/ReceiptScanner.vue';
 import { ref, computed, watch, nextTick } from 'vue';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 
@@ -38,6 +39,9 @@ const category = ref('');
 const description = ref('');
 const accountId = ref<string | number>('');
 const amountInput = ref<HTMLInputElement | null>(null);
+const receiptFile = ref<File | null>(null);
+const receiptPreview = ref<string | null>(null);
+const showReceiptSection = ref(false);
 
 const categories = computed(() => {
     if (props.type === 'income') {
@@ -90,7 +94,22 @@ const formatDateLabel = (dateStr: string) => {
     return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 };
 
-const close = () => emit('update:open', false);
+const close = () => {
+    receiptFile.value = null;
+    receiptPreview.value = null;
+    showReceiptSection.value = false;
+    emit('update:open', false);
+};
+
+const handleReceiptCaptured = (data: { photoBlob: Blob; previewUrl: string }) => {
+    receiptFile.value = data.photoBlob as File;
+    receiptPreview.value = data.previewUrl;
+};
+
+const handleReceiptClear = () => {
+    receiptFile.value = null;
+    receiptPreview.value = null;
+};
 
 const handleSubmit = () => {
     if (!amount.value || parseFloat(amount.value) <= 0) return;
@@ -100,6 +119,7 @@ const handleSubmit = () => {
         category: category.value,
         description: description.value,
         account_id: accountId.value,
+        receipt_photo: receiptFile.value,
     });
 };
 
@@ -282,6 +302,31 @@ watch(
                             </div>
                         </label>
                     </div>
+
+                    <!-- Receipt Section (Mobile) -->
+                    <div class="mt-3">
+                        <button
+                            type="button"
+                            @click="showReceiptSection = !showReceiptSection"
+                            class="flex items-center gap-2 rounded-2xl border border-border/60 bg-muted/30 px-3.5 py-2.5 w-full transition-all hover:bg-muted/50"
+                        >
+                            <Camera class="h-4 w-4 shrink-0 text-primary" />
+                            <span class="text-[11px] font-semibold text-foreground">
+                                {{ receiptPreview ? 'Receipt attached' : 'Attach Receipt' }}
+                            </span>
+                            <span v-if="receiptPreview" class="ml-auto flex items-center gap-1.5">
+                                <span class="h-2 w-2 rounded-full bg-emerald-500"></span>
+                                <span class="text-[10px] font-bold text-emerald-500">Photo</span>
+                            </span>
+                        </button>
+                        <div v-if="showReceiptSection" class="mt-2">
+                            <ReceiptScanner
+                                :receipt-preview="receiptPreview"
+                                @captured="handleReceiptCaptured"
+                                @clear="handleReceiptClear"
+                            />
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Sticky submit -->
@@ -443,6 +488,32 @@ watch(
                                 />
                             </div>
                         </label>
+                    </div>
+
+                    <!-- Receipt Section (Desktop) -->
+                    <div class="mt-4">
+                        <button
+                            type="button"
+                            @click="showReceiptSection = !showReceiptSection"
+                            class="flex items-center gap-2 rounded-xl border border-border/60 bg-background px-3.5 py-2.5 w-full transition-all hover:bg-muted/50"
+                        >
+                            <Camera class="h-4 w-4 shrink-0 text-primary" />
+                            <span class="text-[11px] font-semibold text-foreground">
+                                {{ receiptPreview ? 'Receipt attached' : 'Attach Receipt' }}
+                            </span>
+                            <span v-if="receiptPreview" class="ml-auto flex items-center gap-1.5">
+                                <span class="h-2 w-2 rounded-full bg-emerald-500"></span>
+                                <span class="text-[10px] font-bold text-emerald-500">Photo</span>
+                            </span>
+                            <ChevronRight v-else class="h-3.5 w-3.5 ml-auto text-muted-foreground" />
+                        </button>
+                        <div v-if="showReceiptSection" class="mt-2">
+                            <ReceiptScanner
+                                :receipt-preview="receiptPreview"
+                                @captured="handleReceiptCaptured"
+                                @clear="handleReceiptClear"
+                            />
+                        </div>
                     </div>
                 </div>
 
