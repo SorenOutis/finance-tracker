@@ -100,7 +100,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
             'type' => 'nullable|in:income,expense',
         ]);
 
-        $service = new \App\Services\CategorySuggestionService();
+        $service = new \App\Services\CategorySuggestionService;
         $suggestion = $service->suggest(
             $request->input('description'),
             $request->input('type')

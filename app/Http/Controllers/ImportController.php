@@ -48,7 +48,7 @@ class ImportController extends Controller
 
         $storedPath = $request->session()->pull('import_stored_path');
 
-        if (!$storedPath || !Storage::disk('local')->exists($storedPath)) {
+        if (! $storedPath || ! Storage::disk('local')->exists($storedPath)) {
             return back()->withErrors(['file' => 'Uploaded file not found. Please try again.']);
         }
 

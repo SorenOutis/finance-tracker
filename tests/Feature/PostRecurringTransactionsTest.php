@@ -37,7 +37,6 @@ class PostRecurringTransactionsTest extends TestCase
             'is_active' => true,
         ]);
 
-
         $this->artisan('finance:post-recurring')
             ->expectsOutputToContain('Posted 1 recurring transaction(s).')
             ->assertSuccessful();

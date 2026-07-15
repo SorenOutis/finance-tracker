@@ -18,6 +18,7 @@ class CsvImportService
         while (($data = fgetcsv($handle)) !== false) {
             if ($headers === null) {
                 $headers = array_map('trim', $data);
+
                 continue;
             }
 
@@ -77,7 +78,8 @@ class CsvImportService
                 $description = isset($mapping['description'], $row[$mapping['description']]) ? $row[$mapping['description']] : null;
 
                 if ($amount === null || $date === null) {
-                    $errors[] = "Row ".($index + 1).": Missing amount or date";
+                    $errors[] = 'Row '.($index + 1).': Missing amount or date';
+
                     continue;
                 }
 
@@ -101,7 +103,7 @@ class CsvImportService
 
                 $imported++;
             } catch (\Exception $e) {
-                $errors[] = "Row ".($index + 1).": ".$e->getMessage();
+                $errors[] = 'Row '.($index + 1).': '.$e->getMessage();
             }
         }
 
@@ -128,7 +130,7 @@ class CsvImportService
 
     private function extractAmount(array $row, array $mapping): ?float
     {
-        if (!isset($mapping['amount']) || !isset($row[$mapping['amount']])) {
+        if (! isset($mapping['amount']) || ! isset($row[$mapping['amount']])) {
             return null;
         }
 
@@ -143,7 +145,7 @@ class CsvImportService
 
     private function extractDate(array $row, array $mapping): ?Carbon
     {
-        if (!isset($mapping['date']) || !isset($row[$mapping['date']])) {
+        if (! isset($mapping['date']) || ! isset($row[$mapping['date']])) {
             return null;
         }
 

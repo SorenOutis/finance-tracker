@@ -24,7 +24,7 @@ class Expense extends Model
      */
     public function getReceiptUrlAttribute(): ?string
     {
-        if (!$this->receipt_photo_path) {
+        if (! $this->receipt_photo_path) {
             return null;
         }
 

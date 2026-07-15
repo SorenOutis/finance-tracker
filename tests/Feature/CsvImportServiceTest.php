@@ -2,12 +2,10 @@
 
 namespace Tests\Feature;
 
-use App\Models\Expense;
-use App\Models\Income;
 use App\Models\User;
 use App\Services\CsvImportService;
-use Illuminate\Http\UploadedFile;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 use Tests\TestCase;
 
 class CsvImportServiceTest extends TestCase
@@ -15,12 +13,13 @@ class CsvImportServiceTest extends TestCase
     use RefreshDatabase;
 
     protected CsvImportService $service;
+
     protected User $user;
 
     protected function setUp(): void
     {
         parent::setUp();
-        $this->service = new CsvImportService();
+        $this->service = new CsvImportService;
         $this->user = User::factory()->create();
     }
 

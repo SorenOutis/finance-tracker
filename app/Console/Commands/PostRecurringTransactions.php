@@ -11,6 +11,7 @@ use Illuminate\Console\Command;
 class PostRecurringTransactions extends Command
 {
     protected $signature = 'finance:post-recurring';
+
     protected $description = 'Auto-create income/expense records for due recurring transactions and advance their due dates';
 
     public function handle(): int
