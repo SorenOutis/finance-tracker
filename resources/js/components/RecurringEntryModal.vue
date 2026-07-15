@@ -5,6 +5,9 @@ import {
 } from 'lucide-vue-next';
 import { ref, computed, watch, nextTick } from 'vue';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { useSheetDrag } from '@/composables/useSheetDrag';
+import { useHaptic } from '@/composables/useHaptic';
+import DatePickerSheet from '@/components/DatePickerSheet.vue';
 
 interface RecurringData {
     name: string;
@@ -48,6 +51,10 @@ const quickAmounts = [100, 500, 1000, 5000];
 
 const nameInput = ref<HTMLInputElement | null>(null);
 const showNote = ref(false);
+const showDatePicker = ref(false);
+
+const { sheetStyle, onHandleTouchStart, onHandleTouchMove, onHandleTouchEnd, registerDismiss } = useSheetDrag();
+registerDismiss(() => emit('update:open', false));
 
 const form = ref<RecurringData>({
     name: '',
@@ -112,9 +119,12 @@ const submitDisabled = computed(
     () => !form.value.name.trim() || !form.value.amount || parseFloat(form.value.amount) <= 0,
 );
 
+const haptic = useHaptic();
+
 const close = () => emit('update:open', false);
 const handleSubmit = () => {
     if (submitDisabled.value) return;
+    haptic.success();
     emit('submit', { ...form.value });
 };
 
@@ -176,9 +186,14 @@ watch(
                  - Single column, dense, scrollable
                  - Compact spacing, smaller type
                  ============================================================ -->
-            <div class="flex max-h-[92vh] flex-col md:hidden">
+            <div class="flex max-h-[92vh] flex-col md:hidden" :style="sheetStyle">
                 <!-- Drag handle -->
-                <div class="flex justify-center pt-2">
+                <div
+                    class="flex justify-center pt-2"
+                    @touchstart="onHandleTouchStart"
+                    @touchmove="onHandleTouchMove"
+                    @touchend="onHandleTouchEnd"
+                >
                     <span class="h-1.5 w-10 rounded-full bg-muted" aria-hidden="true" />
                 </div>
 
@@ -281,15 +296,16 @@ watch(
                     </label>
 
                     <!-- Next due date -->
-                    <label class="group relative mt-2 flex items-center gap-3 rounded-2xl border border-border/60 bg-muted/30 px-3.5 py-2.5 transition-colors focus-within:border-primary/60 focus-within:bg-muted/50">
+                    <button
+                        @click="showDatePicker = true"
+                        class="group mt-2 flex w-full items-center gap-3 rounded-2xl border border-border/60 bg-muted/30 px-3.5 py-2.5 text-left transition-all hover:border-primary/50 hover:bg-muted/50 active:scale-[0.99]"
+                    >
                         <Calendar class="h-4 w-4 shrink-0 text-primary" />
                         <div class="min-w-0 flex-1">
                             <span class="block text-[9px] font-semibold uppercase tracking-wider text-muted-foreground/80">Next Due Date</span>
-                            <input
-                                v-model="form.next_due_date"
-                                type="date"
-                                class="w-full bg-transparent text-sm font-semibold text-foreground outline-none [color-scheme:light] dark:[color-scheme:dark]"
-                            />
+                            <span class="text-sm font-semibold text-foreground">
+                                {{ new Date(form.next_due_date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' }) }}
+                            </span>
                         </div>
                         <span
                             v-if="daysUntilDue"
@@ -297,7 +313,7 @@ watch(
                         >
                             {{ daysUntilDue }}
                         </span>
-                    </label>
+                    </button>
 
                     <!-- Category -->
                     <p class="mt-4 mb-2 px-0.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
@@ -697,7 +713,11 @@ watch(
                 </div>
             </div>
         </DialogContent>
-    </Dialog>
+        <DatePickerSheet
+        v-model:open="showDatePicker"
+        v-model="form.next_due_date"
+    />
+</Dialog>
 </template>
 
 <style scoped>

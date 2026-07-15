@@ -1,12 +1,19 @@
 <script setup lang="ts">
-import { Head, useForm, router, Link } from '@inertiajs/vue3';
+import { Head, useForm, router, Link, usePage } from '@inertiajs/vue3';
 import { useStorage } from '@vueuse/core';
 import {
     Plus, Trash2, ArrowUpRight, CalendarClock, CreditCard, ArrowDownRight, ChevronRight,
     ReceiptText, Inbox, Camera, X as XIcon,
 } from 'lucide-vue-next';
-import { computed, ref } from 'vue';
+import { computed, ref, onMounted } from 'vue';
+import { useOnboarding } from '@/composables/useOnboarding';
+import OnboardingTour from '@/components/OnboardingTour.vue';
+import PullToRefresh from '@/components/PullToRefresh.vue';
+import SwipeToDelete from '@/components/SwipeToDelete.vue';
 import TransactionModal from '@/components/TransactionModal.vue';
+import { usePageLoading } from '@/composables/usePageLoading';
+import HeroHeaderSkeleton from '@/components/Skeletons/HeroHeaderSkeleton.vue';
+import CardGridSkeleton from '@/components/Skeletons/CardGridSkeleton.vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 import type { BreadcrumbItem } from '@/types';
 import { formatCurrency } from '@/utils/currency';
@@ -29,6 +36,8 @@ interface Props {
 
 const props = defineProps<Props>();
 const breadcrumbs: BreadcrumbItem[] = [{ title: 'Expenses', href: '/expenses' }];
+
+const { isLoading } = usePageLoading(500);
 
 const showAddModal = useStorage('expenses-add-modal', false);
 const expandedReceipt = ref<number | null>(null);
@@ -122,15 +131,42 @@ const totalThisMonth = computed(() => {
 
 const formatDate = (s: string) =>
     new Date(s).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+
+const refreshExpenses = () => {
+    router.reload({ preserveScroll: true, only: ['expenses', 'accounts'] });
+};
+
+// Onboarding
+const page = usePage();
+const seenTour = useStorage('seen-tour-expenses', false, sessionStorage);
+const tour = useOnboarding([
+    { title: 'Welcome to Expenses', description: 'This is where all your spending is tracked. Each card shows the amount, category, and wallet used.', targetSelector: '.tour-expenses-hero' },
+    { title: 'Expense Cards', description: 'Each expense displays the amount, date, receipt photo, and wallet. Swipe to delete on mobile or use the trash icon on desktop.', targetSelector: '.tour-expenses-grid' },
+    { title: 'Add Expenses', description: 'Tap the Add Expense button to log a new expense with amount, category, wallet, and even a receipt photo.' },
+]);
+
+onMounted(() => {
+    if (!seenTour.value && !(page.props.auth?.user as any)?.is_onboarded) {
+        tour.showOnboarding.value = true;
+        setTimeout(tour.updateTooltipPosition, 300);
+    }
+});
 </script>
 
 <template>
     <Head title="Expenses" />
     <AppLayout :breadcrumbs="breadcrumbs">
-        <div class="flex h-full flex-1 flex-col gap-5 md:gap-6 overflow-x-auto p-4 sm:p-8 pb-24 md:pb-8">
+        <template v-if="isLoading">
+            <div class="flex h-full flex-1 flex-col gap-5 md:gap-6 p-4 sm:p-8 pb-24 md:pb-8">
+                <HeroHeaderSkeleton />
+                <CardGridSkeleton :count="6" />
+            </div>
+        </template>
+        <template v-else>
+            <PullToRefresh @refresh="refreshExpenses" class="flex h-full flex-1 flex-col gap-5 md:gap-6 overflow-x-auto p-4 sm:p-8 pb-24 md:pb-8">
 
             <!-- Header -->
-            <div class="relative overflow-hidden rounded-[24px] bg-card border border-border/50 p-4 sm:p-5 mb-1.5 sm:mb-2 animate-fade-up stagger-1">
+            <div :class="['relative overflow-hidden rounded-[24px] bg-card border border-border/50 p-4 sm:p-5 mb-1.5 sm:mb-2 animate-fade-up stagger-1 tour-expenses-hero', tour.highlightClass(1)]">
                 <div class="absolute -top-12 -right-12 w-32 h-32 bg-primary/5 rounded-full blur-2xl pointer-events-none"></div>
                 <div class="absolute -bottom-12 -left-12 w-32 h-32 bg-secondary/5 rounded-full blur-2xl pointer-events-none"></div>
 
@@ -178,105 +214,114 @@ const formatDate = (s: string) =>
             </div>
 
             <!-- Expenses Grid -->
-            <div v-if="expenses.length" class="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3 animate-fade-up stagger-3">
-                <div v-for="expense in expenses" :key="expense.id"
-                    class="group relative overflow-hidden rounded-[18px] sm:rounded-[24px] p-3 sm:p-5 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 text-white shadow-lg"
-                    :style="{ background: `linear-gradient(135deg, ${expense.account?.color || '#ef4444'}, #b91c1c)` }">                        <div class="flex items-start justify-between mb-3 sm:mb-4">
-                        <div class="flex items-center gap-2 sm:gap-3 min-w-0">
-                            <div class="p-1.5 sm:p-2.5 rounded-lg sm:rounded-xl bg-white/20 flex-shrink-0">
-                                <ArrowUpRight class="h-3.5 w-3.5 sm:h-5 sm:w-5" />
-                            </div>
-                            <div class="min-w-0">
-                                <h3 class="font-bold text-xs sm:text-base truncate">{{ expense.category || 'Expense' }}</h3>
-                                <p class="text-[8px] sm:text-[10px] font-bold uppercase tracking-wider opacity-70 truncate">
-                                    {{ expense.account?.name || 'No Wallet' }}
-                                </p>
-                            </div>
-                        </div>
-                        <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <button @click="deleteExpense(expense.id)" class="p-1.5 rounded-lg hover:bg-red-500/40 transition-colors">
-                                <Trash2 class="h-3.5 w-3.5" />
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="space-y-3 sm:space-y-4">
-                        <div class="flex items-baseline gap-1 flex-wrap">
-                            <span class="text-base sm:text-2xl font-black font-mono">
-                                -{{ formatCurrency(expense.amount) }}
-                            </span>
-                        </div>
-
-                        <!-- Receipt thumbnail -->
-                        <div v-if="expense.receipt_url" class="relative">
-                            <button
-                                @click="expandedReceipt = expandedReceipt === expense.id ? null : expense.id"
-                                class="relative w-full rounded-xl overflow-hidden border border-white/10 group/receipt transition-all"
-                            >
-                                <img
-                                    :src="expense.receipt_url"
-                                    alt="Receipt"
-                                    class="w-full h-20 object-cover transition-all group-hover/receipt:scale-105"
-                                />
-                                <div class="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
-                                <div class="absolute bottom-1.5 left-2 flex items-center gap-1.5">
-                                    <Camera class="w-3 h-3 text-white/80" />
-                                    <span class="text-[9px] font-bold text-white/80">Receipt</span>
-                                </div>
-                            </button>
-
-                            <!-- Expanded receipt preview -->
-                            <div
-                                v-if="expandedReceipt === expense.id"
-                                class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
-                                @click="expandedReceipt = null"
-                            >
-                                <div class="relative max-w-2xl w-full" @click.stop>
-                                    <button
-                                        @click="expandedReceipt = null"
-                                        class="absolute -top-3 -right-3 z-10 p-1.5 rounded-full bg-black/60 text-white hover:bg-black/80 transition-colors"
-                                    >
-                                        <XIcon class="w-4 h-4" />
-                                    </button>
-                                    <img
-                                        :src="expense.receipt_url"
-                                        alt="Receipt full view"
-                                        class="w-full rounded-2xl shadow-2xl"
-                                    />
-                                    <div class="mt-2 flex justify-end">
-                                        <button
-                                            @click="deleteReceiptForExpense(expense.id)"
-                                            class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-500/20 text-red-400 text-[10px] font-bold hover:bg-red-500/30 transition-colors"
-                                        >
-                                            Remove Photo
-                                        </button>
+            <div v-if="expenses.length" :class="['grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3 animate-fade-up stagger-3 tour-expenses-grid', tour.highlightClass(2)]">
+                <div v-for="expense in expenses" :key="expense.id" class="flex flex-col">
+                    <SwipeToDelete
+                        @delete="deleteExpense(expense.id)"
+                        confirm-label="Delete?"
+                    >
+                        <div
+                            class="group relative overflow-hidden rounded-[18px] sm:rounded-[24px] p-3 sm:p-5 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 text-white shadow-lg"
+                            :style="{ background: `linear-gradient(135deg, ${expense.account?.color || '#ef4444'}, #b91c1c)` }"
+                        >
+                            <div class="flex items-start justify-between mb-3 sm:mb-4">
+                                <div class="flex items-center gap-2 sm:gap-3 min-w-0">
+                                    <div class="p-1.5 sm:p-2.5 rounded-lg sm:rounded-xl bg-white/20 flex-shrink-0">
+                                        <ArrowUpRight class="h-3.5 w-3.5 sm:h-5 sm:w-5" />
+                                    </div>
+                                    <div class="min-w-0">
+                                        <h3 class="font-bold text-xs sm:text-base truncate">{{ expense.category || 'Expense' }}</h3>
+                                        <p class="text-[8px] sm:text-[10px] font-bold uppercase tracking-wider opacity-70 truncate">
+                                            {{ expense.account?.name || 'No Wallet' }}
+                                        </p>
                                     </div>
                                 </div>
+                                <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all hidden sm:flex">
+                                    <button @click="deleteExpense(expense.id)" class="p-1.5 rounded-lg hover:bg-red-500/40 transition-colors">
+                                        <Trash2 class="h-3.5 w-3.5" />
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="space-y-3 sm:space-y-4">
+                                <div class="flex items-baseline gap-1 flex-wrap">
+                                    <span class="text-base sm:text-2xl font-black font-mono">
+                                        -{{ formatCurrency(expense.amount) }}
+                                    </span>
+                                </div>
+
+                                <!-- Receipt thumbnail -->
+                                <div v-if="expense.receipt_url" class="relative">
+                                    <button
+                                        @click.stop="expandedReceipt = expandedReceipt === expense.id ? null : expense.id"
+                                        class="relative w-full rounded-xl overflow-hidden border border-white/10 group/receipt transition-all"
+                                    >
+                                        <img
+                                            :src="expense.receipt_url"
+                                            alt="Receipt"
+                                            class="w-full h-20 object-cover transition-all group-hover/receipt:scale-105"
+                                        />
+                                        <div class="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
+                                        <div class="absolute bottom-1.5 left-2 flex items-center gap-1.5">
+                                            <Camera class="w-3 h-3 text-white/80" />
+                                            <span class="text-[9px] font-bold text-white/80">Receipt</span>
+                                        </div>
+                                    </button>
+
+                                    <!-- Expanded receipt preview -->
+                                    <div
+                                        v-if="expandedReceipt === expense.id"
+                                        class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
+                                        @click="expandedReceipt = null"
+                                    >
+                                        <div class="relative max-w-2xl w-full" @click.stop>
+                                            <button
+                                                @click="expandedReceipt = null"
+                                                class="absolute -top-3 -right-3 z-10 p-1.5 rounded-full bg-black/60 text-white hover:bg-black/80 transition-colors"
+                                            >
+                                                <XIcon class="w-4 h-4" />
+                                            </button>
+                                            <img
+                                                :src="expense.receipt_url"
+                                                alt="Receipt full view"
+                                                class="w-full rounded-2xl shadow-2xl"
+                                            />
+                                            <div class="mt-2 flex justify-end">
+                                                <button
+                                                    @click="deleteReceiptForExpense(expense.id)"
+                                                    class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-500/20 text-red-400 text-[10px] font-bold hover:bg-red-500/30 transition-colors"
+                                                >
+                                                    Remove Photo
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- Upload receipt button (when no receipt) -->
+                                <div v-else class="pt-1">
+                                    <label class="flex items-center gap-1.5 cursor-pointer opacity-0 group-hover:opacity-100 transition-all">
+                                        <Camera class="w-3 h-3 text-white/50" />
+                                        <span class="text-[9px] font-semibold text-white/50 hover:text-white/80 transition-colors">
+                                            {{ uploadingReceipt === expense.id ? 'Uploading...' : 'Attach receipt' }}
+                                        </span>
+                                        <input
+                                            type="file"
+                                            accept="image/*"
+                                            @change="handleReceiptFileInput(expense.id, $event)"
+                                            class="hidden"
+                                            :disabled="uploadingReceipt === expense.id"
+                                        />
+                                    </label>
+                                </div>
+
+                                <div class="flex flex-col gap-1 pt-3 sm:pt-4 border-t border-white/10">
+                                    <span class="text-[8px] sm:text-[9px] font-bold uppercase tracking-wider opacity-70">Date</span>
+                                    <span class="text-[10px] sm:text-xs font-bold">{{ formatDate(expense.date) }}</span>
+                                    <p v-if="expense.description" class="text-[10px] sm:text-xs opacity-80 truncate mt-0.5">{{ expense.description }}</p>
+                                </div>
                             </div>
                         </div>
-                        <!-- Upload receipt button (when no receipt) -->
-                        <div v-else class="pt-1">
-                            <label class="flex items-center gap-1.5 cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity">
-                                <Camera class="w-3 h-3 text-white/50" />
-                                <span class="text-[9px] font-semibold text-white/50 hover:text-white/80 transition-colors">
-                                    {{ uploadingReceipt === expense.id ? 'Uploading...' : 'Attach receipt' }}
-                                </span>
-                                <input
-                                    type="file"
-                                    accept="image/*"
-                                    @change="handleReceiptFileInput(expense.id, $event)"
-                                    class="hidden"
-                                    :disabled="uploadingReceipt === expense.id"
-                                />
-                            </label>
-                        </div>
-
-                        <div class="flex flex-col gap-1 pt-3 sm:pt-4 border-t border-white/10">
-                            <span class="text-[8px] sm:text-[9px] font-bold uppercase tracking-wider opacity-70">Date</span>
-                            <span class="text-[10px] sm:text-xs font-bold">{{ formatDate(expense.date) }}</span>
-                            <p v-if="expense.description" class="text-[10px] sm:text-xs opacity-80 truncate mt-0.5">{{ expense.description }}</p>
-                        </div>
-                    </div>
+                    </SwipeToDelete>
                 </div>
             </div>
 
@@ -292,8 +337,21 @@ const formatDate = (s: string) =>
                 </button>
             </div>
 
-        </div>
+        </PullToRefresh>
+        </template>
     </AppLayout>
+
+    <OnboardingTour
+        :show="tour.showOnboarding.value"
+        :step="tour.onboardingStep.value"
+        :total="tour.totalSteps"
+        :current-step="tour.currentStep.value"
+        :tooltip-style="tour.tooltipStyle.value"
+        :tooltip-side="tour.tooltipSide.value"
+        @next="tour.nextStep()"
+        @prev="tour.prevStep()"
+        @close="tour.completeOnboarding()"
+    />
 
     <TransactionModal
         v-model:open="showAddModal"

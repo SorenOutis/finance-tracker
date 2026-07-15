@@ -7,12 +7,17 @@ import gsap from 'gsap';
 import {
     Wallet, TrendingDown, DollarSign, PieChart, Plus, ArrowUpRight, ArrowDownRight,
     Target, CalendarClock, Flame, Activity, Zap, AlertCircle, X,
-    CreditCard, Smartphone, Landmark, Coins, Bitcoin, MoreHorizontal, Sun, SunDim, Moon
+    CreditCard, Smartphone, Landmark, Coins, Bitcoin, MoreHorizontal, Sun, SunDim, Moon,
+    ChevronDown
 } from 'lucide-vue-next';
 import { ref, computed, watch, onMounted } from 'vue';
 import { Line as LineChart } from 'vue-chartjs';
+import PullToRefresh from '@/components/PullToRefresh.vue';
 import RecurringEntryModal from '@/components/RecurringEntryModal.vue';
+import { usePageLoading } from '@/composables/usePageLoading';
+import DashboardSkeleton from '@/components/Skeletons/DashboardSkeleton.vue';
 import TransactionModal from '@/components/TransactionModal.vue';
+import MonthPickerSheet from '@/components/MonthPickerSheet.vue';
 import {
     Dialog,
     DialogContent,
@@ -59,6 +64,8 @@ interface Props {
 
 const props = defineProps<Props>();
 const breadcrumbs: BreadcrumbItem[] = [{ title: 'Dashboard', href: dashboardRoute() }];
+
+const { isLoading } = usePageLoading(600);
 const { chartColors, isDark } = useChartDefaults();
 
 // Date handling
@@ -260,6 +267,7 @@ const highlightClass = (targetStep: number) => {
 // Remove getTooltipPosition computed as we now use tooltipStyle
 const showWelcomeModal = useStorage('show-welcome-modal-v1', true, sessionStorage);
 const showRecurringModal = ref(false);
+const showMonthPicker = ref(false);
 
 // Forms
 const incomeForm = useForm({ amount: '', date: getYYYYMMDD(new Date()), category: '', description: '', account_id: '' as string | number });
@@ -313,6 +321,10 @@ const addRecurring = (data: any) => {
 };
 const deleteEntry = (id: number, type: 'income' | 'expense') => { router.delete(`/${type}s/${id}`, { preserveScroll: true }); };
 
+const refreshDashboard = () => {
+    router.reload({ preserveScroll: true, only: ['dashboard', 'incomeEntries', 'expenseEntries', 'dailySpending', 'expensesByCategory', 'topExpense', 'transactionStats', 'recentActivity', 'savingsStreak', 'ytd', 'budget', 'financialGoals', 'recurringIncomes', 'upcomingBills', 'accounts'] });
+};
+
 const greeting = computed(() => { const h = new Date().getHours(); return h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening'; });
 const greetingIcon = computed(() => { const h = new Date().getHours(); return h < 12 ? Sun : h < 17 ? SunDim : Moon; });
 
@@ -343,7 +355,11 @@ const formatDate = (dateStr: string) => {
 <template>
 <Head title="Dashboard" />
 <AppLayout :breadcrumbs="breadcrumbs">
-<div class="flex h-full flex-1 flex-col gap-4 md:gap-6 overflow-x-auto p-3 sm:p-8 pb-24 md:pb-8 relative">
+<template v-if="isLoading">
+    <DashboardSkeleton />
+</template>
+<template v-else>
+    <PullToRefresh @refresh="refreshDashboard" class="flex h-full flex-1 flex-col gap-4 md:gap-6 overflow-x-auto p-3 sm:p-8 pb-24 md:pb-8 relative">
 
 <!-- Onboarding Backdrop -->
 <Transition
@@ -458,7 +474,11 @@ const formatDate = (dateStr: string) => {
                 Hi, <span class="text-primary">{{ user.name.split(' ')[0] }}</span>!
             </h1>
             <p class="mt-1 text-[11px] sm:text-xs text-muted-foreground font-medium max-w-xl leading-relaxed">
-                Your <span class="text-foreground font-bold">{{ fmtMonthYear(currentMonth) }}</span> overview: 
+                <button @click="showMonthPicker = true" class="inline-flex items-center gap-1.5 group/month">
+                    <span class="text-foreground font-bold border-b-2 border-dotted border-border/50 group-hover/month:border-primary/50 transition-colors">{{ fmtMonthYear(currentMonth) }}</span>
+                    <ChevronDown class="h-3 w-3 text-muted-foreground/50 group-hover/month:text-primary transition-colors" />
+                </button>
+                overview: 
                 you've saved <span class="text-[--fin-gain] font-bold">{{ animatedSR.toFixed(0) }}%</span> of your income.
             </p>
         </div>
@@ -857,7 +877,8 @@ const formatDate = (dateStr: string) => {
     </div>
 </div>
 
-</div>
+</PullToRefresh>
+</template>
 </AppLayout>
 
 <!-- Welcome Modal -->
@@ -966,5 +987,10 @@ const formatDate = (dateStr: string) => {
     v-model:open="showRecurringModal"
     title="Add Recurring"
     @submit="addRecurring"
+/>
+
+<MonthPickerSheet
+    v-model:open="showMonthPicker"
+    v-model="selectedDate"
 />
 </template>

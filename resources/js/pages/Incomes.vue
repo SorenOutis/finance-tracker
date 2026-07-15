@@ -1,11 +1,16 @@
 <script setup lang="ts">
-import { Head, useForm, router, Link } from '@inertiajs/vue3';
+import { Head, useForm, router, Link, usePage } from '@inertiajs/vue3';
 import { useStorage } from '@vueuse/core';
 import {
     Plus, Trash2, Pencil, CalendarClock, Clock, Wallet, TrendingUp, CreditCard, ChevronRight, ReceiptText
 } from 'lucide-vue-next';
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
+import { useOnboarding } from '@/composables/useOnboarding';
+import OnboardingTour from '@/components/OnboardingTour.vue';
 import RecurringEntryModal from '@/components/RecurringEntryModal.vue';
+import { usePageLoading } from '@/composables/usePageLoading';
+import HeroHeaderSkeleton from '@/components/Skeletons/HeroHeaderSkeleton.vue';
+import CardGridSkeleton from '@/components/Skeletons/CardGridSkeleton.vue';
 
 import AppLayout from '@/layouts/AppLayout.vue';
 import type { BreadcrumbItem } from '@/types';
@@ -30,6 +35,8 @@ interface Props {
 
 defineProps<Props>();
 const breadcrumbs: BreadcrumbItem[] = [{ title: 'Income', href: '/incomes' }];
+
+const { isLoading } = usePageLoading(500);
 
 const showAddModal = useStorage('incomes-add-modal', false);
 const showEditModal = ref(false);
@@ -60,7 +67,21 @@ const editForm = useForm({
     color: '#10b981',
 });
 
+// Onboarding
+const page = usePage();
+const seenTour = useStorage('seen-tour-incomes', false, sessionStorage);
+const tour = useOnboarding([
+    { title: 'Welcome to Incomes', description: 'Manage all your recurring income sources here. Each card shows the amount, frequency, and next payout date.', targetSelector: '.tour-incomes-hero' },
+    { title: 'Income Cards', description: 'Each income source displays the amount, frequency, and next payout date. Edit or delete using the icons on hover.', targetSelector: '.tour-incomes-grid' },
+    { title: 'Add Income', description: 'Tap the Add Income button to create a new recurring income source like salary, freelance, or investments.' },
+]);
 
+onMounted(() => {
+    if (!seenTour.value && !(page.props.auth?.user as any)?.is_onboarded) {
+        tour.showOnboarding.value = true;
+        setTimeout(tour.updateTooltipPosition, 300);
+    }
+});
 
 const addIncome = (data: any) => {
     incomeForm.name = data.name;
@@ -148,10 +169,17 @@ const simpleGradient = (color: string | null, def: string) => {
 <template>
 <Head title="Incomes" />
 <AppLayout :breadcrumbs="breadcrumbs">
+<template v-if="isLoading">
+    <div class="flex h-full flex-1 flex-col gap-5 md:gap-6 p-4 sm:p-8 pb-24 md:pb-8">
+        <HeroHeaderSkeleton />
+        <CardGridSkeleton :count="6" />
+    </div>
+</template>
+<template v-else>
 <div class="flex h-full flex-1 flex-col gap-5 md:gap-6 overflow-x-auto p-4 sm:p-8 pb-24 md:pb-8">
 
 <!-- Header Section (Compact Hero) -->
-<div class="relative overflow-hidden rounded-[24px] bg-card border border-border/50 p-4 sm:p-5 mb-1.5 sm:mb-2 animate-fade-up stagger-1">
+<div :class="['relative overflow-hidden rounded-[24px] bg-card border border-border/50 p-4 sm:p-5 mb-1.5 sm:mb-2 animate-fade-up stagger-1 tour-incomes-hero', tour.highlightClass(1)]">
     <!-- Background abstract shapes -->
     <div class="absolute -top-12 -right-12 w-32 h-32 bg-primary/5 rounded-full blur-2xl pointer-events-none"></div>
     <div class="absolute -bottom-12 -left-12 w-32 h-32 bg-secondary/5 rounded-full blur-2xl pointer-events-none"></div>
@@ -200,7 +228,7 @@ const simpleGradient = (color: string | null, def: string) => {
 </div>
 
 <!-- Incomes Grid -->
-<div v-if="incomes.length" class="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3 animate-fade-up stagger-3">
+<div v-if="incomes.length" :class="['grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3 animate-fade-up stagger-3 tour-incomes-grid', tour.highlightClass(2)]">
     <div v-for="income in incomes" :key="income.id"
         class="group relative overflow-hidden rounded-[18px] sm:rounded-[24px] p-3 sm:p-5 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 text-white shadow-lg"
         :style="{ background: simpleGradient(income.color, '#10b981') }">
@@ -261,7 +289,20 @@ const simpleGradient = (color: string | null, def: string) => {
 </div>
 
 </div>
+</template>
 </AppLayout>
+
+<OnboardingTour
+    :show="tour.showOnboarding.value"
+    :step="tour.onboardingStep.value"
+    :total="tour.totalSteps"
+    :current-step="tour.currentStep.value"
+    :tooltip-style="tour.tooltipStyle.value"
+    :tooltip-side="tour.tooltipSide.value"
+    @next="tour.nextStep()"
+    @prev="tour.prevStep()"
+    @close="tour.completeOnboarding()"
+/>
 
 <RecurringEntryModal 
     v-model:open="showAddModal"

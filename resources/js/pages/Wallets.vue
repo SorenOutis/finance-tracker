@@ -1,16 +1,19 @@
 <script setup lang="ts">
-import { Head, useForm, router } from '@inertiajs/vue3';
-import { Link } from '@inertiajs/vue3';
+import { Head, useForm, router, Link, usePage } from '@inertiajs/vue3';
 import { useStorage } from '@vueuse/core';
 import {
     CreditCard, Plus, Trash2, Pencil, Wallet, Smartphone, Landmark, Coins, Bitcoin, MoreHorizontal, ArrowDownRight, ArrowUpRight, CalendarClock, ChevronRight, ReceiptText
 } from 'lucide-vue-next';
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
+import { useOnboarding } from '@/composables/useOnboarding';
+import OnboardingTour from '@/components/OnboardingTour.vue';
 import TransactionModal from '@/components/TransactionModal.vue';
 import {
     Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription
 } from '@/components/ui/dialog';
 import WalletEntryModal from '@/components/WalletEntryModal.vue';
+import { usePageLoading } from '@/composables/usePageLoading';
+import WalletsSkeleton from '@/components/Skeletons/WalletsSkeleton.vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 import type { BreadcrumbItem } from '@/types';
 import { formatCurrency } from '@/utils/currency';
@@ -29,6 +32,8 @@ interface Props {
 
 defineProps<Props>();
 const breadcrumbs: BreadcrumbItem[] = [{ title: 'Wallets', href: '/wallets' }];
+
+const { isLoading } = usePageLoading(500);
 
 const showAddModal = useStorage('wallets-add-modal', false);
 const showEditModal = ref(false);
@@ -224,15 +229,37 @@ const addExpense = (data: any) => {
         }
     });
 };
+
+// Onboarding
+const page = usePage();
+const seenTour = useStorage('seen-tour-wallets', false, sessionStorage);
+const tour = useOnboarding([
+    { title: 'Your Wallets', description: 'Manage all your accounts in one place — GCash, Maya, bank accounts, credit cards, and more.', targetSelector: '.tour-wallets-hero' },
+    { title: 'Wallet Cards', description: 'Each wallet card shows your balance, account type, and monthly inflows/outflows at a glance.', targetSelector: '.tour-wallets-grid' },
+    { title: 'Add Wallet', description: 'Tap the Add Wallet button to connect a new account and track its balance and transactions.' },
+]);
+
+onMounted(() => {
+    if (!seenTour.value && !(page.props.auth?.user as any)?.is_onboarded) {
+        tour.showOnboarding.value = true;
+        setTimeout(tour.updateTooltipPosition, 300);
+    }
+});
 </script>
 
 <template>
 <Head title="Wallets" />
 <AppLayout :breadcrumbs="breadcrumbs">
+<template v-if="isLoading">
+    <div class="flex h-full flex-1 flex-col gap-5 md:gap-6 p-4 sm:p-8 pb-24 md:pb-8">
+        <WalletsSkeleton />
+    </div>
+</template>
+<template v-else>
 <div class="flex h-full flex-1 flex-col gap-5 md:gap-6 overflow-x-auto p-4 sm:p-8 pb-24 md:pb-8">
 
 <!-- Header Section (Compact Hero) -->
-<div class="relative overflow-hidden rounded-[24px] bg-card border border-border/50 p-4 sm:p-5 mb-1.5 sm:mb-2 animate-fade-up stagger-1">
+<div :class="['relative overflow-hidden rounded-[24px] bg-card border border-border/50 p-4 sm:p-5 mb-1.5 sm:mb-2 animate-fade-up stagger-1 tour-wallets-hero', tour.highlightClass(1)]">
     <!-- Background abstract shapes -->
     <div class="absolute -top-12 -right-12 w-32 h-32 bg-primary/5 rounded-full blur-2xl pointer-events-none"></div>
     <div class="absolute -bottom-12 -left-12 w-32 h-32 bg-secondary/5 rounded-full blur-2xl pointer-events-none"></div>
@@ -281,7 +308,7 @@ const addExpense = (data: any) => {
 </div>
 
 <!-- Wallet Cards Grid -->
-<div v-if="accounts.length" class="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3 animate-fade-up stagger-3">
+<div v-if="accounts.length" :class="['grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3 animate-fade-up stagger-3 tour-wallets-grid', tour.highlightClass(2)]">
     <div v-for="account in accounts" :key="account.id"
         class="group relative overflow-hidden rounded-[16px] sm:rounded-[20px] p-3 sm:p-6 text-white shadow-lg sm:shadow-xl transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 hover:scale-[1.02] cursor-default"
         :style="{ background: getCardGradient(account.type, account.color) }">
@@ -377,7 +404,20 @@ const addExpense = (data: any) => {
 </div>
 
 </div>
+</template>
 </AppLayout>
+
+<OnboardingTour
+    :show="tour.showOnboarding.value"
+    :step="tour.onboardingStep.value"
+    :total="tour.totalSteps"
+    :current-step="tour.currentStep.value"
+    :tooltip-style="tour.tooltipStyle.value"
+    :tooltip-side="tour.tooltipSide.value"
+    @next="tour.nextStep()"
+    @prev="tour.prevStep()"
+    @close="tour.completeOnboarding()"
+/>
 
 <WalletEntryModal 
     v-model:open="showAddModal"

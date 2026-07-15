@@ -1,11 +1,18 @@
 <script setup lang="ts">
-import { Head, useForm, router, Link } from '@inertiajs/vue3';
+import { Head, useForm, router, Link, usePage } from '@inertiajs/vue3';
 import { useStorage } from '@vueuse/core';
 import {
     Plus, Trash2, Pencil, CalendarClock, Clock, Wallet, CreditCard, ArrowDownRight, ChevronRight, ReceiptText
 } from 'lucide-vue-next';
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
+import { useOnboarding } from '@/composables/useOnboarding';
+import OnboardingTour from '@/components/OnboardingTour.vue';
+import PullToRefresh from '@/components/PullToRefresh.vue';
+import SwipeToDelete from '@/components/SwipeToDelete.vue';
 import RecurringEntryModal from '@/components/RecurringEntryModal.vue';
+import { usePageLoading } from '@/composables/usePageLoading';
+import HeroHeaderSkeleton from '@/components/Skeletons/HeroHeaderSkeleton.vue';
+import CardGridSkeleton from '@/components/Skeletons/CardGridSkeleton.vue';
 
 import AppLayout from '@/layouts/AppLayout.vue';
 import type { BreadcrumbItem } from '@/types';
@@ -30,6 +37,8 @@ interface Props {
 
 defineProps<Props>();
 const breadcrumbs: BreadcrumbItem[] = [{ title: 'Bills', href: '/bills' }];
+
+const { isLoading } = usePageLoading(500);
 
 const showAddModal = useStorage('bills-add-modal', false);
 const showEditModal = ref(false);
@@ -123,7 +132,21 @@ const deleteBill = (id: number) => {
     }
 };
 
+// Onboarding
+const page = usePage();
+const seenTour = useStorage('seen-tour-bills', false, sessionStorage);
+const tour = useOnboarding([
+    { title: 'Welcome to Bills', description: 'Track all your recurring payments here. Each bill card shows the amount, frequency, and due date status.', targetSelector: '.tour-bills-hero' },
+    { title: 'Bill Cards', description: 'Each bill displays the amount, frequency, and due date. Overdue and upcoming bills are color-coded for easy scanning.', targetSelector: '.tour-bills-grid' },
+    { title: 'Add Bills', description: 'Tap the Add Bill button to create a new recurring payment like rent, subscriptions, or utilities.' },
+]);
 
+onMounted(() => {
+    if (!seenTour.value && !(page.props.auth?.user as any)?.is_onboarded) {
+        tour.showOnboarding.value = true;
+        setTimeout(tour.updateTooltipPosition, 300);
+    }
+});
 
 const getStatusLabel = (bill: BillItem) => {
     if (!bill.is_active) return 'Inactive';
@@ -152,15 +175,26 @@ const simpleGradient = (color: string | null, def: string) => {
     const b = color || def; 
     return `linear-gradient(135deg, ${b} 0%, ${b}CC 50%, ${b}99 100%)`; 
 };
+
+const refreshBills = () => {
+    router.reload({ preserveScroll: true, only: ['bills'] });
+};
 </script>
 
 <template>
 <Head title="Bills" />
 <AppLayout :breadcrumbs="breadcrumbs">
-<div class="flex h-full flex-1 flex-col gap-5 md:gap-6 overflow-x-auto p-4 sm:p-8 pb-24 md:pb-8">
+<template v-if="isLoading">
+    <div class="flex h-full flex-1 flex-col gap-5 md:gap-6 p-4 sm:p-8 pb-24 md:pb-8">
+        <HeroHeaderSkeleton />
+        <CardGridSkeleton :count="6" />
+    </div>
+</template>
+<template v-else>
+<PullToRefresh @refresh="refreshBills" class="flex h-full flex-1 flex-col gap-5 md:gap-6 overflow-x-auto p-4 sm:p-8 pb-24 md:pb-8">
 
 <!-- Header Section (Compact Hero) -->
-<div class="relative overflow-hidden rounded-[24px] bg-card border border-border/50 p-4 sm:p-5 mb-1.5 sm:mb-2 animate-fade-up stagger-1">
+<div :class="['relative overflow-hidden rounded-[24px] bg-card border border-border/50 p-4 sm:p-5 mb-1.5 sm:mb-2 animate-fade-up stagger-1 tour-bills-hero', tour.highlightClass(1)]">
     <!-- Background abstract shapes -->
     <div class="absolute -top-12 -right-12 w-32 h-32 bg-primary/5 rounded-full blur-2xl pointer-events-none"></div>
     <div class="absolute -bottom-12 -left-12 w-32 h-32 bg-secondary/5 rounded-full blur-2xl pointer-events-none"></div>
@@ -208,52 +242,58 @@ const simpleGradient = (color: string | null, def: string) => {
     </div>
 </div>
 
-<!-- Bills Grid -->
-<div v-if="bills.length" class="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3 animate-fade-up stagger-3">
-    <div v-for="bill in bills" :key="bill.id"
-        class="group relative overflow-hidden rounded-[18px] sm:rounded-[24px] p-3 sm:p-5 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 text-white shadow-lg"
-        :style="{ background: simpleGradient(bill.color, '#ef4444') }">
-        
-        <div class="flex items-start justify-between mb-3 sm:mb-4">
-            <div class="flex items-center gap-2 sm:gap-3 min-w-0">
-                <div class="p-1.5 sm:p-2.5 rounded-lg sm:rounded-xl bg-white/20 flex-shrink-0">
-                    <component :is="bill.type === 'income' ? Wallet : CalendarClock" class="h-3.5 w-3.5 sm:h-5 sm:w-5" />
+<!-- Bills Grid -->            <div v-if="bills.length" :class="['grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3 animate-fade-up stagger-3 tour-bills-grid', tour.highlightClass(2)]">
+    <div v-for="bill in bills" :key="bill.id" class="flex flex-col">
+        <SwipeToDelete
+            @delete="deleteBill(bill.id)"
+            confirm-label="Delete?"
+        >
+            <div
+                class="group relative overflow-hidden rounded-[18px] sm:rounded-[24px] p-3 sm:p-5 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 text-white shadow-lg"
+                :style="{ background: simpleGradient(bill.color, '#ef4444') }">
+                
+                <div class="flex items-start justify-between mb-3 sm:mb-4">
+                    <div class="flex items-center gap-2 sm:gap-3 min-w-0">
+                        <div class="p-1.5 sm:p-2.5 rounded-lg sm:rounded-xl bg-white/20 flex-shrink-0">
+                            <component :is="bill.type === 'income' ? Wallet : CalendarClock" class="h-3.5 w-3.5 sm:h-5 sm:w-5" />
+                        </div>
+                        <div class="min-w-0">
+                            <h3 class="font-bold text-xs sm:text-base truncate">{{ bill.name }}</h3>
+                            <p class="text-[8px] sm:text-[10px] font-bold uppercase tracking-wider opacity-70 truncate">{{ bill.category || 'No Category' }}</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all hidden sm:flex">
+                        <button @click="openEdit(bill)" class="p-1.5 rounded-lg hover:bg-white/20 transition-colors">
+                            <Pencil class="h-3.5 w-3.5" />
+                        </button>
+                        <button @click="deleteBill(bill.id)" class="p-1.5 rounded-lg hover:bg-red-500/40 transition-colors">
+                            <Trash2 class="h-3.5 w-3.5" />
+                        </button>
+                    </div>
                 </div>
-                <div class="min-w-0">
-                    <h3 class="font-bold text-xs sm:text-base truncate">{{ bill.name }}</h3>
-                    <p class="text-[8px] sm:text-[10px] font-bold uppercase tracking-wider opacity-70 truncate">{{ bill.category || 'No Category' }}</p>
-                </div>
-            </div>
-            <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                <button @click="openEdit(bill)" class="p-1.5 rounded-lg hover:bg-white/20 transition-colors">
-                    <Pencil class="h-3.5 w-3.5" />
-                </button>
-                <button @click="deleteBill(bill.id)" class="p-1.5 rounded-lg hover:bg-red-500/40 transition-colors">
-                    <Trash2 class="h-3.5 w-3.5" />
-                </button>
-            </div>
-        </div>
 
-        <div class="space-y-3 sm:space-y-4">
-            <div class="flex items-baseline gap-1 flex-wrap">
-                <span class="text-base sm:text-2xl font-black font-mono">
-                    {{ bill.type === 'income' ? '+' : '-' }}{{ formatCurrency(bill.amount) }}
-                </span>
-                <span class="text-[8px] sm:text-[10px] font-bold opacity-70 uppercase tracking-widest">/ {{ bill.frequency }}</span>
-            </div>
+                <div class="space-y-3 sm:space-y-4">
+                    <div class="flex items-baseline gap-1 flex-wrap">
+                        <span class="text-base sm:text-2xl font-black font-mono">
+                            {{ bill.type === 'income' ? '+' : '-' }}{{ formatCurrency(bill.amount) }}
+                        </span>
+                        <span class="text-[8px] sm:text-[10px] font-bold opacity-70 uppercase tracking-widest">/ {{ bill.frequency }}</span>
+                    </div>
 
-            <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between pt-3 sm:pt-4 border-t border-white/10">
-                <div class="flex flex-col">
-                    <span class="text-[8px] sm:text-[9px] font-bold uppercase tracking-wider opacity-70 mb-0.5">Next Due</span>
-                    <span class="text-[10px] sm:text-xs font-bold flex items-center gap-1 sm:gap-1.5">
-                        <Clock class="h-2.5 w-2.5 sm:h-3 sm:w-3" /> {{ formatDate(bill.next_due_date) }}
-                    </span>
+                    <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between pt-3 sm:pt-4 border-t border-white/10">
+                        <div class="flex flex-col">
+                            <span class="text-[8px] sm:text-[9px] font-bold uppercase tracking-wider opacity-70 mb-0.5">Next Due</span>
+                            <span class="text-[10px] sm:text-xs font-bold flex items-center gap-1 sm:gap-1.5">
+                                <Clock class="h-2.5 w-2.5 sm:h-3 sm:w-3" /> {{ formatDate(bill.next_due_date) }}
+                            </span>
+                        </div>
+                        <span class="self-start sm:self-auto inline-flex items-center px-1.5 sm:px-2.5 py-0.5 sm:py-1 rounded-full text-[8px] sm:text-[10px] font-bold bg-white/20">
+                            {{ getStatusLabel(bill) }}
+                        </span>
+                    </div>
                 </div>
-                <span class="self-start sm:self-auto inline-flex items-center px-1.5 sm:px-2.5 py-0.5 sm:py-1 rounded-full text-[8px] sm:text-[10px] font-bold bg-white/20">
-                    {{ getStatusLabel(bill) }}
-                </span>
             </div>
-        </div>
+        </SwipeToDelete>
     </div>
 </div>
 
@@ -269,8 +309,21 @@ const simpleGradient = (color: string | null, def: string) => {
     </button>
 </div>
 
-</div>
+</PullToRefresh>
+</template>
 </AppLayout>
+
+<OnboardingTour
+    :show="tour.showOnboarding.value"
+    :step="tour.onboardingStep.value"
+    :total="tour.totalSteps"
+    :current-step="tour.currentStep.value"
+    :tooltip-style="tour.tooltipStyle.value"
+    :tooltip-side="tour.tooltipSide.value"
+    @next="tour.nextStep()"
+    @prev="tour.prevStep()"
+    @close="tour.completeOnboarding()"
+/>
 
 <RecurringEntryModal 
     v-model:open="showAddModal"

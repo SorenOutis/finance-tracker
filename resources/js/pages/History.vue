@@ -3,7 +3,15 @@ import { Head, router } from '@inertiajs/vue3';
 import {
     Search, ArrowDownRight, ArrowUpRight, History as HistoryIcon, Trash2, Inbox,
 } from 'lucide-vue-next';
-import { ref, computed, watch } from 'vue';
+import { ref, computed, watch, onMounted } from 'vue';
+import { usePage } from '@inertiajs/vue3';
+import { useStorage } from '@vueuse/core';
+import { useOnboarding } from '@/composables/useOnboarding';
+import OnboardingTour from '@/components/OnboardingTour.vue';
+import PullToRefresh from '@/components/PullToRefresh.vue';
+import SwipeToDelete from '@/components/SwipeToDelete.vue';
+import { usePageLoading } from '@/composables/usePageLoading';
+import HistorySkeleton from '@/components/Skeletons/HistorySkeleton.vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 import type { BreadcrumbItem } from '@/types';
 import { formatCurrency } from '@/utils/currency';
@@ -23,6 +31,8 @@ interface HistoryItem {
 const props = defineProps<{ items: HistoryItem[]; query: string }>();
 
 const breadcrumbs: BreadcrumbItem[] = [{ title: 'History', href: '/history' }];
+
+const { isLoading } = usePageLoading(500);
 
 const search = ref(props.query || '');
 
@@ -83,6 +93,26 @@ const deleteItem = (item: HistoryItem) => {
     const url = item.type === 'income' ? `/incomes/${item.raw_id}` : `/expenses/${item.raw_id}`;
     router.delete(url, { preserveScroll: true });
 };
+
+const refreshHistory = () => {
+    router.reload({ preserveScroll: true, only: ['items', 'query'] });
+};
+
+// Onboarding
+const page = usePage();
+const seenTour = useStorage('seen-tour-history', false, sessionStorage);
+const tour = useOnboarding([
+    { title: 'Transaction History', description: 'View all your income and expenses in one place, grouped by date for easy browsing.', targetSelector: '.tour-history-hero' },
+    { title: 'Search & Stats', description: 'Use the search bar to find transactions by category or description. The stats strip shows totals at a glance.', targetSelector: '.tour-history-search' },
+    { title: 'Transaction List', description: 'Each entry shows the type, amount, category, and date. Swipe to delete or use the trash icon on desktop.' },
+]);
+
+onMounted(() => {
+    if (!seenTour.value && !(page.props.auth?.user as any)?.is_onboarded) {
+        tour.showOnboarding.value = true;
+        setTimeout(tour.updateTooltipPosition, 300);
+    }
+});
 </script>
 
 <template>
@@ -90,7 +120,7 @@ const deleteItem = (item: HistoryItem) => {
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="flex h-full flex-1 flex-col gap-4 p-4 sm:p-8 pb-24 md:pb-8">
             <!-- Header -->
-            <div class="flex items-center justify-between gap-4">
+            <div :class="['flex items-center justify-between gap-4 tour-history-hero', tour.highlightClass(1)]">
                 <div>
                     <div class="flex items-center gap-2 mb-1.5">
                         <div class="p-1.5 rounded-lg bg-primary/10">
@@ -121,7 +151,7 @@ const deleteItem = (item: HistoryItem) => {
             </div>
 
             <!-- Search -->
-            <div class="relative">
+            <div :class="['relative tour-history-search', tour.highlightClass(2)]">
                 <Search class="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <input
                     v-model="search"
@@ -130,6 +160,12 @@ const deleteItem = (item: HistoryItem) => {
                     class="w-full rounded-2xl bg-card border border-border/50 pl-11 pr-4 py-3 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40 transition-all placeholder:text-muted-foreground/50"
                 />
             </div>
+
+            <template v-if="isLoading">
+                <HistorySkeleton />
+            </template>
+            <template v-else>
+            <PullToRefresh @refresh="refreshHistory">
 
             <!-- Empty state -->
             <div v-if="!items.length" class="flex flex-col items-center justify-center py-16 text-center">
@@ -150,41 +186,61 @@ const deleteItem = (item: HistoryItem) => {
                         <span class="text-[10px] font-medium text-muted-foreground/70">{{ list.length }} {{ list.length === 1 ? 'entry' : 'entries' }}</span>
                     </div>
                     <ul class="flex flex-col gap-1.5">
-                        <li v-for="item in list" :key="item.id"
-                            class="group flex items-center gap-3 rounded-2xl border border-border/40 bg-card p-3 hover:border-primary/30 transition-all"
-                        >
-                            <div :class="[
-                                'flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl',
-                                item.type === 'income' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-rose-500/10 text-rose-500'
-                            ]">
-                                <component :is="item.type === 'income' ? ArrowDownRight : ArrowUpRight" class="h-4 w-4" />
-                            </div>
-                            <div class="flex-1 min-w-0">
-                                <div class="flex items-center gap-2">
-                                    <p class="text-sm font-bold truncate">{{ item.category || (item.type === 'income' ? 'Income' : 'Expense') }}</p>
-                                    <span v-if="item.account" class="hidden sm:inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-wider"
-                                        :style="{ backgroundColor: (item.account.color || '#6366F1') + '20', color: item.account.color || '#6366F1' }"
-                                    >{{ item.account.name }}</span>
+                        <li v-for="item in list" :key="item.id">
+                            <SwipeToDelete
+                                :disabled="false"
+                                @delete="deleteItem(item)"
+                            >
+                                <div class="group flex items-center gap-3 rounded-2xl border border-border/40 bg-card p-3 hover:border-primary/30 transition-all">
+                                    <div :class="[
+                                        'flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl',
+                                        item.type === 'income' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-rose-500/10 text-rose-500'
+                                    ]">
+                                        <component :is="item.type === 'income' ? ArrowDownRight : ArrowUpRight" class="h-4 w-4" />
+                                    </div>
+                                    <div class="flex-1 min-w-0">
+                                        <div class="flex items-center gap-2">
+                                            <p class="text-sm font-bold truncate">{{ item.category || (item.type === 'income' ? 'Income' : 'Expense') }}</p>
+                                            <span v-if="item.account" class="hidden sm:inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-wider"
+                                                :style="{ backgroundColor: (item.account.color || '#6366F1') + '20', color: item.account.color || '#6366F1' }"
+                                            >{{ item.account.name }}</span>
+                                        </div>
+                                        <p class="text-[11px] text-muted-foreground truncate mt-0.5">
+                                            {{ formatDay(item.date) }}<span v-if="item.description"> · {{ item.description }}</span>
+                                        </p>
+                                    </div>
+                                    <div class="flex items-center gap-2 flex-shrink-0">
+                                        <p :class="[
+                                            'text-sm font-black tabular-nums',
+                                            item.type === 'income' ? 'text-emerald-500' : 'text-rose-500'
+                                        ]">
+                                            {{ item.type === 'income' ? '+' : '-' }}{{ formatCurrency(item.amount) }}
+                                        </p>
+                                        <!-- Desktop hover delete button -->
+                                        <button @click="deleteItem(item)" class="p-1.5 rounded-lg text-muted-foreground hover:text-rose-500 hover:bg-rose-500/10 opacity-0 group-hover:opacity-100 transition-all hidden sm:block">
+                                            <Trash2 class="h-3.5 w-3.5" />
+                                        </button>
+                                    </div>
                                 </div>
-                                <p class="text-[11px] text-muted-foreground truncate mt-0.5">
-                                    {{ formatDay(item.date) }}<span v-if="item.description"> · {{ item.description }}</span>
-                                </p>
-                            </div>
-                            <div class="flex items-center gap-2 flex-shrink-0">
-                                <p :class="[
-                                    'text-sm font-black tabular-nums',
-                                    item.type === 'income' ? 'text-emerald-500' : 'text-rose-500'
-                                ]">
-                                    {{ item.type === 'income' ? '+' : '-' }}{{ formatCurrency(item.amount) }}
-                                </p>
-                                <button @click="deleteItem(item)" class="p-1.5 rounded-lg text-muted-foreground hover:text-rose-500 hover:bg-rose-500/10 opacity-0 group-hover:opacity-100 transition-all">
-                                    <Trash2 class="h-3.5 w-3.5" />
-                                </button>
-                            </div>
+                            </SwipeToDelete>
                         </li>
                     </ul>
                 </section>
             </div>
+            </PullToRefresh>
+            </template>
         </div>
     </AppLayout>
+
+    <OnboardingTour
+        :show="tour.showOnboarding.value"
+        :step="tour.onboardingStep.value"
+        :total="tour.totalSteps"
+        :current-step="tour.currentStep.value"
+        :tooltip-style="tour.tooltipStyle.value"
+        :tooltip-side="tour.tooltipSide.value"
+        @next="tour.nextStep()"
+        @prev="tour.prevStep()"
+        @close="tour.completeOnboarding()"
+    />
 </template>

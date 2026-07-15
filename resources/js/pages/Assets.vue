@@ -1,8 +1,12 @@
 <script setup lang="ts">
-import { Head, useForm, router } from '@inertiajs/vue3';
+import { Head, useForm, router, usePage } from '@inertiajs/vue3';
 import { useStorage } from '@vueuse/core';
-import { Landmark, CreditCard, Scale, Plus, Check, Trash2 } from 'lucide-vue-next';
+import { Landmark, CreditCard, Scale, Plus, Check, Trash2, LayoutDashboard } from 'lucide-vue-next';
 import { ref, computed, onMounted } from 'vue';
+import { useOnboarding } from '@/composables/useOnboarding';
+import OnboardingTour from '@/components/OnboardingTour.vue';
+import { usePageLoading } from '@/composables/usePageLoading';
+import { Skeleton } from '@/components/ui/skeleton';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { assets as assetsRoute } from '@/routes';
 import type { BreadcrumbItem } from '@/types';
@@ -36,6 +40,8 @@ interface Props {
 }
 
 const props = defineProps<Props>();
+
+const { isLoading } = usePageLoading(500);
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -147,6 +153,15 @@ const ringDashOffset = computed(() => {
     return ringCircumference - (clamped / 100) * ringCircumference;
 });
 
+// Onboarding
+const page = usePage();
+const seenTour = useStorage('seen-tour-assets', false, sessionStorage);
+const tour = useOnboarding([
+    { title: 'Assets & Liabilities', description: 'Track your net worth by managing what you own (assets) and what you owe (liabilities).', targetSelector: '.tour-assets-hero' },
+    { title: 'Assets Tab', description: 'Add and manage your assets like savings, investments, and property. Check items off as you track them.', targetSelector: '.tour-assets-tab' },
+    { title: 'Liabilities Tab', description: 'Track your debts like loans, mortgages, and credit card balances to understand your full financial picture.' },
+]);
+
 onMounted(() => {
     const target = netWorthPct.value;
     const duration = 1200;
@@ -160,6 +175,14 @@ onMounted(() => {
         if (progress < 1) requestAnimationFrame(animate);
     };
     requestAnimationFrame(animate);
+
+    // Start onboarding after animations
+    if (!seenTour.value && !(page.props.auth?.user as any)?.is_onboarded) {
+        setTimeout(() => {
+            tour.showOnboarding.value = true;
+            setTimeout(tour.updateTooltipPosition, 300);
+        }, 800);
+    }
 });
 </script>
 
@@ -168,9 +191,50 @@ onMounted(() => {
     <Head title="Assets" />
 
     <AppLayout :breadcrumbs="breadcrumbs">
+        <template v-if="isLoading">
+            <div class="flex h-full flex-1 flex-col gap-5 md:gap-8 p-4 sm:p-8 pb-24 md:pb-8 animate-pulse">
+                <div class="rounded-[24px] bg-card border border-border/50 p-4 sm:p-6">
+                    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+                        <div class="flex-1">
+                            <div class="flex items-center gap-2 mb-1">
+                                <Skeleton class="h-6 w-6 rounded-lg" />
+                                <Skeleton class="h-3 w-20" />
+                            </div>
+                            <Skeleton class="h-7 w-48 mb-2" />
+                            <Skeleton class="h-4 w-64" />
+                        </div>
+                        <div class="flex items-center gap-6 lg:pl-6 lg:border-l border-border/50">
+                            <Skeleton class="h-14 w-14 sm:h-16 sm:w-16 rounded-full" />
+                            <div>
+                                <Skeleton class="h-3 w-24 mb-1" />
+                                <Skeleton class="h-7 w-32" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="rounded-[20px] border border-border/40 bg-card">
+                    <div class="flex border-b border-border">
+                        <Skeleton class="h-12 flex-1 m-2 rounded-lg" />
+                        <Skeleton class="h-12 flex-1 m-2 rounded-lg" />
+                    </div>
+                    <div class="p-5 lg:p-6 space-y-4">
+                        <div v-for="i in 4" :key="i" class="flex items-start justify-between py-4 border-b border-border/20">
+                            <div class="flex items-start gap-3 flex-1">
+                                <Skeleton class="h-5 w-5 rounded-md mt-0.5" />
+                                <div class="flex-1">
+                                    <Skeleton class="h-4 w-28 mb-1" />
+                                    <Skeleton class="h-4 w-20" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </template>
+        <template v-else>
         <div class="flex h-full flex-1 flex-col gap-5 md:gap-8 overflow-x-auto p-4 sm:p-8 pb-24 md:pb-8">
             <!-- Header Section (Compact Hero) -->
-            <div class="relative overflow-hidden rounded-[24px] bg-card border border-border/50 p-4 sm:p-6 mb-1.5 sm:mb-2 animate-fade-up stagger-1">
+            <div :class="['relative overflow-hidden rounded-[24px] bg-card border border-border/50 p-4 sm:p-6 mb-1.5 sm:mb-2 animate-fade-up stagger-1 tour-assets-hero', tour.highlightClass(1)]">
                 <!-- Background abstract shapes -->
                 <div class="absolute -top-12 -right-12 w-32 h-32 bg-primary/5 rounded-full blur-2xl"></div>
                 <div class="absolute -bottom-12 -left-12 w-32 h-32 bg-secondary/5 rounded-full blur-2xl"></div>
@@ -220,7 +284,7 @@ onMounted(() => {
             </div>
 
             <!-- Tab Navigation -->
-            <div class="surface-card overflow-hidden p-0 animate-fade-up stagger-4">
+            <div :class="['surface-card overflow-hidden p-0 animate-fade-up stagger-4 tour-assets-tab', tour.highlightClass(2)]">
                 <div class="flex gap-0 border-b border-border">
                     <button @click="activeTab = 'assets'; showAddForm = false" :class="[
                         'flex-1 px-6 py-4 text-sm font-semibold transition-all duration-200 flex items-center justify-center gap-2',
@@ -430,7 +494,20 @@ onMounted(() => {
                 </div>
             </div>
         </div>
+        </template>
     </AppLayout>
+
+    <OnboardingTour
+        :show="tour.showOnboarding.value"
+        :step="tour.onboardingStep.value"
+        :total="tour.totalSteps"
+        :current-step="tour.currentStep.value"
+        :tooltip-style="tour.tooltipStyle.value"
+        :tooltip-side="tour.tooltipSide.value"
+        @next="tour.nextStep()"
+        @prev="tour.prevStep()"
+        @close="tour.completeOnboarding()"
+    />
 
     <!-- Notification Toasts -->
     <Transition

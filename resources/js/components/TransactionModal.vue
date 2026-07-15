@@ -8,6 +8,9 @@ import {
 } from 'lucide-vue-next';
 import ReceiptScanner from '@/components/ReceiptScanner.vue';
 import { ref, computed, watch, nextTick } from 'vue';
+import { useSheetDrag } from '@/composables/useSheetDrag';
+import { useHaptic } from '@/composables/useHaptic';
+import DatePickerSheet from '@/components/DatePickerSheet.vue';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 
 interface Account {
@@ -42,6 +45,10 @@ const amountInput = ref<HTMLInputElement | null>(null);
 const receiptFile = ref<File | null>(null);
 const receiptPreview = ref<string | null>(null);
 const showReceiptSection = ref(false);
+const showDatePicker = ref(false);
+
+const { sheetStyle, onHandleTouchStart, onHandleTouchMove, onHandleTouchEnd, registerDismiss } = useSheetDrag();
+registerDismiss(() => emit('update:open', false));
 
 const categories = computed(() => {
     if (props.type === 'income') {
@@ -113,6 +120,7 @@ const handleReceiptClear = () => {
 
 const handleSubmit = () => {
     if (!amount.value || parseFloat(amount.value) <= 0) return;
+    haptic.success();
     emit('submit', {
         amount: amount.value,
         date: date.value,
@@ -122,6 +130,8 @@ const handleSubmit = () => {
         receipt_photo: receiptFile.value,
     });
 };
+
+const haptic = useHaptic();
 
 const submitDisabled = computed(() => !amount.value || parseFloat(amount.value) <= 0);
 
@@ -167,9 +177,14 @@ watch(
                  - Bottom sheet
                  - Hero amount, full-width inputs, finger-friendly tiles
                  ============================================================ -->
-            <div class="flex max-h-[92vh] flex-col md:hidden">
+            <div class="flex max-h-[92vh] flex-col md:hidden" :style="sheetStyle">
                 <!-- Drag handle -->
-                <div class="flex justify-center pt-2">
+                <div
+                    class="flex justify-center pt-2"
+                    @touchstart="onHandleTouchStart"
+                    @touchmove="onHandleTouchMove"
+                    @touchend="onHandleTouchEnd"
+                >
                     <span class="h-1.5 w-10 rounded-full bg-muted" aria-hidden="true" />
                 </div>
 
@@ -274,20 +289,21 @@ watch(
                     </div>
 
                     <div class="grid grid-cols-1 gap-2">
-                        <label class="flex items-center gap-3 rounded-2xl border border-border/60 bg-muted/30 px-3.5 py-2.5 transition-colors focus-within:border-primary/60 focus-within:bg-muted/50">
+                        <button
+                            @click="showDatePicker = true"
+                            class="flex items-center gap-3 rounded-2xl border border-border/60 bg-muted/30 px-3.5 py-2.5 w-full text-left transition-all hover:border-primary/50 hover:bg-muted/50 active:scale-[0.99]"
+                        >
                             <Calendar class="h-4 w-4 shrink-0 text-primary" />
                             <div class="min-w-0 flex-1">
                                 <span class="block text-[9px] font-semibold uppercase tracking-wider text-muted-foreground/80">Date</span>
-                                <input
-                                    v-model="date"
-                                    type="date"
-                                    class="w-full bg-transparent text-sm font-semibold text-foreground outline-none [color-scheme:light] dark:[color-scheme:dark]"
-                                />
+                                <span class="text-sm font-semibold text-foreground">
+                                    {{ new Date(date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' }) }}
+                                </span>
                             </div>
                             <span class="ml-1 shrink-0 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary">
                                 {{ formatDateLabel(date) }}
                             </span>
-                        </label>
+                        </button>
 
                         <label class="flex items-center gap-3 rounded-2xl border border-border/60 bg-muted/30 px-3.5 py-2.5 transition-colors focus-within:border-primary/60 focus-within:bg-muted/50">
                             <FileText class="h-4 w-4 shrink-0 text-primary" />
@@ -544,7 +560,11 @@ watch(
                 </div>
             </div>
         </DialogContent>
-    </Dialog>
+        <DatePickerSheet
+        v-model:open="showDatePicker"
+        v-model="date"
+    />
+</Dialog>
 </template>
 
 <style scoped>

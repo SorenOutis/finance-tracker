@@ -6,6 +6,8 @@ import {
 } from 'lucide-vue-next';
 import { ref, computed, watch, nextTick } from 'vue';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { useSheetDrag } from '@/composables/useSheetDrag';
+import { useHaptic } from '@/composables/useHaptic';
 
 interface WalletData {
     name: string;
@@ -66,6 +68,9 @@ const currencies = [
 const colorManuallySet = ref(false);
 const showAdvanced = ref(false);
 const nameInput = ref<HTMLInputElement | null>(null);
+
+const { sheetStyle, onHandleTouchStart, onHandleTouchMove, onHandleTouchEnd, registerDismiss } = useSheetDrag();
+registerDismiss(() => emit('update:open', false));
 
 const form = ref<WalletData>({
     name: '',
@@ -128,11 +133,14 @@ const cardGradient = computed(
     () => `linear-gradient(135deg, ${form.value.color} 0%, ${form.value.color}CC 50%, ${form.value.color}99 100%)`,
 );
 
+const haptic = useHaptic();
+
 const submitDisabled = computed(() => !form.value.name.trim());
 
 const close = () => emit('update:open', false);
 const handleSubmit = () => {
     if (submitDisabled.value) return;
+    haptic.success();
     emit('submit', { ...form.value });
 };
 
@@ -194,9 +202,14 @@ watch(
                  - Bottom sheet
                  - Card preview at top, fields stacked, advanced collapsible
                  ============================================================ -->
-            <div class="flex max-h-[92vh] flex-col md:hidden">
+            <div class="flex max-h-[92vh] flex-col md:hidden" :style="sheetStyle">
                 <!-- Drag handle -->
-                <div class="flex justify-center pt-2">
+                <div
+                    class="flex justify-center pt-2"
+                    @touchstart="onHandleTouchStart"
+                    @touchmove="onHandleTouchMove"
+                    @touchend="onHandleTouchEnd"
+                >
                     <span class="h-1.5 w-10 rounded-full bg-muted" aria-hidden="true" />
                 </div>
 

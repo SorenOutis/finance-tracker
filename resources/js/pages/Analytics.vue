@@ -5,7 +5,13 @@ import gsap from 'gsap';
 import { TrendingUp, TrendingDown, BarChart3, PieChart, ArrowRight } from 'lucide-vue-next';
 import { computed } from 'vue';
 import { onMounted } from 'vue';
+import { usePage } from '@inertiajs/vue3';
+import { useStorage } from '@vueuse/core';
+import { useOnboarding } from '@/composables/useOnboarding';
+import OnboardingTour from '@/components/OnboardingTour.vue';
 import { Line as LineChart, Bar as BarChart, Doughnut as DoughnutChart } from 'vue-chartjs';
+import { usePageLoading } from '@/composables/usePageLoading';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useChartDefaults } from '@/composables/useChartDefaults';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { analytics, yearly } from '@/routes';
@@ -32,6 +38,8 @@ interface Props {
 }
 
 const props = defineProps<Props>();
+
+const { isLoading } = usePageLoading(500);
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -178,8 +186,24 @@ const categoryBarColors = [
     chartColors.loss,
 ];
 
+// Onboarding
+const page = usePage();
+const seenTour = useStorage('seen-tour-analytics', false, sessionStorage);
+const tour = useOnboarding([
+    { title: 'Financial Analytics', description: 'Get insights into your yearly financial performance with interactive charts and breakdowns.', targetSelector: '.tour-analytics-hero' },
+    { title: 'Income vs Expenses', description: 'Track your monthly income and expense trends with line and bar charts for the full year.', targetSelector: '.tour-analytics-charts' },
+    { title: 'Category Breakdown', description: 'See where your money is going with category breakdowns and top spending analysis.' },
+]);
+
 onMounted(() => {
-    // Animate category bars
+    // Start onboarding after charts render
+    if (!seenTour.value && !(page.props.auth?.user as any)?.is_onboarded) {
+        setTimeout(() => {
+            tour.showOnboarding.value = true;
+            setTimeout(tour.updateTooltipPosition, 300);
+        }, 600);
+    }
+
     gsap.from('.animate-bar-fill', {
         scaleX: 0,
         duration: 1.5,
@@ -194,9 +218,83 @@ onMounted(() => {
     <Head title="Analytics" />
 
     <AppLayout :breadcrumbs="breadcrumbs">
+        <template v-if="isLoading">
+            <div class="flex h-full flex-1 flex-col gap-5 md:gap-8 p-4 sm:p-8 pb-28 md:pb-12 animate-pulse">
+                <div class="rounded-[24px] bg-card border border-border/50 p-4 sm:p-5">
+                    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+                        <div class="flex-1">
+                            <div class="flex items-center gap-2 mb-1">
+                                <Skeleton class="h-6 w-6 rounded-lg" />
+                                <Skeleton class="h-3 w-20" />
+                            </div>
+                            <Skeleton class="h-7 w-48 mb-2" />
+                            <Skeleton class="h-4 w-72" />
+                        </div>
+                        <Skeleton class="h-10 w-40 rounded-xl" />
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="p-4 lg:p-5 rounded-[20px] border border-border/40 bg-card">
+                        <div class="flex items-center gap-4">
+                            <Skeleton class="h-10 w-10 rounded-xl shrink-0" />
+                            <div>
+                                <Skeleton class="h-3 w-20 mb-1" />
+                                <Skeleton class="h-6 w-28 mb-1" />
+                                <Skeleton class="h-4 w-20" />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="p-4 lg:p-5 rounded-[20px] border border-border/40 bg-card">
+                        <div class="flex items-center gap-4">
+                            <Skeleton class="h-10 w-10 rounded-xl shrink-0" />
+                            <div>
+                                <Skeleton class="h-3 w-20 mb-1" />
+                                <Skeleton class="h-6 w-28 mb-1" />
+                                <Skeleton class="h-4 w-20" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="p-5 lg:p-6 rounded-[20px] border border-border/40 bg-card">
+                    <Skeleton class="h-5 w-48 mb-1" />
+                    <Skeleton class="h-3 w-56 mb-6" />
+                    <Skeleton class="h-[300px] sm:h-[400px] w-full rounded-xl" />
+                </div>
+                <div class="p-5 lg:p-6 rounded-[20px] border border-border/40 bg-card">
+                    <Skeleton class="h-5 w-48 mb-1" />
+                    <Skeleton class="h-3 w-56 mb-6" />
+                    <Skeleton class="h-[300px] sm:h-[400px] w-full rounded-xl" />
+                </div>
+                <div class="grid gap-6 md:grid-cols-2">
+                    <div class="p-5 lg:p-6 rounded-[20px] border border-border/40 bg-card">
+                        <Skeleton class="h-5 w-48 mb-1" />
+                        <Skeleton class="h-3 w-56 mb-6" />
+                        <Skeleton class="h-[250px] sm:h-[300px] w-full rounded-full" />
+                    </div>
+                    <div class="p-5 lg:p-6 rounded-[20px] border border-border/40 bg-card">
+                        <Skeleton class="h-5 w-48 mb-1" />
+                        <Skeleton class="h-3 w-56 mb-4" />
+                        <div v-for="i in 4" :key="i" class="mb-4">
+                            <div class="flex items-center justify-between mb-1">
+                                <div class="flex items-center gap-2">
+                                    <Skeleton class="h-2.5 w-2.5 rounded-full" />
+                                    <Skeleton class="h-4 w-20" />
+                                </div>
+                                <div class="flex items-center gap-3">
+                                    <Skeleton class="h-3 w-10" />
+                                    <Skeleton class="h-4 w-20" />
+                                </div>
+                            </div>
+                            <Skeleton class="h-2 w-full rounded-full" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </template>
+        <template v-else>
         <div class="flex h-full flex-1 flex-col gap-5 md:gap-8 p-4 sm:p-8 pb-28 md:pb-12">
             <!-- Header Section (Compact Hero) -->
-            <div class="relative overflow-hidden rounded-[24px] bg-card border border-border/50 p-4 sm:p-5 mb-1.5 sm:mb-2 animate-fade-up stagger-1">
+            <div :class="['relative overflow-hidden rounded-[24px] bg-card border border-border/50 p-4 sm:p-5 mb-1.5 sm:mb-2 animate-fade-up stagger-1 tour-analytics-hero', tour.highlightClass(1)]">
                 <!-- Background abstract shapes -->
                 <div class="absolute -top-12 -right-12 w-32 h-32 bg-primary/5 rounded-full blur-2xl"></div>
                 <div class="absolute -bottom-12 -left-12 w-32 h-32 bg-secondary/5 rounded-full blur-2xl"></div>
@@ -252,7 +350,7 @@ onMounted(() => {
             </div>
 
             <!-- Income vs Expenses Trend -->
-            <div class="surface-card premium-hover p-5 lg:p-6 animate-fade-up stagger-5">
+            <div :class="['surface-card premium-hover p-5 lg:p-6 animate-fade-up stagger-5 tour-analytics-charts', tour.highlightClass(2)]">
                 <div class="flex items-center gap-2 mb-1">
                     <div class="p-1.5 rounded-lg bg-primary/8">
                         <TrendingUp class="h-4 w-4 text-primary" />
@@ -377,5 +475,18 @@ onMounted(() => {
                 </div>
             </div>
         </div>
+        </template>
     </AppLayout>
+
+    <OnboardingTour
+        :show="tour.showOnboarding.value"
+        :step="tour.onboardingStep.value"
+        :total="tour.totalSteps"
+        :current-step="tour.currentStep.value"
+        :tooltip-style="tour.tooltipStyle.value"
+        :tooltip-side="tour.tooltipSide.value"
+        @next="tour.nextStep()"
+        @prev="tour.prevStep()"
+        @close="tour.completeOnboarding()"
+    />
 </template>

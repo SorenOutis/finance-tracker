@@ -1,8 +1,7 @@
 <script setup lang="ts">
 import { usePage } from '@inertiajs/vue3';
 import { useSessionStorage } from '@vueuse/core';
-import gsap from 'gsap';
-import { onMounted, ref } from 'vue';
+import { onMounted, ref, computed } from 'vue';
 import LoadingScreen from '@/components/LoadingScreen.vue';
 import AppLayout from '@/layouts/app/AppSidebarLayout.vue';
 import { useLocalStorage } from '@/plugins/localStorage';
@@ -18,7 +17,9 @@ withDefaults(defineProps<Props>(), {
 });
 
 const page = usePage();
-const mainContent = ref<HTMLElement | null>(null);
+
+// Page transition key — changes on every navigation to restart CSS slide-in animation
+const pageKey = computed(() => page.url);
 
 // Only show loading screen once per session
 const showLoading = useSessionStorage('has-seen-loading', false);
@@ -30,30 +31,39 @@ const onLoadingComplete = () => {
 };
 
 
-// Save current page to local storage and animate entry
+// Save current page to local storage
 onMounted(() => {
     useLocalStorage.setCurrentPage(page.url);
-
-    // Global entry animation for a premium feel
-    if (mainContent.value) {
-        gsap.from(mainContent.value.querySelectorAll('.surface-card, .animate-fade-up, h1, p'), {
-            y: 30,
-            opacity: 0,
-            duration: 0.8,
-            stagger: 0.1,
-            ease: 'expo.out',
-            clearProps: 'all',
-        });
-    }
 });
 </script>
 
 <template>
     <AppLayout :breadcrumbs="breadcrumbs">
         <LoadingScreen v-if="isLoadingVisible" @complete="onLoadingComplete" />
-        <div ref="mainContent" class="contents">
+        <div class="contents page-enter" :key="pageKey">
             <slot />
         </div>
     </AppLayout>
-
 </template>
+
+<style scoped>
+/**
+ * Slide-in transition for page navigation.
+ * The :key binding on the wrapper div causes Vue to recreate the element
+ * whenever the page URL changes, re-triggering this animation.
+ */
+.page-enter {
+    animation: page-slide-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+}
+
+@keyframes page-slide-in {
+    0% {
+        opacity: 0;
+        transform: translateX(24px) translateY(4px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateX(0) translateY(0);
+    }
+}
+</style>

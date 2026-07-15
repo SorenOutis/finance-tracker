@@ -2,9 +2,15 @@
 import { Head } from '@inertiajs/vue3';
 import { Chart as ChartJS, registerables } from 'chart.js';
 import { Calendar, TrendingUp, TrendingDown, DollarSign, ArrowUpRight, ArrowDownRight } from 'lucide-vue-next';
-import { computed } from 'vue';
+import { computed, onMounted } from 'vue';
+import { usePage } from '@inertiajs/vue3';
+import { useStorage } from '@vueuse/core';
+import { useOnboarding } from '@/composables/useOnboarding';
+import OnboardingTour from '@/components/OnboardingTour.vue';
 import { Bar as BarChart } from 'vue-chartjs';
 import { useChartDefaults } from '@/composables/useChartDefaults';
+import { usePageLoading } from '@/composables/usePageLoading';
+import { Skeleton } from '@/components/ui/skeleton';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { yearly } from '@/routes';
 import type { BreadcrumbItem } from '@/types';
@@ -31,6 +37,8 @@ interface Props {
 }
 
 const props = defineProps<Props>();
+
+const { isLoading } = usePageLoading(500);
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -121,15 +129,85 @@ const maxAmount = computed(() => {
     }
     return max || 1;
 });
+
+// Onboarding
+const page = usePage();
+const seenTour = useStorage('seen-tour-yearly', false, sessionStorage);
+const tour = useOnboarding([
+    { title: 'Yearly Overview', description: 'View your complete annual financial summary with income, expenses, and net totals.', targetSelector: '.tour-yearly-hero' },
+    { title: 'Monthly Comparison', description: 'Compare income vs expenses across all months with an interactive bar chart.', targetSelector: '.tour-yearly-chart' },
+    { title: 'Monthly Breakdown', description: 'Dive into detailed month-by-month data with income, expenses, and net for each period.' },
+]);
+
+onMounted(() => {
+    if (!seenTour.value && !(page.props.auth?.user as any)?.is_onboarded) {
+        setTimeout(() => {
+            tour.showOnboarding.value = true;
+            setTimeout(tour.updateTooltipPosition, 300);
+        }, 500);
+    }
+});
 </script>
 
 <template>
     <Head title="Yearly" />
 
     <AppLayout :breadcrumbs="breadcrumbs">
+        <template v-if="isLoading">
+            <div class="flex h-full flex-1 flex-col gap-5 md:gap-8 p-4 sm:p-8 pb-24 md:pb-8 animate-pulse">
+                <div class="rounded-[24px] bg-card border border-border/50 p-4 sm:p-5">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div class="flex-1">
+                            <div class="flex items-center gap-2 mb-1">
+                                <Skeleton class="h-6 w-6 rounded-lg" />
+                                <Skeleton class="h-3 w-20" />
+                            </div>
+                            <Skeleton class="h-7 w-48 mb-2" />
+                            <Skeleton class="h-4 w-72" />
+                        </div>
+                    </div>
+                </div>
+                <div class="grid gap-4 md:grid-cols-2">
+                    <div class="p-4 lg:p-5 rounded-[20px] border border-border/40 bg-card flex items-center gap-4">
+                        <Skeleton class="h-10 w-10 rounded-xl shrink-0" />
+                        <div>
+                            <Skeleton class="h-3 w-20 mb-1" />
+                            <Skeleton class="h-6 w-28 mb-1" />
+                            <Skeleton class="h-4 w-20" />
+                        </div>
+                    </div>
+                    <div class="p-4 lg:p-5 rounded-[20px] border border-border/40 bg-card flex items-center gap-4">
+                        <Skeleton class="h-10 w-10 rounded-xl shrink-0" />
+                        <div>
+                            <Skeleton class="h-3 w-20 mb-1" />
+                            <Skeleton class="h-6 w-28 mb-1" />
+                            <Skeleton class="h-4 w-20" />
+                        </div>
+                    </div>
+                </div>
+                <div class="p-5 lg:p-6 rounded-[20px] border border-border/40 bg-card">
+                    <Skeleton class="h-5 w-48 mb-1" />
+                    <Skeleton class="h-3 w-64 mb-6" />
+                    <Skeleton class="h-[350px] w-full rounded-xl" />
+                </div>
+                <div class="p-5 lg:p-6 rounded-[20px] border border-border/40 bg-card">
+                    <Skeleton class="h-5 w-48 mb-1" />
+                    <Skeleton class="h-3 w-64 mb-6" />
+                    <div class="space-y-3">
+                        <div v-for="i in 5" :key="i" class="flex items-center gap-4 py-2 border-b border-border/20">
+                            <Skeleton class="h-4 w-24" />
+                            <Skeleton class="h-4 w-20 ml-auto" />
+                            <Skeleton class="h-4 w-20" />
+                            <Skeleton class="h-4 w-20" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </template>
+        <template v-else>
         <div class="flex h-full flex-1 flex-col gap-5 md:gap-8 overflow-x-auto p-4 sm:p-8 pb-24 md:pb-8">
             <!-- Header Section (Compact Hero) -->
-            <div class="relative overflow-hidden rounded-[24px] bg-card border border-border/50 p-4 sm:p-5 mb-1.5 sm:mb-2 animate-fade-up stagger-1">
+            <div :class="['relative overflow-hidden rounded-[24px] bg-card border border-border/50 p-4 sm:p-5 mb-1.5 sm:mb-2 animate-fade-up stagger-1 tour-yearly-hero', tour.highlightClass(1)]">
                 <!-- Background abstract shapes -->
                 <div class="absolute -top-12 -right-12 w-32 h-32 bg-primary/5 rounded-full blur-2xl"></div>
                 <div class="absolute -bottom-12 -left-12 w-32 h-32 bg-secondary/5 rounded-full blur-2xl"></div>
@@ -184,7 +262,7 @@ const maxAmount = computed(() => {
             </div>
 
             <!-- Monthly Bar Chart -->
-            <div class="surface-card p-5 lg:p-6 animate-fade-up stagger-5">
+            <div :class="['surface-card p-5 lg:p-6 animate-fade-up stagger-5 tour-yearly-chart', tour.highlightClass(2)]">
                 <div class="flex items-center gap-2 mb-1">
                     <div class="p-1.5 rounded-lg bg-primary/8">
                         <Calendar class="h-4 w-4 text-primary" />
@@ -252,5 +330,18 @@ const maxAmount = computed(() => {
                 </div>
             </div>
         </div>
+        </template>
     </AppLayout>
+
+    <OnboardingTour
+        :show="tour.showOnboarding.value"
+        :step="tour.onboardingStep.value"
+        :total="tour.totalSteps"
+        :current-step="tour.currentStep.value"
+        :tooltip-style="tour.tooltipStyle.value"
+        :tooltip-side="tour.tooltipSide.value"
+        @next="tour.nextStep()"
+        @prev="tour.prevStep()"
+        @close="tour.completeOnboarding()"
+    />
 </template>
