@@ -4,6 +4,13 @@ import { CheckCheck, AlertTriangle, Info, X, AlertCircle } from 'lucide-vue-next
 
 const { toasts, removeToast } = useToast();
 
+const progressColors: Record<string, string> = {
+    success: 'bg-emerald-500/30',
+    warning: 'bg-amber-500/30',
+    info: 'bg-blue-500/30',
+    error: 'bg-rose-500/30',
+};
+
 const typeConfig: Record<string, { icon: any; bg: string; border: string; iconBg: string; iconColor: string; titleColor: string; msgColor: string }> = {
     success: {
         icon: CheckCheck,
@@ -46,19 +53,19 @@ const typeConfig: Record<string, { icon: any; bg: string; border: string; iconBg
 
 <template>
     <Teleport to="body">
-        <div class="fixed sm:top-4 sm:bottom-auto bottom-4 right-4 z-[9999] flex flex-col sm:flex-col-reverse gap-2 pointer-events-none">
+        <div class="fixed top-16 sm:top-20 right-4 z-[9999] flex flex-col sm:flex-col-reverse gap-2 pointer-events-none">
             <TransitionGroup
-                enter-active-class="transition duration-300 ease-out"
-                enter-from-class="opacity-0 sm:-translate-y-4 translate-y-4 scale-95"
+                enter-active-class="transition duration-[400ms] ease-out"
+                enter-from-class="opacity-0 translate-x-8 -translate-y-2 scale-90"
                 leave-active-class="transition duration-200 ease-in"
-                leave-to-class="opacity-0 translate-x-4 scale-95"
+                leave-to-class="opacity-0 translate-x-full scale-90"
                 move-class="transition duration-300 ease-out"
             >
                 <div
                     v-for="toast in toasts"
                     :key="toast.id"
                     :class="[
-                        'pointer-events-auto flex items-center gap-2.5 p-3 rounded-xl border shadow-lg max-w-[360px] w-full',
+                        'pointer-events-auto flex items-center gap-2.5 p-3 pb-4 rounded-xl border shadow-lg max-w-[360px] w-full relative',
                         typeConfig[toast.type]?.bg || 'bg-muted/20',
                         typeConfig[toast.type]?.border || 'border-border/30',
                     ]"
@@ -97,8 +104,31 @@ const typeConfig: Record<string, { icon: any; bg: string; border: string; iconBg
                     >
                         <X class="w-3 h-3 text-muted-foreground/60" />
                     </button>
+                    <!-- Progress bar -->
+                    <div class="absolute bottom-0 left-0 right-0 h-0.5 rounded-b-xl overflow-hidden bg-black/[0.04] dark:bg-white/[0.04]">
+                        <div
+                            class="h-full rounded-b-xl toast-progress"
+                            :class="progressColors[toast.type] || 'bg-muted-foreground/20'"
+                            :style="{ animationDuration: (toast.duration ?? 3000) + 'ms' }"
+                        ></div>
+                    </div>
                 </div>
             </TransitionGroup>
         </div>
     </Teleport>
 </template>
+
+<style scoped>
+@keyframes toast-progress {
+    from {
+        width: 100%;
+    }
+    to {
+        width: 0%;
+    }
+}
+
+.toast-progress {
+    animation: toast-progress linear forwards;
+}
+</style>

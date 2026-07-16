@@ -17,7 +17,7 @@ export function useToast() {
         const newToast: Toast = { ...toast, id };
         toasts.value.push(newToast);
 
-        const duration = toast.duration ?? 4000;
+        const duration = toast.duration ?? 3000;
         setTimeout(() => {
             removeToast(id);
         }, duration);
