@@ -76,7 +76,7 @@ const saveEnvelope = () => {
 
 const deleteEnv = (id: number) => {
     if (!confirm('Delete this envelope?')) return;
-    router.delete(`/envelopes/${id}`, { preserveScroll: true });
+    router.delete(`/envelopes/${id}`, { preserveScroll: true, onSuccess: () => { addToast({ type: 'info', title: 'Envelope Deleted', message: 'Savings envelope removed' }); } });
 };
 
 const openAllocate = (env: Envelope) => {

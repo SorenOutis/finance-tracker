@@ -86,7 +86,7 @@ const saveCategory = () => {
 
 const deleteCategory = (cat: Category) => {
     if (!confirm(`Delete "${cat.name}" category?`)) return;
-    router.delete(`/categories/${cat.id}`, { preserveScroll: true });
+    router.delete(`/categories/${cat.id}`, { preserveScroll: true, onSuccess: () => { addToast({ type: 'info', title: 'Category Deleted', message: `"${cat.name}" removed` }); } });
 };
 
 const seedDefaults = () => {

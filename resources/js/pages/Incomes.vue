@@ -145,7 +145,7 @@ const updateIncome = (data: any) => {
 
 const deleteIncome = (id: number) => {
     if (confirm('Delete this recurring income?')) {
-        router.delete(`/recurring-transactions/${id}`, { preserveScroll: true });
+        router.delete(`/recurring-transactions/${id}`, { preserveScroll: true, onSuccess: () => { addToast({ type: 'info', title: 'Income Deleted', message: 'Recurring income removed' }); } });
     }
 };
 

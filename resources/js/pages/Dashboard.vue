@@ -304,7 +304,7 @@ const addExpense = (data: any) => {
 };
 const saveBudget = () => { if (!budgetForm.monthly_limit) return; budgetForm.post('/budgets', { onSuccess: () => { showBudgetModal.value = false; addToast({ type: 'success', title: 'Budget Saved', message: `₱${Number(budgetForm.monthly_limit).toLocaleString()} monthly limit set` }); } }); };
 const addGoal = () => { if (!goalForm.name || !goalForm.target_amount) return; goalForm.post('/financial-goals', { onSuccess: () => { goalForm.reset(); goalForm.color = '#14b8a6'; showGoalModal.value = false; addToast({ type: 'success', title: 'Goal Created', message: goalForm.name }); } }); };
-const deleteGoal = (id: number) => { router.delete(`/financial-goals/${id}`, { preserveScroll: true }); };
+const deleteGoal = (id: number) => { router.delete(`/financial-goals/${id}`, { preserveScroll: true, onSuccess: () => { addToast({ type: 'info', title: 'Goal Deleted', message: 'Financial goal removed' }); } }); };
 const addRecurring = (data: any) => {
     recurringForm.name = data.name;
     recurringForm.amount = data.amount;
@@ -323,7 +323,7 @@ const addRecurring = (data: any) => {
         }
     });
 };
-const deleteEntry = (id: number, type: 'income' | 'expense') => { router.delete(`/${type}s/${id}`, { preserveScroll: true }); };
+const deleteEntry = (id: number, type: 'income' | 'expense') => { router.delete(`/${type}s/${id}`, { preserveScroll: true, onSuccess: () => { addToast({ type: 'info', title: type === 'income' ? 'Income Deleted' : 'Expense Deleted', message: 'Entry removed from history' }); } }); };
 
 const refreshDashboard = () => {
     router.reload({ preserveScroll: true, only: ['dashboard', 'incomeEntries', 'expenseEntries', 'dailySpending', 'expensesByCategory', 'topExpense', 'transactionStats', 'recentActivity', 'savingsStreak', 'ytd', 'budget', 'financialGoals', 'recurringIncomes', 'upcomingBills', 'accounts'] });

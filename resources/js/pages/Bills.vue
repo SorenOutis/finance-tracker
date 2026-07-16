@@ -133,7 +133,7 @@ const updateBill = (data: any) => {
 
 const deleteBill = (id: number) => {
     if (confirm('Delete this recurring bill?')) {
-        router.delete(`/recurring-transactions/${id}`, { preserveScroll: true });
+        router.delete(`/recurring-transactions/${id}`, { preserveScroll: true, onSuccess: () => { addToast({ type: 'info', title: 'Bill Deleted', message: 'Recurring bill removed' }); } });
     }
 };
 

@@ -15,6 +15,7 @@ import HistorySkeleton from '@/components/Skeletons/HistorySkeleton.vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 import type { BreadcrumbItem } from '@/types';
 import { formatCurrency } from '@/utils/currency';
+import { useToast } from '@/composables/useToast';
 
 interface AccountRef { id: number; name: string; color: string | null; type: string; }
 interface HistoryItem {
@@ -33,6 +34,8 @@ const props = defineProps<{ items: HistoryItem[]; query: string }>();
 const breadcrumbs: BreadcrumbItem[] = [{ title: 'History', href: '/history' }];
 
 const { isLoading } = usePageLoading(500);
+
+const { addToast } = useToast();
 
 const search = ref(props.query || '');
 
@@ -91,7 +94,7 @@ const formatDay = (dateStr: string) => {
 const deleteItem = (item: HistoryItem) => {
     if (!confirm(`Delete this ${item.type}?`)) return;
     const url = item.type === 'income' ? `/incomes/${item.raw_id}` : `/expenses/${item.raw_id}`;
-    router.delete(url, { preserveScroll: true });
+    router.delete(url, { preserveScroll: true, onSuccess: () => { addToast({ type: 'info', title: item.type === 'income' ? 'Income Deleted' : 'Expense Deleted', message: item.category || 'Entry removed' }); } });
 };
 
 const refreshHistory = () => {

@@ -95,7 +95,7 @@ const addExpense = (data: any) => {
 
 const deleteExpense = (id: number) => {
     if (!confirm('Delete this expense?')) return;
-    router.delete(`/expenses/${id}`, { preserveScroll: true });
+    router.delete(`/expenses/${id}`, { preserveScroll: true, onSuccess: () => { addToast({ type: 'info', title: 'Expense Removed', message: 'Transaction deleted' }); } });
 };
 
 const uploadReceiptForExpense = (expenseId: number, file: File) => {
@@ -114,7 +114,7 @@ const uploadReceiptForExpense = (expenseId: number, file: File) => {
 
 const deleteReceiptForExpense = (expenseId: number) => {
     if (!confirm('Remove receipt photo?')) return;
-    router.delete(`/expenses/${expenseId}/receipt`, { preserveScroll: true });
+    router.delete(`/expenses/${expenseId}/receipt`, { preserveScroll: true, onSuccess: () => { addToast({ type: 'info', title: 'Receipt Removed', message: 'Photo deleted' }); } });
 };
 
 const handleReceiptFileInput = (expenseId: number, e: Event) => {

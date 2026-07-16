@@ -184,11 +184,13 @@ const deleteAccount = (account: AccountItem) => {
 
 const confirmDelete = () => {
     if (!accountToDelete.value) return;
+    const { name: accountName } = accountToDelete.value;
     router.delete(`/accounts/${accountToDelete.value.id}`, {
         preserveScroll: true,
         onSuccess: () => {
             showDeleteModal.value = false;
             accountToDelete.value = null;
+            addToast({ type: 'info', title: 'Wallet Deleted', message: accountName || 'Account removed' });
         }
     });
 };
