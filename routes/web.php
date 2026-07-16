@@ -19,9 +19,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('history', \App\Http\Controllers\HistoryController::class)->name('history');
     Route::get('assets', \App\Http\Controllers\AssetsController::class)->name('assets');
     Route::get('settings', \App\Http\Controllers\SettingsController::class)->name('settings');
-    Route::get('enhancement-designs', function () {
-        return \Inertia\Inertia::render('EnhancementDesigns');
-    })->name('enhancement-designs');
     Route::get('wallets', \App\Http\Controllers\WalletsController::class)->name('wallets');
     Route::get('bills', [\App\Http\Controllers\RecurringTransactionController::class, 'index'])->name('bills');
     Route::get('incomes', [\App\Http\Controllers\RecurringTransactionController::class, 'incomes'])->name('incomes');

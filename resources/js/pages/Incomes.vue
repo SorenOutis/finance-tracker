@@ -9,6 +9,7 @@ import { useOnboarding } from '@/composables/useOnboarding';
 import OnboardingTour from '@/components/OnboardingTour.vue';
 import RecurringEntryModal from '@/components/RecurringEntryModal.vue';
 import { usePageLoading } from '@/composables/usePageLoading';
+import { useToast } from '@/composables/useToast';
 import HeroHeaderSkeleton from '@/components/Skeletons/HeroHeaderSkeleton.vue';
 import CardGridSkeleton from '@/components/Skeletons/CardGridSkeleton.vue';
 
@@ -37,6 +38,8 @@ defineProps<Props>();
 const breadcrumbs: BreadcrumbItem[] = [{ title: 'Income', href: '/incomes' }];
 
 const { isLoading } = usePageLoading(500);
+
+const { addToast } = useToast();
 
 const showAddModal = useStorage('incomes-add-modal', false);
 const showEditModal = ref(false);
@@ -98,6 +101,7 @@ const addIncome = (data: any) => {
         onSuccess: () => {
             incomeForm.reset();
             showAddModal.value = false;
+            addToast({ type: 'success', title: 'Income Source Added', message: `${data.name} · ₱${Number(data.amount).toLocaleString()}` });
         }
     });
 };
@@ -134,6 +138,7 @@ const updateIncome = (data: any) => {
         onSuccess: () => {
             showEditModal.value = false;
             editingIncome.value = null;
+            addToast({ type: 'success', title: 'Income Source Updated', message: data.name });
         }
     });
 };

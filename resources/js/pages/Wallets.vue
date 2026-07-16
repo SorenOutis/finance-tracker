@@ -17,6 +17,7 @@ import WalletsSkeleton from '@/components/Skeletons/WalletsSkeleton.vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 import type { BreadcrumbItem } from '@/types';
 import { formatCurrency } from '@/utils/currency';
+import { useToast } from '@/composables/useToast';
 
 interface AccountItem {
     id: number; name: string; type: string; color: string | null;
@@ -72,6 +73,8 @@ const accountForm = useForm({
     last4: '',
     holder_name: '',
 });
+
+const { addToast } = useToast();
 
 const editForm = useForm({
     name: '',
@@ -135,6 +138,7 @@ const addAccount = (data: any) => {
         onSuccess: () => {
             accountForm.reset();
             showAddModal.value = false;
+            addToast({ type: 'success', title: 'Wallet Created', message: data.name });
         }
     });
 };
@@ -168,6 +172,7 @@ const updateAccount = (data: any) => {
         onSuccess: () => {
             showEditModal.value = false;
             editingAccount.value = null;
+            addToast({ type: 'success', title: 'Wallet Updated', message: data.name });
         }
     });
 };
@@ -211,6 +216,7 @@ const addIncome = (data: any) => {
             incomeForm.reset();
             incomeForm.date = getYYYYMMDD(new Date());
             showIncomeModal.value = false;
+            addToast({ type: 'success', title: 'Income Added', message: `₱${Number(data.amount).toLocaleString()} recorded` });
         }
     });
 };
@@ -226,6 +232,7 @@ const addExpense = (data: any) => {
             expenseForm.reset();
             expenseForm.date = getYYYYMMDD(new Date());
             showExpenseModal.value = false;
+            addToast({ type: 'success', title: 'Expense Added', message: `₱${Number(data.amount).toLocaleString()} · ${data.category || 'Uncategorized'}` });
         }
     });
 };

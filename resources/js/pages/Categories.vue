@@ -9,6 +9,7 @@ import {
 import { ref, computed } from 'vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 import type { BreadcrumbItem } from '@/types';
+import { useToast } from '@/composables/useToast';
 
 interface Category {
     id: number;
@@ -43,6 +44,8 @@ const form = useForm({
     sort_order: 0,
 });
 
+const { addToast } = useToast();
+
 const openAddForm = (type: 'income' | 'expense') => {
     editingCat.value = null;
     form.reset();
@@ -72,11 +75,11 @@ const saveCategory = () => {
 
     if (editingCat.value) {
         form.patch(`/categories/${editingCat.value.id}`, {
-            onSuccess: () => closeForm(),
+            onSuccess: () => { closeForm(); addToast({ type: 'success', title: 'Category Updated', message: form.name }); },
         });
     } else {
         form.post('/categories', {
-            onSuccess: () => closeForm(),
+            onSuccess: () => { closeForm(); addToast({ type: 'success', title: 'Category Created', message: form.name }); },
         });
     }
 };

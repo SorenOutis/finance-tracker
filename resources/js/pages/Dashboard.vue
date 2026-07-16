@@ -28,6 +28,7 @@ import {
 } from '@/components/ui/dialog';
 import { useChartDefaults } from '@/composables/useChartDefaults';
 import { useNumberAnimation } from '@/composables/useNumberAnimation';
+import { useToast } from '@/composables/useToast';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { dashboard as dashboardRoute } from '@/routes';
 import type { BreadcrumbItem } from '@/types';
@@ -273,6 +274,8 @@ const showMonthPicker = ref(false);
 const incomeForm = useForm({ amount: '', date: getYYYYMMDD(new Date()), category: '', description: '', account_id: '' as string | number });
 const expenseForm = useForm({ amount: '', date: getYYYYMMDD(new Date()), category: '', description: '', account_id: '' as string | number });
 
+const { addToast } = useToast();
+
 // Wallet card helpers
 const walletDefColors: Record<string, string> = { gcash: '#007DFE', maya: '#00B274', paypal: '#003087', bank: '#1E3A5F', cash: '#6B7280', credit_card: '#18181B', crypto: '#F7931A', other: '#6366F1' };
 const walletGradient = (type: string, color: string | null) => { const b = color || walletDefColors[type] || '#6366F1'; return `linear-gradient(135deg, ${b} 0%, ${b}CC 50%, ${b}99 100%)`; };
@@ -289,7 +292,7 @@ const addIncome = (data: any) => {
     incomeForm.category = data.category;
     incomeForm.description = data.description;
     incomeForm.account_id = data.account_id;
-    incomeForm.post('/incomes', { onSuccess: () => { incomeForm.reset(); incomeForm.date = getYYYYMMDD(new Date()); showIncomeModal.value = false; } }); 
+    incomeForm.post('/incomes', { onSuccess: () => { incomeForm.reset(); incomeForm.date = getYYYYMMDD(new Date()); showIncomeModal.value = false; addToast({ type: 'success', title: 'Income Added', message: `₱${Number(data.amount).toLocaleString()} recorded` }); } }); 
 };
 const addExpense = (data: any) => { 
     expenseForm.amount = data.amount;
@@ -297,10 +300,10 @@ const addExpense = (data: any) => {
     expenseForm.category = data.category;
     expenseForm.description = data.description;
     expenseForm.account_id = data.account_id;
-    expenseForm.post('/expenses', { onSuccess: () => { expenseForm.reset(); expenseForm.date = getYYYYMMDD(new Date()); showExpenseModal.value = false; } }); 
+    expenseForm.post('/expenses', { onSuccess: () => { expenseForm.reset(); expenseForm.date = getYYYYMMDD(new Date()); showExpenseModal.value = false; addToast({ type: 'success', title: 'Expense Added', message: `₱${Number(data.amount).toLocaleString()} · ${data.category || 'Uncategorized'}` }); } }); 
 };
-const saveBudget = () => { if (!budgetForm.monthly_limit) return; budgetForm.post('/budgets', { onSuccess: () => { showBudgetModal.value = false; } }); };
-const addGoal = () => { if (!goalForm.name || !goalForm.target_amount) return; goalForm.post('/financial-goals', { onSuccess: () => { goalForm.reset(); goalForm.color = '#14b8a6'; showGoalModal.value = false; } }); };
+const saveBudget = () => { if (!budgetForm.monthly_limit) return; budgetForm.post('/budgets', { onSuccess: () => { showBudgetModal.value = false; addToast({ type: 'success', title: 'Budget Saved', message: `₱${Number(budgetForm.monthly_limit).toLocaleString()} monthly limit set` }); } }); };
+const addGoal = () => { if (!goalForm.name || !goalForm.target_amount) return; goalForm.post('/financial-goals', { onSuccess: () => { goalForm.reset(); goalForm.color = '#14b8a6'; showGoalModal.value = false; addToast({ type: 'success', title: 'Goal Created', message: goalForm.name }); } }); };
 const deleteGoal = (id: number) => { router.delete(`/financial-goals/${id}`, { preserveScroll: true }); };
 const addRecurring = (data: any) => {
     recurringForm.name = data.name;
@@ -316,6 +319,7 @@ const addRecurring = (data: any) => {
         onSuccess: () => {
             recurringForm.reset();
             showRecurringModal.value = false;
+            addToast({ type: 'success', title: data.type === 'income' ? 'Income Added' : 'Bill Created', message: `${data.name} · ₱${Number(data.amount).toLocaleString()}` });
         }
     });
 };

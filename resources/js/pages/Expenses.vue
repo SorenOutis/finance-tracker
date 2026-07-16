@@ -17,6 +17,7 @@ import CardGridSkeleton from '@/components/Skeletons/CardGridSkeleton.vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 import type { BreadcrumbItem } from '@/types';
 import { formatCurrency } from '@/utils/currency';
+import { useToast } from '@/composables/useToast';
 
 interface AccountRef { id: number; name: string; color?: string | null; type?: string; }
 interface ExpenseItem {
@@ -42,6 +43,8 @@ const { isLoading } = usePageLoading(500);
 const showAddModal = useStorage('expenses-add-modal', false);
 const expandedReceipt = ref<number | null>(null);
 const uploadingReceipt = ref<number | null>(null);
+
+const { addToast } = useToast();
 
 const getYYYYMMDD = (d: Date) => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 
@@ -75,6 +78,7 @@ const addExpense = (data: any) => {
                 expenseForm.reset();
                 expenseForm.date = getYYYYMMDD(new Date());
                 showAddModal.value = false;
+                addToast({ type: 'success', title: 'Expense Added', message: `₱${Number(data.amount).toLocaleString()} · ${data.category || 'Uncategorized'}` });
             },
         });
     } else {
@@ -83,6 +87,7 @@ const addExpense = (data: any) => {
                 expenseForm.reset();
                 expenseForm.date = getYYYYMMDD(new Date());
                 showAddModal.value = false;
+                addToast({ type: 'success', title: 'Expense Added', message: `₱${Number(data.amount).toLocaleString()} · ${data.category || 'Uncategorized'}` });
             },
         });
     }

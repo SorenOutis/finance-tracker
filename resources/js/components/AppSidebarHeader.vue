@@ -2,6 +2,7 @@
 import { Moon, Sun } from 'lucide-vue-next';
 import { ref, onMounted, onBeforeUnmount } from 'vue';
 import Breadcrumbs from '@/components/Breadcrumbs.vue';
+import NotificationBell from '@/components/NotificationBell.vue';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { useAppearance } from '@/composables/useAppearance';
 import type { BreadcrumbItem } from '@/types';
@@ -92,9 +93,11 @@ onBeforeUnmount(() => {
 
 
         
-        <!-- Date/Time & Theme Toggle -->
-        <div class="flex items-center gap-2 sm:gap-4">
-            <div class="flex flex-col items-end justify-center">
+        <!-- Date/Time, Notifications & Theme Toggle -->
+        <div class="flex items-center gap-1 sm:gap-3">
+            <NotificationBell />
+            
+            <div class="hidden sm:flex flex-col items-end justify-center">
                 <span class="text-[10px] sm:text-xs font-bold text-foreground font-mono tracking-tight">{{ currentTime }}</span>
                 <span class="text-[8px] sm:text-[10px] font-semibold text-muted-foreground uppercase tracking-wider font-sans">{{ currentDate }}</span>
             </div>

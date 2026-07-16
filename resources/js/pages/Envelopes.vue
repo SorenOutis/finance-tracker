@@ -9,6 +9,7 @@ import { ref, computed } from 'vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 import type { BreadcrumbItem } from '@/types';
 import { formatCurrency } from '@/utils/currency';
+import { useToast } from '@/composables/useToast';
 
 interface AccountRef { id: number; name: string; type: string; color: string | null; }
 interface Envelope {
@@ -31,6 +32,8 @@ const allocateEnv = ref<Envelope | null>(null);
 const editingEnv = ref<Envelope | null>(null);
 
 const colorPalette = ['#6366F1', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#3B82F6', '#14B8A6', '#F97316'];
+
+const { addToast } = useToast();
 const iconOptions = ['PiggyBank', 'Home', 'ShoppingCart', 'Heart', 'MapPin', 'ShieldCheck', 'Target', 'Wallet'];
 
 const iconMap: Record<string, any> = { PiggyBank, Home, ShoppingCart, Heart, MapPin, ShieldCheck, Target, Wallet };
@@ -65,9 +68,9 @@ const closeForm = () => { showForm.value = false; editingEnv.value = null; form.
 const saveEnvelope = () => {
     if (!form.name || !form.target_amount) return;
     if (editingEnv.value) {
-        form.patch(`/envelopes/${editingEnv.value.id}`, { onSuccess: () => closeForm() });
+        form.patch(`/envelopes/${editingEnv.value.id}`, { onSuccess: () => { closeForm(); addToast({ type: 'success', title: 'Envelope Updated', message: form.name }); } });
     } else {
-        form.post('/envelopes', { onSuccess: () => closeForm() });
+        form.post('/envelopes', { onSuccess: () => { closeForm(); addToast({ type: 'success', title: 'Envelope Created', message: form.name }); } });
     }
 };
 
@@ -86,7 +89,7 @@ const openAllocate = (env: Envelope) => {
 const doAllocate = () => {
     if (!allocateEnv.value || !allocateForm.amount) return;
     allocateForm.post(`/envelopes/${allocateEnv.value.id}/allocate`, {
-        onSuccess: () => { showAllocate.value = false; allocateEnv.value = null; }
+        onSuccess: () => { showAllocate.value = false; allocateEnv.value = null; addToast({ type: 'success', title: 'Money Allocated', message: `₱${Number(allocateForm.amount).toLocaleString()} to ${allocateEnv.value.name}` }); }
     });
 };
 

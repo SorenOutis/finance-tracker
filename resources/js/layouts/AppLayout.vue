@@ -3,6 +3,7 @@ import { usePage } from '@inertiajs/vue3';
 import { useSessionStorage } from '@vueuse/core';
 import { onMounted, ref, computed } from 'vue';
 import LoadingScreen from '@/components/LoadingScreen.vue';
+import ToastNotification from '@/components/ToastNotification.vue';
 import AppLayout from '@/layouts/app/AppSidebarLayout.vue';
 import { useLocalStorage } from '@/plugins/localStorage';
 import type { BreadcrumbItem } from '@/types';
@@ -44,6 +45,7 @@ onMounted(() => {
             <slot />
         </div>
     </AppLayout>
+    <ToastNotification />
 </template>
 
 <style scoped>

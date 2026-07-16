@@ -11,6 +11,7 @@ import PullToRefresh from '@/components/PullToRefresh.vue';
 import SwipeToDelete from '@/components/SwipeToDelete.vue';
 import RecurringEntryModal from '@/components/RecurringEntryModal.vue';
 import { usePageLoading } from '@/composables/usePageLoading';
+import { useToast } from '@/composables/useToast';
 import HeroHeaderSkeleton from '@/components/Skeletons/HeroHeaderSkeleton.vue';
 import CardGridSkeleton from '@/components/Skeletons/CardGridSkeleton.vue';
 
@@ -39,6 +40,8 @@ defineProps<Props>();
 const breadcrumbs: BreadcrumbItem[] = [{ title: 'Bills', href: '/bills' }];
 
 const { isLoading } = usePageLoading(500);
+
+const { addToast } = useToast();
 
 const showAddModal = useStorage('bills-add-modal', false);
 const showEditModal = ref(false);
@@ -86,6 +89,7 @@ const addBill = (data: any) => {
         onSuccess: () => {
             billForm.reset();
             showAddModal.value = false;
+            addToast({ type: 'success', title: 'Bill Created', message: `${data.name} · ₱${Number(data.amount).toLocaleString()}` });
         }
     });
 };
@@ -122,6 +126,7 @@ const updateBill = (data: any) => {
         onSuccess: () => {
             showEditModal.value = false;
             editingBill.value = null;
+            addToast({ type: 'success', title: 'Bill Updated', message: data.name });
         }
     });
 };

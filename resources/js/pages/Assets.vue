@@ -8,10 +8,9 @@ import OnboardingTour from '@/components/OnboardingTour.vue';
 import { usePageLoading } from '@/composables/usePageLoading';
 import { Skeleton } from '@/components/ui/skeleton';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { assets as assetsRoute } from '@/routes';
-import type { BreadcrumbItem } from '@/types';
-
+import { assets as assetsRoute } from '@/routes';import type { BreadcrumbItem } from '@/types';
 import { formatCurrency } from '@/utils/currency';
+import { useToast } from '@/composables/useToast';
 
 interface AssetItem {
     id: number;
