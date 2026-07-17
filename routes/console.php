@@ -9,3 +9,4 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 Schedule::command('finance:post-recurring')->dailyAt('06:00');
+Schedule::command('sitemap:generate')->dailyAt('00:00');

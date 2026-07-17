@@ -11,6 +11,16 @@ Route::inertia('/pricing', 'Pricing', [
     'canRegister' => Features::enabled(Features::registration()),
 ])->name('pricing');
 
+Route::get('/sitemap.xml', [
+    App\Http\Controllers\SitemapController::class,
+    'index',
+])->name('sitemap');
+
+Route::get('/robots.txt', [
+    App\Http\Controllers\RobotsController::class,
+    'index',
+])->name('robots');
+
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', \App\Http\Controllers\DashboardController::class)->name('dashboard');
     Route::post('onboarding/complete', function () {

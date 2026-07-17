@@ -23,12 +23,50 @@ import {
     HelpCircle,
 } from 'lucide-vue-next';
 import { onMounted, ref, computed } from 'vue';
+import { usePage } from '@inertiajs/vue3';
 import { useAppearance } from '@/composables/useAppearance';
 import { useSmoothScroll } from '@/composables/useSmoothScroll';
 import { login, register, home } from '@/routes';
+import { absoluteUrl } from '@/utils/url';
 
 const { appearance, updateAppearance } = useAppearance();
 useSmoothScroll();
+
+// JSON-LD structured data
+const appUrl = computed(() => (usePage().props.appUrl as string) || '');
+const siteUrl = computed(() => absoluteUrl('/', appUrl.value));
+const pricingUrl = computed(() => absoluteUrl('/pricing', appUrl.value));
+
+const ldWebsite = computed(() =>
+    JSON.stringify({
+        '@context': 'https://schema.org',
+        '@type': 'WebSite',
+        name: 'Finance Tracker',
+        url: siteUrl.value,
+        description: 'Choose the perfect plan for your financial journey. Free, Pro ($2/mo), and Enterprise ($5/mo) tiers with transparent pricing.',
+    }),
+);
+
+const ldOrganization = computed(() =>
+    JSON.stringify({
+        '@context': 'https://schema.org',
+        '@type': 'Organization',
+        name: 'Finance Tracker',
+        url: siteUrl.value,
+        logo: absoluteUrl('/apple-touch-icon.png', appUrl.value),
+    }),
+);
+
+const ldBreadcrumb = computed(() =>
+    JSON.stringify({
+        '@context': 'https://schema.org',
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+            { '@type': 'ListItem', position: 1, name: 'Home', item: siteUrl.value },
+            { '@type': 'ListItem', position: 2, name: 'Pricing', item: pricingUrl.value },
+        ],
+    }),
+);
 
 const isAuthenticated = ref(false);
 const mobileMenuOpen = ref(false);
@@ -278,19 +316,30 @@ onMounted(() => {
     <Head title="Pricing — Finance Tracker">
         <meta name="description" content="Choose the perfect plan for your financial journey. Free, Pro ($2/mo), and Enterprise ($5/mo) tiers with transparent pricing, no hidden fees, and a 14-day free trial." />
         <meta name="keywords" content="finance tracker pricing, budgeting app plans, personal finance subscription, free finance app, pro finance plan" />
+        <link rel="canonical" :href="absoluteUrl('/pricing', $page.props.appUrl)" />
 
         <!-- Open Graph -->
         <meta property="og:title" content="Pricing — Finance Tracker" />
         <meta property="og:description" content="Choose the perfect plan for your financial journey. Start free with the basics, go Pro for $2/mo, or scale with Enterprise at $5/mo. No hidden fees." />
         <meta property="og:type" content="website" />
-        <meta property="og:url" content="/pricing" />
+        <meta property="og:url" :content="absoluteUrl('/pricing', $page.props.appUrl)" />
+        <meta property="og:image" :content="absoluteUrl('/apple-touch-icon.png', $page.props.appUrl)" />
+        <meta property="og:image:width" content="166" />
+        <meta property="og:image:height" content="166" />
+        <meta property="og:image:alt" content="Finance Tracker Logo" />
         <meta property="og:site_name" content="Finance Tracker" />
         <meta property="og:locale" content="en_US" />
 
         <!-- Twitter Card -->
-        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:card" content="summary" />
         <meta name="twitter:title" content="Pricing — Finance Tracker" />
         <meta name="twitter:description" content="Start free, upgrade when you need more. Pro from $2/mo, Enterprise from $5/mo. Transparent pricing, no surprises." />
+        <meta name="twitter:image" :content="absoluteUrl('/apple-touch-icon.png', $page.props.appUrl)" />
+
+        <!-- JSON-LD Structured Data -->
+        <script type="application/ld+json" v-html="ldWebsite"></script>
+        <script type="application/ld+json" v-html="ldOrganization"></script>
+        <script type="application/ld+json" v-html="ldBreadcrumb"></script>
     </Head>
 
     <div class="min-h-screen flex flex-col bg-background overflow-x-hidden">

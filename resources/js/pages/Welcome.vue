@@ -21,13 +21,54 @@ import {
     Menu,
     X,
 } from 'lucide-vue-next';
-import { onMounted, ref } from 'vue';
+import { onMounted, ref, computed } from 'vue';
+import { usePage } from '@inertiajs/vue3';
 import { useAppearance } from '@/composables/useAppearance';
 import { useSmoothScroll } from '@/composables/useSmoothScroll';
 import { dashboard, login, register, home, pricing } from '@/routes';
+import { absoluteUrl } from '@/utils/url';
 
 const { appearance, updateAppearance } = useAppearance();
 useSmoothScroll();
+
+// JSON-LD structured data
+const appUrl = computed(() => (usePage().props.appUrl as string) || '');
+const siteUrl = computed(() => absoluteUrl('/', appUrl.value));
+
+const ldWebsite = computed(() =>
+    JSON.stringify({
+        '@context': 'https://schema.org',
+        '@type': 'WebSite',
+        name: 'Finance Tracker',
+        url: siteUrl.value,
+        description: 'Master your wealth journey with a minimalist finance dashboard. Track assets, analyze spending, set intelligent budgets, and achieve your financial goals.',
+        potentialAction: {
+            '@type': 'SearchAction',
+            target: { '@type': 'EntryPoint', urlTemplate: siteUrl.value + '?q={search_term_string}' },
+            'query-input': 'required name=search_term_string',
+        },
+    }),
+);
+
+const ldOrganization = computed(() =>
+    JSON.stringify({
+        '@context': 'https://schema.org',
+        '@type': 'Organization',
+        name: 'Finance Tracker',
+        url: siteUrl.value,
+        logo: absoluteUrl('/apple-touch-icon.png', appUrl.value),
+    }),
+);
+
+const ldBreadcrumb = computed(() =>
+    JSON.stringify({
+        '@context': 'https://schema.org',
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+            { '@type': 'ListItem', position: 1, name: 'Home', item: siteUrl.value },
+        ],
+    }),
+);
 
 // Check if user is authenticated
 const isAuthenticated = ref(false);
@@ -497,7 +538,34 @@ onMounted(() => {
 </script>
 
 <template>
-    <Head title="Finance Tracker — Master Your Wealth" />
+    <Head title="Finance Tracker — Master Your Wealth">
+        <meta name="description" content="A minimalist finance tracker dashboard. Track your assets, analyze spending, set budgets, and secure your financial future with pure clarity. Start free." />
+        <meta name="keywords" content="finance tracker, personal finance, budgeting app, expense tracker, wealth management, financial dashboard" />
+        <link rel="canonical" :href="absoluteUrl('/', $page.props.appUrl)" />
+
+        <!-- Open Graph -->
+        <meta property="og:title" content="Finance Tracker — Master Your Wealth" />
+        <meta property="og:description" content="Master your wealth journey with a minimalist finance dashboard. Track assets, analyze spending, set intelligent budgets, and achieve your financial goals." />
+        <meta property="og:type" content="website" />
+        <meta property="og:url" :content="absoluteUrl('/', $page.props.appUrl)" />
+        <meta property="og:image" :content="absoluteUrl('/apple-touch-icon.png', $page.props.appUrl)" />
+        <meta property="og:image:width" content="166" />
+        <meta property="og:image:height" content="166" />
+        <meta property="og:image:alt" content="Finance Tracker Logo" />
+        <meta property="og:site_name" content="Finance Tracker" />
+        <meta property="og:locale" content="en_US" />
+
+        <!-- Twitter Card -->
+        <meta name="twitter:card" content="summary" />
+        <meta name="twitter:title" content="Finance Tracker — Master Your Wealth" />
+        <meta name="twitter:description" content="Track assets, analyze spending, and secure your financial future with minimalist clarity. Start your journey free." />
+        <meta name="twitter:image" :content="absoluteUrl('/apple-touch-icon.png', $page.props.appUrl)" />
+
+        <!-- JSON-LD Structured Data -->
+        <script type="application/ld+json" v-html="ldWebsite"></script>
+        <script type="application/ld+json" v-html="ldOrganization"></script>
+        <script type="application/ld+json" v-html="ldBreadcrumb"></script>
+    </Head>
 
     <div class="min-h-screen flex flex-col bg-background overflow-x-hidden">
         <!-- ============ DYNAMIC BACKGROUND ============ -->
