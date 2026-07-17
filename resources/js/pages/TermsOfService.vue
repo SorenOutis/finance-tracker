@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3';
 import gsap from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { ArrowUpRight, Sun, Moon, FileText, ArrowLeft } from 'lucide-vue-next';
 import { onMounted, ref, computed } from 'vue';
 import { usePage } from '@inertiajs/vue3';
@@ -55,9 +54,7 @@ const lastUpdated = 'April 15, 2026';
 onMounted(() => {
     isAuthenticated.value = !!(window as any).__inertia_page_props?.auth?.user;
 
-    gsap.registerPlugin(ScrollTrigger);
-
-    gsap.from('.legal-header', { y: -20, opacity: 0, duration: 0.6, ease: 'power3.out' });
+    gsap.from('.legal-header', { y: -20, opacity: 0, duration: 0.6, ease: 'power3.out', clearProps: 'opacity' });
 
     const heroTl = gsap.timeline();
     heroTl
@@ -67,7 +64,7 @@ onMounted(() => {
 
     gsap.from('.legal-section', {
         y: 20, opacity: 0, duration: 0.5, stagger: 0.06, ease: 'power3.out',
-        scrollTrigger: { trigger: '.legal-content', start: 'top 85%', toggleActions: 'play none none reverse' },
+        clearProps: 'opacity',
     });
 });
 </script>
@@ -275,9 +272,7 @@ html {
     scroll-behavior: smooth;
 }
 
-.legal-section {
-    transition: opacity 0.3s ease-out, transform 0.3s ease-out;
-}
+
 
 details > summary {
     list-style: none;
