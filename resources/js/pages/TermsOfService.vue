@@ -1,16 +1,18 @@
 <script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3';
 import gsap from 'gsap';
-import { ArrowUpRight, Sun, Moon, FileText, ArrowLeft } from 'lucide-vue-next';
+import { ArrowUpRight, Sun, Moon, FileText, ArrowLeft, ArrowUp, ChevronDown, ShieldCheck, ExternalLink } from 'lucide-vue-next';
 import { onMounted, ref, computed } from 'vue';
 import { usePage } from '@inertiajs/vue3';
 import { useAppearance } from '@/composables/useAppearance';
 import { useSmoothScroll } from '@/composables/useSmoothScroll';
+import { useScrollProgress } from '@/composables/useScrollProgress';
 import { home } from '@/routes';
 import { absoluteUrl } from '@/utils/url';
 
 const { appearance, updateAppearance } = useAppearance();
 useSmoothScroll();
+const { scrollProgress, showBackToTop, scrollToTop } = useScrollProgress();
 
 const appUrl = computed(() => (usePage().props.appUrl as string) || '');
 const siteUrl = computed(() => absoluteUrl('/', appUrl.value));
@@ -26,6 +28,32 @@ const ldWebsite = computed(() =>
 
 const isAuthenticated = ref(false);
 const mobileMenuOpen = ref(false);
+const tocOpen = ref(false);
+
+const sections = [
+    { id: 'acceptance', label: '1. Acceptance' },
+    { id: 'description', label: '2. Description' },
+    { id: 'accounts', label: '3. User Accounts' },
+    { id: 'billing', label: '4. Billing' },
+    { id: 'acceptable-use', label: '5. Acceptable Use' },
+    { id: 'data-ownership', label: '6. Data Ownership' },
+    { id: 'availability', label: '7. Availability' },
+    { id: 'liability', label: '8. Liability' },
+    { id: 'termination', label: '9. Termination' },
+    { id: 'changes', label: '10. Changes' },
+    { id: 'governing-law', label: '11. Governing Law' },
+    { id: 'contact', label: '12. Contact' },
+];
+
+function scrollToSection(id: string) {
+    tocOpen.value = false;
+    const el = document.getElementById(id);
+    if (el) {
+        const offset = 80;
+        const top = el.getBoundingClientRect().top + window.scrollY - offset;
+        window.scrollTo({ top, behavior: 'smooth' });
+    }
+}
 
 const toggleTheme = (event: MouseEvent) => {
     const newTheme = appearance.value === 'dark' ? 'light' : 'dark';
@@ -94,6 +122,14 @@ onMounted(() => {
     </Head>
 
     <div class="min-h-screen flex flex-col bg-background overflow-x-hidden">
+        <!-- ============ READING PROGRESS BAR ============ -->
+        <div class="fixed top-0 left-0 right-0 z-[60] h-0.5 bg-border/10">
+            <div
+                class="h-full bg-primary transition-[width] duration-150 ease-out"
+                :style="{ width: scrollProgress + '%' }"
+            ></div>
+        </div>
+
         <!-- Background glows -->
         <div class="fixed inset-0 pointer-events-none overflow-hidden -z-10">
             <div class="absolute -top-[15%] -left-[10%] w-[50%] h-[50%] bg-primary/6 rounded-full blur-[150px]"></div>
@@ -101,16 +137,19 @@ onMounted(() => {
         </div>
 
         <!-- ============ HEADER ============ -->
-        <header class="legal-header fixed top-0 left-0 right-0 z-50 border-b border-border/10 bg-background/70 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60">
-            <div class="flex items-center justify-between w-full max-w-7xl mx-auto px-4 sm:px-8 h-14 sm:h-16">
-                <Link :href="home()" class="flex items-center gap-2 group">
-                    <div class="w-8 h-8 rounded-xl bg-primary flex items-center justify-center shadow-lg shadow-primary/20 group-hover:shadow-primary/30 transition-shadow">
-                        <ArrowUpRight class="text-primary-foreground size-4" />
+        <header class="legal-header fixed top-0.5 left-0 right-0 z-50 border-b border-border/10 bg-background/70 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60">
+            <div class="flex items-center justify-between w-full max-w-7xl mx-auto px-3 sm:px-8 h-14 sm:h-16">
+                <Link :href="home()" class="flex items-center gap-2 group shrink-0">
+                    <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-primary flex items-center justify-center shadow-lg shadow-primary/20 group-hover:shadow-primary/30 transition-shadow">
+                        <ArrowUpRight class="text-primary-foreground size-3.5 sm:size-4" />
                     </div>
-                    <span class="text-base font-black font-display tracking-tight text-foreground">Finance Tracker</span>
+                    <span class="text-sm sm:text-base font-black font-display tracking-tight text-foreground hidden sm:inline">Finance Tracker</span>
                 </Link>
+
+                <!-- Desktop nav -->
                 <nav class="hidden md:flex items-center gap-1.5">
                     <Link :href="home()" class="px-3 py-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors rounded-lg hover:bg-card/50">Home</Link>
+                    <Link :href="'/privacy'" class="px-3 py-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors rounded-lg hover:bg-card/50">Privacy</Link>
                     <div class="w-px h-5 bg-border/40 mx-1.5"></div>
                     <template v-if="isAuthenticated">
                         <Link :href="home()" class="rounded-full bg-primary px-4 py-1.5 text-xs font-bold text-primary-foreground transition-all hover:shadow-lg hover:shadow-primary/20 active:scale-[0.98]">Dashboard</Link>
@@ -118,26 +157,34 @@ onMounted(() => {
                     <template v-else>
                         <Link :href="home()" class="px-3 py-1.5 text-xs font-bold text-muted-foreground transition-all hover:text-foreground">Get Started</Link>
                     </template>
-                    <button @click="toggleTheme" class="ml-1 inline-flex items-center justify-center rounded-full p-1.5 text-xs transition-colors hover:bg-card/50 text-foreground border border-border/30 bg-card/20" :aria-label="`Switch to ${appearance === 'dark' ? 'light' : 'dark'} mode`">
+                    <button @click="toggleTheme" class="ml-1 inline-flex items-center justify-center rounded-full p-2 sm:p-1.5 text-xs transition-colors hover:bg-card/50 text-foreground border border-border/30 bg-card/20 min-w-[32px] min-h-[32px]" :aria-label="`Switch to ${appearance === 'dark' ? 'light' : 'dark'} mode`">
                         <Sun v-if="appearance === 'dark'" class="h-3.5 w-3.5" />
                         <Moon v-else class="h-3.5 w-3.5" />
                     </button>
                 </nav>
+
+                <!-- Mobile header -->
                 <div class="flex md:hidden items-center gap-1.5">
-                    <button @click="toggleTheme" class="inline-flex items-center justify-center rounded-full p-1.5 text-xs transition-colors hover:bg-card/50 text-foreground border border-border/30 bg-card/20" :aria-label="`Switch to ${appearance === 'dark' ? 'light' : 'dark'} mode`">
-                        <Sun v-if="appearance === 'dark'" class="h-3.5 w-3.5" />
-                        <Moon v-else class="h-3.5 w-3.5" />
+                    <Link :href="home()" class="text-xs font-bold text-muted-foreground transition-all hover:text-foreground px-2 py-2 min-h-[36px] flex items-center">Home</Link>
+                    <button @click="toggleTheme" class="inline-flex items-center justify-center rounded-full p-2 text-xs transition-colors hover:bg-card/50 text-foreground border border-border/30 bg-card/20 min-w-[36px] min-h-[36px]" :aria-label="`Switch to ${appearance === 'dark' ? 'light' : 'dark'} mode`">
+                        <Sun v-if="appearance === 'dark'" class="h-4 w-4" />
+                        <Moon v-else class="h-4 w-4" />
                     </button>
-                    <button @click="mobileMenuOpen = !mobileMenuOpen" class="inline-flex items-center justify-center rounded-full p-1.5 text-xs transition-colors hover:bg-card/50 text-foreground border border-border/30 bg-card/20" aria-label="Toggle menu">
+                    <button @click="mobileMenuOpen = !mobileMenuOpen" class="inline-flex items-center justify-center rounded-full p-2 text-xs transition-colors hover:bg-card/50 text-foreground border border-border/30 bg-card/20 min-w-[36px] min-h-[36px]" aria-label="Toggle menu">
                         <svg v-if="!mobileMenuOpen" class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
                         <svg v-else class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
                     </button>
                 </div>
             </div>
+
+            <!-- Mobile menu dropdown -->
             <Transition enter-active-class="transition-all duration-300 ease-out" enter-from-class="opacity-0 -translate-y-4" enter-to-class="opacity-100 translate-y-0" leave-active-class="transition-all duration-200 ease-in" leave-from-class="opacity-100 translate-y-0" leave-to-class="opacity-0 -translate-y-4">
                 <div v-if="mobileMenuOpen" class="md:hidden border-t border-border/10 bg-background/95 backdrop-blur-xl">
                     <div class="px-4 py-3 space-y-1">
-                        <Link :href="home()" @click="mobileMenuOpen = false" class="block px-4 py-2 text-sm font-semibold text-foreground hover:bg-card/50 rounded-xl transition-colors">Home</Link>
+                        <Link :href="home()" @click="mobileMenuOpen = false" class="block px-4 py-2.5 text-sm font-semibold text-foreground hover:bg-card/50 rounded-xl transition-colors">Home</Link>
+                        <Link :href="'/privacy'" @click="mobileMenuOpen = false" class="block px-4 py-2.5 text-sm font-semibold text-foreground hover:bg-card/50 rounded-xl transition-colors">
+                            <span class="flex items-center gap-2"><ShieldCheck class="size-3.5" /> Privacy Policy</span>
+                        </Link>
                         <Link :href="home()" @click="mobileMenuOpen = false" class="block w-full text-center px-5 py-2.5 text-sm font-bold text-primary-foreground bg-primary rounded-xl hover:shadow-lg hover:shadow-primary/20 transition-all">Get Started</Link>
                     </div>
                 </div>
@@ -147,38 +194,70 @@ onMounted(() => {
         <div class="h-14 sm:h-16"></div>
 
         <!-- ============ HERO ============ -->
-        <section class="relative pt-10 sm:pt-12 md:pt-14 pb-6 sm:pb-8">
+        <section class="relative pt-8 sm:pt-12 md:pt-14 pb-5 sm:pb-8">
             <div class="w-full max-w-7xl mx-auto px-4 sm:px-8 text-center">
-                <div class="legal-badge inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-border/30 bg-card/40 text-muted-foreground text-[9px] font-bold uppercase tracking-[0.1em] backdrop-blur-md">
+                <div class="legal-badge inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-border/30 bg-card/40 text-muted-foreground text-[10px] sm:text-[9px] font-bold uppercase tracking-[0.1em] backdrop-blur-md">
                     <FileText class="size-2.5 text-primary" />
                     Terms of Service
                 </div>
                 <h1 class="legal-title text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black font-display tracking-tight text-foreground mt-4 sm:mt-5">
                     Terms of <span class="text-primary italic">Service</span>
                 </h1>
-                <p class="legal-meta text-[10px] sm:text-[11px] text-muted-foreground/60 font-medium mt-2">Last updated: {{ lastUpdated }}</p>
+                <p class="legal-meta text-[11px] sm:text-[11px] text-muted-foreground/60 font-medium mt-2">Last updated: {{ lastUpdated }}</p>
             </div>
         </section>
+
+        <!-- ============ STICKY TABLE OF CONTENTS (mobile) ============ -->
+        <div class="sticky top-14 sm:top-16 z-40 md:hidden border-b border-border/10 bg-background/80 backdrop-blur-xl">
+            <button
+                @click="tocOpen = !tocOpen"
+                class="flex items-center justify-between w-full px-4 py-2.5 text-[11px] font-bold text-foreground/80"
+            >
+                <span class="flex items-center gap-2"><FileText class="size-3.5 text-primary" /> Jump to section</span>
+                <ChevronDown class="size-3.5 transition-transform duration-200" :class="tocOpen ? 'rotate-180' : ''" />
+            </button>
+            <Transition
+                enter-active-class="transition-all duration-200 ease-out"
+                enter-from-class="opacity-0 max-h-0"
+                enter-to-class="opacity-100 max-h-[320px]"
+                leave-active-class="transition-all duration-150 ease-in"
+                leave-from-class="opacity-100 max-h-[320px]"
+                leave-to-class="opacity-0 max-h-0"
+            >
+                <div v-if="tocOpen" class="overflow-hidden border-t border-border/10">
+                    <div class="px-3 py-2 space-y-0.5 max-h-[280px] overflow-y-auto">
+                        <button
+                            v-for="s in sections"
+                            :key="s.id"
+                            @click="scrollToSection(s.id)"
+                            class="block w-full text-left px-3 py-2 text-xs text-muted-foreground/80 hover:text-foreground hover:bg-card/50 rounded-lg transition-colors"
+                        >
+                            {{ s.label }}
+                        </button>
+                    </div>
+                </div>
+            </Transition>
+        </div>
 
         <!-- ============ CONTENT ============ -->
         <section class="legal-content relative pb-14 sm:pb-16 md:pb-20">
             <div class="w-full max-w-3xl mx-auto px-4 sm:px-8">
-                <div class="legal-section space-y-6 sm:space-y-8 text-[11px] sm:text-sm text-muted-foreground/80 leading-relaxed">
+                <div class="legal-section space-y-5 sm:space-y-8 text-xs sm:text-sm text-muted-foreground/80 leading-relaxed">
                     <div class="rounded-2xl border border-border/20 bg-card/20 backdrop-blur-sm p-4 sm:p-6">
                         <p class="font-medium text-foreground/80">By using Finance Tracker, you agree to these terms. Please read them carefully. If you do not agree, please do not use the service.</p>
                     </div>
 
-                    <div class="legal-section space-y-4">
+                    <div id="acceptance" class="legal-section space-y-3 sm:space-y-4">
                         <h2 class="text-sm sm:text-base font-bold font-display text-foreground">1. Acceptance of Terms</h2>
                         <p>By accessing or using Finance Tracker ("the Service"), you agree to be bound by these Terms of Service. If you are using the Service on behalf of an organization, you represent that you have the authority to bind that organization.</p>
                     </div>
 
-                    <div class="legal-section space-y-4">
+                    <div id="description" class="legal-section space-y-3 sm:space-y-4">
                         <h2 class="text-sm sm:text-base font-bold font-display text-foreground">2. Description of Service</h2>
                         <p>Finance Tracker provides a personal financial management platform that allows users to track income, expenses, budgets, financial goals, and generate analytics and reports. The Service is available in three tiers: Free, Pro, and Enterprise.</p>
                     </div>
 
-                    <div class="legal-section space-y-4">
+                    <div id="accounts" class="legal-section space-y-3 sm:space-y-4">
                         <h2 class="text-sm sm:text-base font-bold font-display text-foreground">3. User Accounts</h2>
                         <ul class="list-disc pl-5 space-y-1.5">
                             <li>You must create an account to use the Service.</li>
@@ -189,7 +268,7 @@ onMounted(() => {
                         </ul>
                     </div>
 
-                    <div class="legal-section space-y-4">
+                    <div id="billing" class="legal-section space-y-3 sm:space-y-4">
                         <h2 class="text-sm sm:text-base font-bold font-display text-foreground">4. Subscriptions &amp; Billing</h2>
                         <ul class="list-disc pl-5 space-y-1.5">
                             <li>Free Tier: Available at no cost with limited features.</li>
@@ -200,7 +279,7 @@ onMounted(() => {
                         </ul>
                     </div>
 
-                    <div class="legal-section space-y-4">
+                    <div id="acceptable-use" class="legal-section space-y-3 sm:space-y-4">
                         <h2 class="text-sm sm:text-base font-bold font-display text-foreground">5. Acceptable Use</h2>
                         <p>You agree not to:</p>
                         <ul class="list-disc pl-5 space-y-1.5">
@@ -212,72 +291,86 @@ onMounted(() => {
                         </ul>
                     </div>
 
-                    <div class="legal-section space-y-4">
+                    <div id="data-ownership" class="legal-section space-y-3 sm:space-y-4">
                         <h2 class="text-sm sm:text-base font-bold font-display text-foreground">6. Data Ownership</h2>
                         <p>You retain full ownership of all financial data you enter into the Service. We claim no intellectual property rights over your data. We will not use your data for any purpose other than providing the Service to you, except as outlined in our Privacy Policy.</p>
                     </div>
 
-                    <div class="legal-section space-y-4">
+                    <div id="availability" class="legal-section space-y-3 sm:space-y-4">
                         <h2 class="text-sm sm:text-base font-bold font-display text-foreground">7. Service Availability</h2>
                         <p>We strive for 99.9% uptime but do not guarantee uninterrupted access. The Service may be temporarily unavailable for maintenance, updates, or due to circumstances beyond our control. We will make reasonable efforts to notify you of scheduled downtime.</p>
                     </div>
 
-                    <div class="legal-section space-y-4">
+                    <div id="liability" class="legal-section space-y-3 sm:space-y-4">
                         <h2 class="text-sm sm:text-base font-bold font-display text-foreground">8. Limitation of Liability</h2>
                         <p>Finance Tracker is provided "as is" without warranties of any kind. We shall not be liable for any indirect, incidental, special, consequential, or punitive damages arising from your use of the Service. Our total liability is limited to the amount you have paid us in the 12 months preceding the claim.</p>
                     </div>
 
-                    <div class="legal-section space-y-4">
+                    <div id="termination" class="legal-section space-y-3 sm:space-y-4">
                         <h2 class="text-sm sm:text-base font-bold font-display text-foreground">9. Termination</h2>
                         <p>You may terminate your account at any time from your account settings. We may suspend or terminate your account if you violate these terms. Upon termination, your data will be permanently deleted within 30 days. Pro-rated refunds are not provided for voluntary termination.</p>
                     </div>
 
-                    <div class="legal-section space-y-4">
+                    <div id="changes" class="legal-section space-y-3 sm:space-y-4">
                         <h2 class="text-sm sm:text-base font-bold font-display text-foreground">10. Changes to Terms</h2>
-                        <p>We may modify these terms at any time. We will notify you of material changes via email or in-app notification. Continued use of the Service after changes take effect constitutes your acceptance of the new terms.</p>
+                        <p>We may modify these terms at any time. We will notify you of material changes via email or in-app notification. Continued use of the Service after changes takes effect constitutes your acceptance of the new terms.</p>
                     </div>
 
-                    <div class="legal-section space-y-4">
+                    <div id="governing-law" class="legal-section space-y-3 sm:space-y-4">
                         <h2 class="text-sm sm:text-base font-bold font-display text-foreground">11. Governing Law</h2>
                         <p>These terms are governed by the laws of the Republic of the Philippines. Any disputes shall be resolved in the courts of Manila, Philippines.</p>
                     </div>
 
-                    <div class="legal-section space-y-4">
+                    <div id="contact" class="legal-section space-y-3 sm:space-y-4">
                         <h2 class="text-sm sm:text-base font-bold font-display text-foreground">12. Contact</h2>
                         <p>For questions about these terms, please contact us at <a href="mailto:legal@financetracker.app" class="text-primary hover:text-primary/80 transition-colors font-medium">legal@financetracker.app</a>.</p>
                     </div>
 
-                    <!-- Back link -->
-                    <div class="legal-section pt-4">
-                        <Link :href="home()" class="inline-flex items-center gap-1.5 text-[11px] font-bold text-primary hover:text-primary/80 transition-colors">
+                    <!-- Footer links -->
+                    <div class="legal-section pt-4 flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
+                        <Link :href="home()" class="inline-flex items-center gap-1.5 text-xs font-bold text-primary hover:text-primary/80 transition-colors">
                             <ArrowLeft class="size-3.5" />
                             Back to Home
+                        </Link>
+                        <Link :href="'/privacy'" class="inline-flex items-center gap-1.5 text-xs font-bold text-muted-foreground hover:text-foreground transition-colors">
+                            <ExternalLink class="size-3.5" />
+                            View Privacy Policy
                         </Link>
                     </div>
                 </div>
 
                 <!-- Footer note -->
-                <div class="legal-section mt-8 sm:mt-10 pt-4 sm:pt-6 border-t border-border/20">
-                    <p class="text-[9px] sm:text-[10px] text-muted-foreground/50 text-center">
+                <div class="legal-section mt-6 sm:mt-10 pt-4 sm:pt-6 border-t border-border/20">
+                    <p class="text-[10px] sm:text-[10px] text-muted-foreground/50 text-center">
                         &copy; {{ new Date().getFullYear() }} Finance Tracker. All rights reserved.
                     </p>
                 </div>
             </div>
         </section>
+
+        <!-- ============ BACK TO TOP ============ -->
+        <Transition
+            enter-active-class="transition-all duration-300 ease-out"
+            enter-from-class="opacity-0 translate-y-4 scale-95"
+            enter-to-class="opacity-100 translate-y-0 scale-100"
+            leave-active-class="transition-all duration-200 ease-in"
+            leave-from-class="opacity-100 translate-y-0 scale-100"
+            leave-to-class="opacity-0 translate-y-4 scale-95"
+        >
+            <button
+                v-if="showBackToTop"
+                @click="scrollToTop"
+                class="fixed bottom-6 right-4 sm:bottom-8 sm:right-8 z-50 flex items-center justify-center w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-primary text-primary-foreground shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 transition-all active:scale-95 hover:-translate-y-0.5"
+                aria-label="Back to top"
+            >
+                <ArrowUp class="size-4 sm:size-4.5" />
+            </button>
+        </Transition>
     </div>
 </template>
 
 <style scoped>
 html {
     scroll-behavior: smooth;
-}
-
-
-
-details > summary {
-    list-style: none;
-}
-details > summary::-webkit-details-marker {
-    display: none;
 }
 </style>
