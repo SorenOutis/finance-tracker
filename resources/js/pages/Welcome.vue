@@ -1427,6 +1427,14 @@ onMounted(() => {
                                     Testimonials
                                 </a>
                             </li>
+                            <li>
+                                <Link
+                                    :href="pricing()"
+                                    class="text-xs sm:text-sm text-muted-foreground/70 hover:text-foreground transition-colors font-medium"
+                                >
+                                    Pricing
+                                </Link>
+                            </li>
                         </ul>
                     </div>
 
