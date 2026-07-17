@@ -1515,36 +1515,20 @@ onMounted(() => {
                         </p>
                         <ul class="space-y-2 sm:space-y-3">
                             <li>
-                                <a
-                                    href="/sitemap.xml"
-                                    target="_blank"
+                                <Link
+                                    :href="'/privacy'"
                                     class="text-xs sm:text-sm text-muted-foreground/70 hover:text-foreground transition-colors font-medium"
-                                >
-                                    Sitemap
-                                </a>
-                            </li>
-                            <li>
-                                <a
-                                    href="/robots.txt"
-                                    target="_blank"
-                                    class="text-xs sm:text-sm text-muted-foreground/70 hover:text-foreground transition-colors font-medium"
-                                >
-                                    robots.txt
-                                </a>
-                            </li>
-                            <li>
-                                <span
-                                    class="text-xs sm:text-sm text-muted-foreground/70 font-medium cursor-not-allowed opacity-50"
                                 >
                                     Privacy Policy
-                                </span>
+                                </Link>
                             </li>
                             <li>
-                                <span
-                                    class="text-xs sm:text-sm text-muted-foreground/70 font-medium cursor-not-allowed opacity-50"
+                                <Link
+                                    :href="'/terms'"
+                                    class="text-xs sm:text-sm text-muted-foreground/70 hover:text-foreground transition-colors font-medium"
                                 >
                                     Terms of Service
-                                </span>
+                                </Link>
                             </li>
                         </ul>
                     </div>

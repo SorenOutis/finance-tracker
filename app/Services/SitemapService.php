@@ -23,6 +23,18 @@ class SitemapService
                 'changefreq' => 'monthly',
                 'priority' => '0.8',
             ],
+            [
+                'loc' => rtrim($appUrl, '/').'/privacy',
+                'lastmod' => Carbon::now()->toDateString(),
+                'changefreq' => 'monthly',
+                'priority' => '0.6',
+            ],
+            [
+                'loc' => rtrim($appUrl, '/').'/terms',
+                'lastmod' => Carbon::now()->toDateString(),
+                'changefreq' => 'monthly',
+                'priority' => '0.6',
+            ],
         ];
 
         $xml = '<?xml version="1.0" encoding="UTF-8"?>'."\n";

@@ -11,6 +11,10 @@ Route::inertia('/pricing', 'Pricing', [
     'canRegister' => Features::enabled(Features::registration()),
 ])->name('pricing');
 
+Route::inertia('/privacy', 'PrivacyPolicy')->name('privacy');
+
+Route::inertia('/terms', 'TermsOfService')->name('terms');
+
 Route::get('/sitemap.xml', [
     App\Http\Controllers\SitemapController::class,
     'index',
