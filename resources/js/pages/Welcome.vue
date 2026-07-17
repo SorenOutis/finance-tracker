@@ -24,7 +24,7 @@ import {
 import { onMounted, ref } from 'vue';
 import { useAppearance } from '@/composables/useAppearance';
 import { useSmoothScroll } from '@/composables/useSmoothScroll';
-import { dashboard, login, register, home } from '@/routes';
+import { dashboard, login, register, home, pricing } from '@/routes';
 
 const { appearance, updateAppearance } = useAppearance();
 useSmoothScroll();
@@ -561,6 +561,12 @@ onMounted(() => {
                     >
                         Testimonials
                     </a>
+                    <Link
+                        :href="pricing()"
+                        class="px-4 py-2 text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors rounded-xl hover:bg-card/50"
+                    >
+                        Pricing
+                    </Link>
                     <div class="w-px h-6 bg-border/40 mx-2"></div>
                     <template v-if="isAuthenticated">
                         <Link
@@ -651,6 +657,13 @@ onMounted(() => {
                         >
                             Testimonials
                         </a>
+                        <Link
+                            :href="pricing()"
+                            @click="mobileMenuOpen = false"
+                            class="block px-4 py-3 text-sm font-semibold text-foreground hover:bg-card/50 rounded-xl transition-colors"
+                        >
+                            Pricing
+                        </Link>
                         <div class="pt-2 space-y-2">
                             <template v-if="!isAuthenticated">
                                 <Link

@@ -7,6 +7,10 @@ Route::inertia('/', 'Welcome', [
     'canRegister' => Features::enabled(Features::registration()),
 ])->name('home');
 
+Route::inertia('/pricing', 'Pricing', [
+    'canRegister' => Features::enabled(Features::registration()),
+])->name('pricing');
+
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', \App\Http\Controllers\DashboardController::class)->name('dashboard');
     Route::post('onboarding/complete', function () {
