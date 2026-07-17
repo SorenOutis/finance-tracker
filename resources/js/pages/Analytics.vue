@@ -1,18 +1,18 @@
 <script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3';
+import { usePage } from '@inertiajs/vue3';
+import { useStorage } from '@vueuse/core';
 import { Chart as ChartJS, registerables } from 'chart.js';
 import gsap from 'gsap';
 import { TrendingUp, TrendingDown, BarChart3, PieChart, ArrowRight } from 'lucide-vue-next';
 import { computed } from 'vue';
 import { onMounted } from 'vue';
-import { usePage } from '@inertiajs/vue3';
-import { useStorage } from '@vueuse/core';
-import { useOnboarding } from '@/composables/useOnboarding';
-import OnboardingTour from '@/components/OnboardingTour.vue';
 import { Line as LineChart, Bar as BarChart, Doughnut as DoughnutChart } from 'vue-chartjs';
-import { usePageLoading } from '@/composables/usePageLoading';
+import OnboardingTour from '@/components/OnboardingTour.vue';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useChartDefaults } from '@/composables/useChartDefaults';
+import { useOnboarding } from '@/composables/useOnboarding';
+import { usePageLoading } from '@/composables/usePageLoading';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { analytics, yearly } from '@/routes';
 import type { BreadcrumbItem } from '@/types';

@@ -6,8 +6,8 @@ import {
 } from 'lucide-vue-next';
 import { ref, computed, watch, nextTick } from 'vue';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
-import { useSheetDrag } from '@/composables/useSheetDrag';
 import { useHaptic } from '@/composables/useHaptic';
+import { useSheetDrag } from '@/composables/useSheetDrag';
 
 interface WalletData {
     name: string;

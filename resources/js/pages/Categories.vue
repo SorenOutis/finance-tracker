@@ -1,15 +1,15 @@
 <script setup lang="ts">
-import { Head, useForm, router, Link } from '@inertiajs/vue3';
+import { Head, useForm, router } from '@inertiajs/vue3';
 import {
-    Tags, Plus, Trash2, Pencil, Search, X, Check, ChevronRight,
+    Tags, Plus, Trash2, Pencil, Search, X, Check,
     ShoppingCart, Utensils, MapPin, Heart, Home, Zap, Gift, TrendingUp,
     MoreHorizontal, ArrowDownRight, ArrowUpRight, CreditCard, CalendarClock, ReceiptText,
     BookOpen, Film, Briefcase, Laptop, Building
 } from 'lucide-vue-next';
 import { ref, computed } from 'vue';
+import { useToast } from '@/composables/useToast';
 import AppLayout from '@/layouts/AppLayout.vue';
 import type { BreadcrumbItem } from '@/types';
-import { useToast } from '@/composables/useToast';
 
 interface Category {
     id: number;
@@ -33,7 +33,6 @@ const showForm = ref(false);
 const editingCat = ref<Category | null>(null);
 const searchQuery = ref('');
 
-const availableIcons = ['ShoppingCart', 'Utensils', 'MapPin', 'Heart', 'Home', 'Zap', 'Gift', 'TrendingUp', 'BookOpen', 'Film', 'Briefcase', 'Laptop', 'Building', 'MoreHorizontal'] as const;
 const colorPalette = ['#10B981', '#3B82F6', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#6366F1', '#14B8A6', '#F97316', '#6B7280'];
 
 const form = useForm({
@@ -162,7 +161,7 @@ const getIcon = (iconName: string | null) => {
                             <p class="text-[8px] uppercase tracking-wider text-muted-foreground/60 font-bold">{{ cat.type }}</p>
                         </div>
                     </div>
-                    <div class="absolute top-2 right-2 flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div class="absolute top-2 right-2 flex items-center gap-0.5 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
                         <button @click="openEditForm(cat)" class="p-1 rounded hover:bg-muted/40 transition-colors"><Pencil class="w-3 h-3 text-muted-foreground" /></button>
                         <button @click="deleteCategory(cat)" class="p-1 rounded hover:bg-destructive/10 transition-colors"><Trash2 class="w-3 h-3 text-destructive/70" /></button>
                     </div>

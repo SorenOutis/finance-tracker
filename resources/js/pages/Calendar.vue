@@ -1,13 +1,11 @@
 <script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3';
 import {
-    CalendarDays, ChevronRight, Plus, ArrowDownRight, ArrowUpRight,
-    X, Wallet, CalendarClock, ReceiptText, CreditCard
+    CalendarDays, ChevronRight, CalendarClock, CreditCard
 } from 'lucide-vue-next';
 import { ref, computed } from 'vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 import type { BreadcrumbItem } from '@/types';
-import { formatCurrency } from '@/utils/currency';
 
 const breadcrumbs: BreadcrumbItem[] = [{ title: 'Calendar', href: '/calendar' }];
 

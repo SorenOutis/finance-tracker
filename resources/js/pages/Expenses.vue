@@ -6,18 +6,18 @@ import {
     ReceiptText, Inbox, Camera, X as XIcon,
 } from 'lucide-vue-next';
 import { computed, ref, onMounted } from 'vue';
-import { useOnboarding } from '@/composables/useOnboarding';
 import OnboardingTour from '@/components/OnboardingTour.vue';
 import PullToRefresh from '@/components/PullToRefresh.vue';
+import CardGridSkeleton from '@/components/Skeletons/CardGridSkeleton.vue';
+import HeroHeaderSkeleton from '@/components/Skeletons/HeroHeaderSkeleton.vue';
 import SwipeToDelete from '@/components/SwipeToDelete.vue';
 import TransactionModal from '@/components/TransactionModal.vue';
+import { useOnboarding } from '@/composables/useOnboarding';
 import { usePageLoading } from '@/composables/usePageLoading';
-import HeroHeaderSkeleton from '@/components/Skeletons/HeroHeaderSkeleton.vue';
-import CardGridSkeleton from '@/components/Skeletons/CardGridSkeleton.vue';
+import { useToast } from '@/composables/useToast';
 import AppLayout from '@/layouts/AppLayout.vue';
 import type { BreadcrumbItem } from '@/types';
 import { formatCurrency } from '@/utils/currency';
-import { useToast } from '@/composables/useToast';
 
 interface AccountRef { id: number; name: string; color?: string | null; type?: string; }
 interface ExpenseItem {
@@ -138,7 +138,7 @@ const formatDate = (s: string) =>
     new Date(s).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 
 const refreshExpenses = () => {
-    router.reload({ preserveScroll: true, only: ['expenses', 'accounts'] });
+    router.reload({ only: ['expenses', 'accounts'] });
 };
 
 // Onboarding
@@ -242,7 +242,7 @@ onMounted(() => {
                                     </div>
                                 </div>
                                 <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all hidden sm:flex">
-                                    <button @click="deleteExpense(expense.id)" class="p-1.5 rounded-lg hover:bg-red-500/40 transition-colors">
+                                    <button @click="deleteExpense(expense.id)" class="p-1.5 rounded-lg hover:bg-red-500/40 transition-colors md:opacity-0 md:group-hover:opacity-100">
                                         <Trash2 class="h-3.5 w-3.5" />
                                     </button>
                                 </div>
@@ -304,7 +304,7 @@ onMounted(() => {
                                 </div>
                                 <!-- Upload receipt button (when no receipt) -->
                                 <div v-else class="pt-1">
-                                    <label class="flex items-center gap-1.5 cursor-pointer opacity-0 group-hover:opacity-100 transition-all">
+                                    <label class="flex items-center gap-1.5 cursor-pointer md:opacity-0 md:group-hover:opacity-100 transition-all">
                                         <Camera class="w-3 h-3 text-white/50" />
                                         <span class="text-[9px] font-semibold text-white/50 hover:text-white/80 transition-colors">
                                             {{ uploadingReceipt === expense.id ? 'Uploading...' : 'Attach receipt' }}

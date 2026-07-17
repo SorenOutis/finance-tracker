@@ -93,7 +93,7 @@ export function useSheetDrag(options: UseSheetDragOptions = {}) {
         }
     };
 
-    const onHandleTouchEnd = (e: TouchEvent | MouseEvent) => {
+    const onHandleTouchEnd = (): void => {
         if (!isDragging.value) return;
 
         isDragging.value = false;

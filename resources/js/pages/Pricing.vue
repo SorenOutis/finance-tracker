@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3';
+import { usePage } from '@inertiajs/vue3';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import {
@@ -23,7 +24,6 @@ import {
     HelpCircle,
 } from 'lucide-vue-next';
 import { onMounted, ref, computed } from 'vue';
-import { usePage } from '@inertiajs/vue3';
 import { useAppearance } from '@/composables/useAppearance';
 import { useSmoothScroll } from '@/composables/useSmoothScroll';
 import { login, register, home } from '@/routes';
@@ -316,14 +316,14 @@ onMounted(() => {
     <Head title="Pricing — Finance Tracker">
         <meta name="description" content="Choose the perfect plan for your financial journey. Free, Pro ($2/mo), and Enterprise ($5/mo) tiers with transparent pricing, no hidden fees, and a 14-day free trial." />
         <meta name="keywords" content="finance tracker pricing, budgeting app plans, personal finance subscription, free finance app, pro finance plan" />
-        <link rel="canonical" :href="absoluteUrl('/pricing', $page.props.appUrl)" />
+        <link rel="canonical" :href="absoluteUrl('/pricing', appUrl)" />
 
         <!-- Open Graph -->
         <meta property="og:title" content="Pricing — Finance Tracker" />
         <meta property="og:description" content="Choose the perfect plan for your financial journey. Start free with the basics, go Pro for $2/mo, or scale with Enterprise at $5/mo. No hidden fees." />
         <meta property="og:type" content="website" />
-        <meta property="og:url" :content="absoluteUrl('/pricing', $page.props.appUrl)" />
-        <meta property="og:image" :content="absoluteUrl('/apple-touch-icon.png', $page.props.appUrl)" />
+        <meta property="og:url" :content="absoluteUrl('/pricing', appUrl)" />
+        <meta property="og:image" :content="absoluteUrl('/apple-touch-icon.png', appUrl)" />
         <meta property="og:image:width" content="166" />
         <meta property="og:image:height" content="166" />
         <meta property="og:image:alt" content="Finance Tracker Logo" />
@@ -334,7 +334,7 @@ onMounted(() => {
         <meta name="twitter:card" content="summary" />
         <meta name="twitter:title" content="Pricing — Finance Tracker" />
         <meta name="twitter:description" content="Start free, upgrade when you need more. Pro from $2/mo, Enterprise from $5/mo. Transparent pricing, no surprises." />
-        <meta name="twitter:image" :content="absoluteUrl('/apple-touch-icon.png', $page.props.appUrl)" />
+        <meta name="twitter:image" :content="absoluteUrl('/apple-touch-icon.png', appUrl)" />
 
         <!-- JSON-LD Structured Data -->
         <script type="application/ld+json" v-html="ldWebsite"></script>

@@ -5,19 +5,19 @@ import {
     CreditCard, Plus, Trash2, Pencil, Wallet, Smartphone, Landmark, Coins, Bitcoin, MoreHorizontal, ArrowDownRight, ArrowUpRight, CalendarClock, ChevronRight, ReceiptText
 } from 'lucide-vue-next';
 import { ref, onMounted } from 'vue';
-import { useOnboarding } from '@/composables/useOnboarding';
 import OnboardingTour from '@/components/OnboardingTour.vue';
+import WalletsSkeleton from '@/components/Skeletons/WalletsSkeleton.vue';
 import TransactionModal from '@/components/TransactionModal.vue';
 import {
     Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription
 } from '@/components/ui/dialog';
 import WalletEntryModal from '@/components/WalletEntryModal.vue';
+import { useOnboarding } from '@/composables/useOnboarding';
 import { usePageLoading } from '@/composables/usePageLoading';
-import WalletsSkeleton from '@/components/Skeletons/WalletsSkeleton.vue';
+import { useToast } from '@/composables/useToast';
 import AppLayout from '@/layouts/AppLayout.vue';
 import type { BreadcrumbItem } from '@/types';
 import { formatCurrency } from '@/utils/currency';
-import { useToast } from '@/composables/useToast';
 
 interface AccountItem {
     id: number; name: string; type: string; color: string | null;
@@ -437,7 +437,7 @@ onMounted(() => {
 <WalletEntryModal 
     v-model:open="showEditModal"
     title="Save Changes"
-    :initialData="editingAccount || {}"
+    :initialData="(editingAccount as any) || {}"
     @submit="updateAccount"
 />
 

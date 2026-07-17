@@ -5,13 +5,13 @@ import {
     Plus, Trash2, Pencil, CalendarClock, Clock, Wallet, TrendingUp, CreditCard, ChevronRight, ReceiptText
 } from 'lucide-vue-next';
 import { ref, onMounted } from 'vue';
-import { useOnboarding } from '@/composables/useOnboarding';
 import OnboardingTour from '@/components/OnboardingTour.vue';
 import RecurringEntryModal from '@/components/RecurringEntryModal.vue';
+import CardGridSkeleton from '@/components/Skeletons/CardGridSkeleton.vue';
+import HeroHeaderSkeleton from '@/components/Skeletons/HeroHeaderSkeleton.vue';
+import { useOnboarding } from '@/composables/useOnboarding';
 import { usePageLoading } from '@/composables/usePageLoading';
 import { useToast } from '@/composables/useToast';
-import HeroHeaderSkeleton from '@/components/Skeletons/HeroHeaderSkeleton.vue';
-import CardGridSkeleton from '@/components/Skeletons/CardGridSkeleton.vue';
 
 import AppLayout from '@/layouts/AppLayout.vue';
 import type { BreadcrumbItem } from '@/types';
@@ -320,7 +320,7 @@ const simpleGradient = (color: string | null, def: string) => {
     v-model:open="showEditModal"
     title="Save Changes"
     fixedType="income"
-    :initialData="editingIncome || {}"
+    :initialData="(editingIncome as any) || {}"
     @submit="updateIncome"
 />
 </template>

@@ -1,7 +1,7 @@
-import { ref, onMounted, onUnmounted } from 'vue';
-import Lenis from 'lenis';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import Lenis from 'lenis';
+import { ref, onMounted, onUnmounted } from 'vue';
 
 export function useSmoothScroll() {
     const lenis = ref<Lenis | null>(null);

@@ -1,16 +1,15 @@
 <script setup lang="ts">
 import { Head, useForm, router, usePage } from '@inertiajs/vue3';
 import { useStorage } from '@vueuse/core';
-import { Landmark, CreditCard, Scale, Plus, Check, Trash2, LayoutDashboard } from 'lucide-vue-next';
+import { Landmark, CreditCard, Scale, Plus, Check, Trash2 } from 'lucide-vue-next';
 import { ref, computed, onMounted } from 'vue';
-import { useOnboarding } from '@/composables/useOnboarding';
 import OnboardingTour from '@/components/OnboardingTour.vue';
-import { usePageLoading } from '@/composables/usePageLoading';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useOnboarding } from '@/composables/useOnboarding';
+import { usePageLoading } from '@/composables/usePageLoading';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { assets as assetsRoute } from '@/routes';import type { BreadcrumbItem } from '@/types';
 import { formatCurrency } from '@/utils/currency';
-import { useToast } from '@/composables/useToast';
 
 interface AssetItem {
     id: number;

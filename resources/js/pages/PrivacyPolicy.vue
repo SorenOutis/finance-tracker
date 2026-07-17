@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3';
+import { usePage } from '@inertiajs/vue3';
 import gsap from 'gsap';
 import { ArrowUpRight, Sun, Moon, Shield, ArrowLeft, ArrowUp, ChevronDown, FileText as FileTextIcon, ExternalLink } from 'lucide-vue-next';
 import { onMounted, ref, computed } from 'vue';
-import { usePage } from '@inertiajs/vue3';
 import { useAppearance } from '@/composables/useAppearance';
-import { useSmoothScroll } from '@/composables/useSmoothScroll';
 import { useScrollProgress } from '@/composables/useScrollProgress';
+import { useSmoothScroll } from '@/composables/useSmoothScroll';
 import { home } from '@/routes';
 import { absoluteUrl } from '@/utils/url';
 
@@ -98,14 +98,14 @@ onMounted(() => {
 <template>
     <Head title="Privacy Policy — Finance Tracker">
         <meta name="description" content="Finance Tracker Privacy Policy. Learn how we collect, use, and protect your personal financial data with our zero-knowledge architecture." />
-        <link rel="canonical" :href="absoluteUrl('/privacy', $page.props.appUrl)" />
+        <link rel="canonical" :href="absoluteUrl('/privacy', appUrl)" />
 
         <!-- Open Graph -->
         <meta property="og:title" content="Privacy Policy — Finance Tracker" />
         <meta property="og:description" content="Our commitment to your privacy. Zero-knowledge architecture ensures even we cannot see your financial data." />
         <meta property="og:type" content="website" />
-        <meta property="og:url" :content="absoluteUrl('/privacy', $page.props.appUrl)" />
-        <meta property="og:image" :content="absoluteUrl('/apple-touch-icon.png', $page.props.appUrl)" />
+        <meta property="og:url" :content="absoluteUrl('/privacy', appUrl)" />
+        <meta property="og:image" :content="absoluteUrl('/apple-touch-icon.png', appUrl)" />
         <meta property="og:site_name" content="Finance Tracker" />
         <meta property="og:locale" content="en_US" />
 
@@ -113,7 +113,7 @@ onMounted(() => {
         <meta name="twitter:card" content="summary" />
         <meta name="twitter:title" content="Privacy Policy — Finance Tracker" />
         <meta name="twitter:description" content="Your financial data stays yours. No tracking, no data mining." />
-        <meta name="twitter:image" :content="absoluteUrl('/apple-touch-icon.png', $page.props.appUrl)" />
+        <meta name="twitter:image" :content="absoluteUrl('/apple-touch-icon.png', appUrl)" />
 
         <!-- JSON-LD -->
         <script type="application/ld+json" v-html="ldWebsite"></script>

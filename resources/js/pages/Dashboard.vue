@@ -12,12 +12,11 @@ import {
 } from 'lucide-vue-next';
 import { ref, computed, watch, onMounted } from 'vue';
 import { Line as LineChart } from 'vue-chartjs';
+import MonthPickerSheet from '@/components/MonthPickerSheet.vue';
 import PullToRefresh from '@/components/PullToRefresh.vue';
 import RecurringEntryModal from '@/components/RecurringEntryModal.vue';
-import { usePageLoading } from '@/composables/usePageLoading';
 import DashboardSkeleton from '@/components/Skeletons/DashboardSkeleton.vue';
 import TransactionModal from '@/components/TransactionModal.vue';
-import MonthPickerSheet from '@/components/MonthPickerSheet.vue';
 import {
     Dialog,
     DialogContent,
@@ -28,6 +27,7 @@ import {
 } from '@/components/ui/dialog';
 import { useChartDefaults } from '@/composables/useChartDefaults';
 import { useNumberAnimation } from '@/composables/useNumberAnimation';
+import { usePageLoading } from '@/composables/usePageLoading';
 import { useToast } from '@/composables/useToast';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { dashboard as dashboardRoute } from '@/routes';
@@ -157,7 +157,7 @@ const showGoalModal = ref(false);
 const showOnboarding = ref(false);
 const onboardingStep = ref(1);
 const totalOnboardingSteps = 5;
-const tooltipStyle = ref({ top: '50%', left: '50%', transform: 'translate(-50%, -50%)' });
+const tooltipStyle = ref<Record<string, string>>({ top: '50%', left: '50%', transform: 'translate(-50%, -50%)' });
 const tooltipSide = ref<'top' | 'bottom'>('bottom');
 
 const updateTooltipPosition = () => {
@@ -244,6 +244,16 @@ onMounted(() => {
     });
 
     window.addEventListener('resize', updateTooltipPosition);
+
+    // Scroll listener for sticky month bar
+    const handleScroll = () => {
+        const hero = document.querySelector('.dashboard-hero');
+        if (hero) {
+            const heroBottom = hero.getBoundingClientRect().bottom;
+            showStickyMonth.value = heroBottom < -60;
+        }
+    };
+    window.addEventListener('scroll', handleScroll, { passive: true });
     
     // Sequence: Show onboarding only if welcome modal is closed and user is not onboarded
     if (!showWelcomeModal.value && !props.user.is_onboarded) {
@@ -269,6 +279,27 @@ const highlightClass = (targetStep: number) => {
 const showWelcomeModal = useStorage('show-welcome-modal-v1', true, sessionStorage);
 const showRecurringModal = ref(false);
 const showMonthPicker = ref(false);
+
+// Collapsible section states (persisted to localStorage)
+const sectionStates = useStorage('dash-sections', {
+    wallets: false,
+    incomes: false,
+    bills: false,
+    transactions: false,
+    spending: false,
+    budget: false,
+    categories: false,
+    goals: false,
+    activity: false,
+});
+
+function toggleSection(key: string) {
+    const k = key as keyof typeof sectionStates.value;
+    sectionStates.value[k] = !sectionStates.value[k];
+}
+
+// Sticky month bar visibility
+const showStickyMonth = ref(false);
 
 // Forms
 const incomeForm = useForm({ amount: '', date: getYYYYMMDD(new Date()), category: '', description: '', account_id: '' as string | number });
@@ -326,7 +357,7 @@ const addRecurring = (data: any) => {
 const deleteEntry = (id: number, type: 'income' | 'expense') => { router.delete(`/${type}s/${id}`, { preserveScroll: true, onSuccess: () => { addToast({ type: 'info', title: type === 'income' ? 'Income Deleted' : 'Expense Deleted', message: 'Entry removed from history' }); } }); };
 
 const refreshDashboard = () => {
-    router.reload({ preserveScroll: true, only: ['dashboard', 'incomeEntries', 'expenseEntries', 'dailySpending', 'expensesByCategory', 'topExpense', 'transactionStats', 'recentActivity', 'savingsStreak', 'ytd', 'budget', 'financialGoals', 'recurringIncomes', 'upcomingBills', 'accounts'] });
+    router.reload({ only: ['dashboard', 'incomeEntries', 'expenseEntries', 'dailySpending', 'expensesByCategory', 'topExpense', 'transactionStats', 'recentActivity', 'savingsStreak', 'ytd', 'budget', 'financialGoals', 'recurringIncomes', 'upcomingBills', 'accounts'] });
 };
 
 const greeting = computed(() => { const h = new Date().getHours(); return h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening'; });
@@ -506,6 +537,27 @@ const formatDate = (dateStr: string) => {
     </div>
 </div>
 
+<!-- Sticky Month Selector Bar -->
+<Transition
+    enter-active-class="transition-all duration-300 ease-out"
+    enter-from-class="-translate-y-full opacity-0"
+    enter-to-class="translate-y-0 opacity-100"
+    leave-active-class="transition-all duration-200 ease-in"
+    leave-from-class="translate-y-0 opacity-100"
+    leave-to-class="-translate-y-full opacity-0"
+>
+    <div v-if="showStickyMonth"
+        class="fixed top-14 md:top-16 left-0 right-0 z-40 flex items-center justify-center gap-2 py-2.5 border-b border-border/10 bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60"
+    >
+        <button @click="showMonthPicker = true" class="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-card border border-border/30 hover:border-primary/40 transition-all shadow-sm">
+            <span class="text-xs font-bold text-foreground">{{ fmtMonthYear(currentMonth) }}</span>
+            <ChevronDown class="h-3 w-3 text-muted-foreground" />
+        </button>
+        <span class="text-[10px] text-muted-foreground font-medium">· {{ displayStats[0]?.value || '—' }} in</span>
+        <span class="text-[10px] font-bold text-foreground">{{ displayStats[1]?.value || '—' }} out</span>
+    </div>
+</Transition>
+
 <!-- Stat Cards -->
 <div :class="['grid grid-cols-2 gap-2.5 md:grid-cols-4 lg:gap-4', highlightClass(2), showOnboarding && onboardingStep === 2 ? 'relative z-[100]' : '']">
     <div v-for="(stat, idx) in displayStats" :key="stat.label"
@@ -528,12 +580,15 @@ const formatDate = (dateStr: string) => {
 </div>
 
 <!-- Wallet Cards Strip -->
-<div v-if="accounts?.length" :class="['animate-fade-up stagger-3 mt-1 p-1', highlightClass(3), showOnboarding && onboardingStep === 3 ? 'relative z-[100]' : '']">
-    <div class="flex items-center justify-between mb-2 px-1">
+<div v-if="accounts?.length" :class="['animate-fade-up stagger-3 mt-1', highlightClass(3), showOnboarding && onboardingStep === 3 ? 'relative z-[100]' : '']">
+    <button @click="toggleSection('wallets')" class="flex items-center justify-between w-full mb-2 px-1 group">
         <p class="text-[9px] sm:text-[10px] font-bold tracking-widest uppercase text-muted-foreground/80 font-sans">My Wallets</p>
-        <a href="/wallets" class="text-[9px] sm:text-[10px] font-semibold text-primary hover:underline">View all</a>
-    </div>
-    <div class="flex gap-2.5 overflow-x-auto snap-x snap-mandatory pb-2 scrollbar-hide">
+        <div class="flex items-center gap-2">
+            <a href="/wallets" @click.stop class="text-[9px] sm:text-[10px] font-semibold text-primary hover:underline">View all</a>
+            <ChevronDown class="h-3.5 w-3.5 text-muted-foreground/50 transition-transform duration-200" :class="sectionStates.wallets ? 'rotate-180' : ''" />
+        </div>
+    </button>
+    <div v-show="!sectionStates.wallets" class="flex gap-2.5 overflow-x-auto snap-x snap-mandatory pb-2 scrollbar-hide">
         <div v-for="account in accounts" :key="account.id"
             class="group relative flex-shrink-0 w-[190px] sm:w-[260px] snap-start overflow-hidden rounded-[16px] sm:rounded-[18px] p-3.5 sm:p-5 text-white shadow-lg transition-all duration-300 hover:shadow-xl hover:-translate-y-0.5 cursor-default"
             :style="{ background: walletGradient(account.type, account.color) }">
@@ -575,12 +630,15 @@ const formatDate = (dateStr: string) => {
 </div>
 
 <!-- Incomes Cards Strip -->
-<div v-if="recurringIncomes?.length" class="animate-fade-up stagger-3 mt-2 px-1">
-    <div class="flex items-center justify-between mb-2 px-1">
+<div v-if="recurringIncomes?.length" class="animate-fade-up stagger-3 mt-2">
+    <button @click="toggleSection('incomes')" class="flex items-center justify-between w-full mb-2 px-1 group">
         <p class="text-[9px] sm:text-[10px] font-bold tracking-widest uppercase text-muted-foreground/80 font-sans">Monthly Incomes</p>
-        <a href="/incomes" class="text-[9px] sm:text-[10px] font-semibold text-primary hover:underline">View all</a>
-    </div>
-    <div class="flex gap-2.5 overflow-x-auto snap-x snap-mandatory pb-2 scrollbar-hide">
+        <div class="flex items-center gap-2">
+            <a href="/incomes" @click.stop class="text-[9px] sm:text-[10px] font-semibold text-primary hover:underline">View all</a>
+            <ChevronDown class="h-3.5 w-3.5 text-muted-foreground/50 transition-transform duration-200" :class="sectionStates.incomes ? 'rotate-180' : ''" />
+        </div>
+    </button>
+    <div v-show="!sectionStates.incomes" class="flex gap-2.5 overflow-x-auto snap-x snap-mandatory pb-2 scrollbar-hide">
         <div v-for="income in recurringIncomes" :key="income.id"
             class="group relative flex-shrink-0 w-[170px] sm:w-[240px] snap-start overflow-hidden rounded-[16px] sm:rounded-[18px] p-3.5 transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5 cursor-default text-white shadow-md"
             :style="{ background: simpleGradient(income.color, '#10b981') }">
@@ -611,12 +669,15 @@ const formatDate = (dateStr: string) => {
 </div>
 
 <!-- Bills Cards Strip -->
-<div v-if="upcomingBills?.length" class="animate-fade-up stagger-4 mt-2 px-1">
-    <div class="flex items-center justify-between mb-2 px-1">
+<div v-if="upcomingBills?.length" class="animate-fade-up stagger-4 mt-2">
+    <button @click="toggleSection('bills')" class="flex items-center justify-between w-full mb-2 px-1 group">
         <p class="text-[9px] sm:text-[10px] font-bold tracking-widest uppercase text-muted-foreground/80 font-sans">My Bills</p>
-        <a href="/bills" class="text-[9px] sm:text-[10px] font-semibold text-primary hover:underline">View all</a>
-    </div>
-    <div class="flex gap-2.5 overflow-x-auto snap-x snap-mandatory pb-2 scrollbar-hide">
+        <div class="flex items-center gap-2">
+            <a href="/bills" @click.stop class="text-[9px] sm:text-[10px] font-semibold text-primary hover:underline">View all</a>
+            <ChevronDown class="h-3.5 w-3.5 text-muted-foreground/50 transition-transform duration-200" :class="sectionStates.bills ? 'rotate-180' : ''" />
+        </div>
+    </button>
+    <div v-show="!sectionStates.bills" class="flex gap-2.5 overflow-x-auto snap-x snap-mandatory pb-2 scrollbar-hide">
         <div v-for="bill in upcomingBills" :key="bill.id"
             class="group relative flex-shrink-0 w-[170px] sm:w-[240px] snap-start overflow-hidden rounded-[16px] sm:rounded-[18px] p-3.5 transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5 cursor-default text-white shadow-md"
             :style="{ background: simpleGradient(bill.color, '#ef4444') }">
@@ -647,7 +708,11 @@ const formatDate = (dateStr: string) => {
 </div>
 
 <!-- Transaction Chips + Income vs Expense Bar -->
-<div class="grid gap-2.5 md:grid-cols-2 animate-fade-up stagger-5 mt-1 px-1">
+<div class="grid gap-2.5 md:grid-cols-2 animate-fade-up stagger-5 mt-1">
+    <button @click="toggleSection('transactions')" class="flex items-center justify-between w-full col-span-full mb-1 px-1 group md:hidden">
+        <p class="text-[9px] sm:text-[10px] font-bold tracking-widest uppercase text-muted-foreground/80 font-sans">Transactions</p>
+        <ChevronDown class="h-3.5 w-3.5 text-muted-foreground/50 transition-transform duration-200" :class="sectionStates.transactions ? 'rotate-180' : ''" />
+    </button>
     <!-- Transaction Stats Chips (Pills layout) -->
     <div class="p-3.5 rounded-[18px] sm:p-4 sm:rounded-[20px] border border-border/40 bg-card/20 flex flex-wrap items-center justify-center gap-1.5">
         <span class="inline-flex items-center gap-1 rounded-full bg-card/40 border border-border/30 px-2.5 py-0.8 text-[10px] sm:text-[11px] font-bold text-muted-foreground transition-all">
@@ -680,7 +745,7 @@ const formatDate = (dateStr: string) => {
 </div>
 
 <!-- Rings Row: Savings + Health + Year Progress -->
-<div :class="['grid grid-cols-2 lg:grid-cols-3 gap-2.5 animate-fade-up stagger-5 px-1', showOnboarding && onboardingStep === 4 ? 'relative z-[100]' : '']">
+<div v-show="!sectionStates.transactions" :class="['grid grid-cols-2 lg:grid-cols-3 gap-2.5 animate-fade-up stagger-5 px-1', showOnboarding && onboardingStep === 4 ? 'relative z-[100]' : '']">
     <!-- Savings Rate Ring -->
     <div class="surface-card p-3.5 sm:p-4 flex flex-col items-center justify-center rounded-[18px] sm:rounded-[20px]">
         <p class="text-[9px] sm:text-[10px] font-semibold tracking-[0.08em] uppercase text-muted-foreground mb-2 sm:mb-3 font-sans">Savings Rate</p>
@@ -737,7 +802,7 @@ const formatDate = (dateStr: string) => {
 </div>
 
 <!-- Sparkline + Top Expense + Streak -->
-<div class="grid gap-2.5 md:grid-cols-3 animate-fade-up stagger-5 px-1">
+<div v-show="!sectionStates.transactions" class="grid gap-2.5 md:grid-cols-3 animate-fade-up stagger-5 px-1">
     <!-- Daily Spending Sparkline -->
     <div class="surface-card p-3.5 sm:p-4 md:col-span-2 rounded-[18px] sm:rounded-[20px]">
         <h2 class="text-xs sm:text-sm font-bold text-foreground font-display tracking-tight">Daily Spending</h2>
@@ -776,30 +841,37 @@ const formatDate = (dateStr: string) => {
 </div>
 
 <!-- Budget Tracker -->
-<div v-if="budget" class="surface-card premium-hover p-3.5 sm:p-4 animate-fade-up stagger-5 rounded-[18px] sm:rounded-[20px] mx-1">
-    <div class="flex items-center justify-between mb-2">
+<div v-if="budget" class="surface-card premium-hover p-3.5 sm:p-4 animate-fade-up stagger-5 rounded-[18px] sm:rounded-[20px]">
+    <button @click="toggleSection('budget')" class="flex items-center justify-between w-full mb-2 group">
         <div class="flex items-center gap-1.5">
             <Target class="h-3 w-3 sm:h-3.5 sm:w-3.5 text-primary" />
             <p class="text-[9px] sm:text-[10px] font-semibold tracking-[0.08em] uppercase text-muted-foreground font-sans">Monthly Budget</p>
         </div>
-        <span :class="['text-[9px] sm:text-[10px] font-bold px-1.5 sm:px-2 py-0.5 rounded-full', budgetUsedPct > 100 ? 'bg-[--fin-loss]/12 text-[--fin-loss]' : budgetUsedPct > 80 ? 'bg-amber-500/12 text-amber-600' : 'bg-[--fin-gain]/12 text-[--fin-gain]']">
-            {{ budgetUsedPct.toFixed(0) }}% used
-        </span>
-    </div>
-    <div class="w-full h-2 sm:h-2.5 rounded-full bg-muted/30 overflow-hidden">
-        <div class="h-full rounded-full transition-all duration-700" :class="budgetUsedPct > 100 ? 'bg-[--fin-loss]' : budgetUsedPct > 80 ? 'bg-amber-500' : 'bg-[--fin-gain]'" :style="{ width: Math.min(100, budgetUsedPct) + '%' }"></div>
-    </div>
-    <div class="flex justify-between mt-1.5 text-[9px] sm:text-[10px] font-mono">
-        <span class="text-muted-foreground">{{ formatCurrency(animatedExpense) }} spent</span>
-        <span class="text-foreground font-semibold">{{ formatCurrency(budget.monthly_limit) }} limit</span>
+        <ChevronDown class="h-3.5 w-3.5 text-muted-foreground/50 transition-transform duration-200" :class="sectionStates.budget ? 'rotate-180' : ''" />
+    </button>
+    <div v-show="!sectionStates.budget" class="space-y-2">
+        <div class="flex items-center justify-between">
+            <span :class="['text-[9px] sm:text-[10px] font-bold px-1.5 sm:px-2 py-0.5 rounded-full', budgetUsedPct > 100 ? 'bg-[--fin-loss]/12 text-[--fin-loss]' : budgetUsedPct > 80 ? 'bg-amber-500/12 text-amber-600' : 'bg-[--fin-gain]/12 text-[--fin-gain]']">
+                {{ budgetUsedPct.toFixed(0) }}% used
+            </span>
+        </div>
+        <div class="w-full h-2 sm:h-2.5 rounded-full bg-muted/30 overflow-hidden">
+            <div class="h-full rounded-full transition-all duration-700" :class="budgetUsedPct > 100 ? 'bg-[--fin-loss]' : budgetUsedPct > 80 ? 'bg-amber-500' : 'bg-[--fin-gain]'" :style="{ width: Math.min(100, budgetUsedPct) + '%' }"></div>
+        </div>
+        <div class="flex justify-between text-[9px] sm:text-[10px] font-mono">
+            <span class="text-muted-foreground">{{ formatCurrency(animatedExpense) }} spent</span>
+            <span class="text-foreground font-semibold">{{ formatCurrency(budget.monthly_limit) }} limit</span>
+        </div>
     </div>
 </div>
 
 <!-- Category Breakdown -->
-<div v-if="expensesByCategory?.length" class="surface-card premium-hover p-3.5 sm:p-4 animate-fade-up stagger-5 rounded-[18px] sm:rounded-[20px] mx-1">
-    <h2 class="text-xs sm:text-sm font-bold text-foreground font-display tracking-tight">Expense Breakdown</h2>
-    <p class="text-[9px] sm:text-[10px] text-muted-foreground font-sans mb-3 sm:mb-4">Where your money goes</p>
-    <div class="space-y-2.5 sm:space-y-3">
+<div v-if="expensesByCategory?.length" class="surface-card premium-hover p-3.5 sm:p-4 animate-fade-up stagger-5 rounded-[18px] sm:rounded-[20px]">
+    <button @click="toggleSection('categories')" class="flex items-center justify-between w-full mb-2 group">
+        <h2 class="text-xs sm:text-sm font-bold text-foreground font-display tracking-tight text-left">Expense Breakdown</h2>
+        <ChevronDown class="h-3.5 w-3.5 text-muted-foreground/50 transition-transform duration-200 shrink-0" :class="sectionStates.categories ? 'rotate-180' : ''" />
+    </button>
+    <div v-show="!sectionStates.categories" class="space-y-2.5 sm:space-y-3">
         <div v-for="(cat, idx) in expensesByCategory" :key="cat.category">
             <div class="flex items-center justify-between mb-1">
                 <div class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full shrink-0" :style="{ backgroundColor: catColors[idx % catColors.length] }"></span><span class="text-[11px] sm:text-xs font-semibold text-foreground font-sans">{{ cat.category }}</span></div>
@@ -812,8 +884,11 @@ const formatDate = (dateStr: string) => {
 
 <!-- Financial Goals -->
 <div v-if="financialGoals?.length" class="surface-card p-3.5 sm:p-4 animate-fade-up stagger-5 rounded-[18px] sm:rounded-[20px] mx-1">
-    <h2 class="text-xs sm:text-sm font-bold text-foreground font-display tracking-tight mb-3 sm:mb-4">Financial Goals</h2>
-    <div class="grid gap-2.5 sm:gap-3 md:grid-cols-2">
+    <button @click="toggleSection('goals')" class="flex items-center justify-between w-full mb-2 group">
+        <h2 class="text-xs sm:text-sm font-bold text-foreground font-display tracking-tight text-left">Financial Goals</h2>
+        <ChevronDown class="h-3.5 w-3.5 text-muted-foreground/50 transition-transform duration-200 shrink-0" :class="sectionStates.goals ? 'rotate-180' : ''" />
+    </button>
+    <div v-show="!sectionStates.goals" class="grid gap-2.5 sm:gap-3 md:grid-cols-2">
         <div v-for="goal in financialGoals" :key="goal.id" class="group p-2.5 sm:p-3 rounded-xl bg-muted/20 border border-border/30 relative">
             <button @click="deleteGoal(goal.id)" class="absolute top-2 right-2 p-1 rounded text-muted-foreground opacity-0 transition-all hover:bg-destructive/10 hover:text-destructive group-hover:opacity-100"><X class="h-3 w-3" /></button>
             <div class="flex items-center gap-2.5 sm:gap-3">
@@ -838,8 +913,11 @@ const formatDate = (dateStr: string) => {
 
 <!-- Recent Activity Timeline -->
 <div v-if="recentActivity?.length" class="surface-card premium-hover p-3.5 sm:p-4 animate-fade-up stagger-5 mt-1 rounded-[18px] sm:rounded-[20px] mx-1">
-    <div class="flex items-center gap-1.5 mb-2.5 sm:mb-3"><Activity class="h-3 w-3 sm:h-3.5 sm:w-3.5 text-primary" /><h2 class="text-xs sm:text-sm font-bold text-foreground font-display tracking-tight">Recent Activity</h2></div>
-    <div class="space-y-0 divide-y divide-border/20">
+    <button @click="toggleSection('activity')" class="flex items-center justify-between w-full mb-2 group">
+        <div class="flex items-center gap-1.5"><Activity class="h-3 w-3 sm:h-3.5 sm:w-3.5 text-primary" /><h2 class="text-xs sm:text-sm font-bold text-foreground font-display tracking-tight">Recent Activity</h2></div>
+        <ChevronDown class="h-3.5 w-3.5 text-muted-foreground/50 transition-transform duration-200 shrink-0" :class="sectionStates.activity ? 'rotate-180' : ''" />
+    </button>
+    <div v-show="!sectionStates.activity" class="space-y-0 divide-y divide-border/20">
         <div v-for="item in recentActivity" :key="`${item.type}-${item.id}`" class="flex items-center justify-between py-2 sm:py-2.5 first:pt-0 last:pb-0">
             <div class="flex items-center gap-2 sm:gap-2.5">
                 <div :class="['w-1.5 h-1.5 rounded-full shrink-0', item.type === 'income' ? 'bg-[--fin-gain]' : 'bg-[--fin-loss]']"></div>

@@ -1,5 +1,5 @@
-import { ref, onMounted, onUnmounted } from 'vue';
 import { router } from '@inertiajs/vue3';
+import { ref, onMounted, onUnmounted } from 'vue';
 
 /**
  * Composable to track Inertia navigation loading state.

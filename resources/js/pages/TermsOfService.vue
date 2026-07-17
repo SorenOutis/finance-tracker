@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3';
+import { usePage } from '@inertiajs/vue3';
 import gsap from 'gsap';
 import { ArrowUpRight, Sun, Moon, FileText, ArrowLeft, ArrowUp, ChevronDown, ShieldCheck, ExternalLink } from 'lucide-vue-next';
 import { onMounted, ref, computed } from 'vue';
-import { usePage } from '@inertiajs/vue3';
 import { useAppearance } from '@/composables/useAppearance';
-import { useSmoothScroll } from '@/composables/useSmoothScroll';
 import { useScrollProgress } from '@/composables/useScrollProgress';
+import { useSmoothScroll } from '@/composables/useSmoothScroll';
 import { home } from '@/routes';
 import { absoluteUrl } from '@/utils/url';
 
@@ -100,14 +100,14 @@ onMounted(() => {
 <template>
     <Head title="Terms of Service — Finance Tracker">
         <meta name="description" content="Finance Tracker Terms of Service. Understand the terms governing your use of our financial tracking platform." />
-        <link rel="canonical" :href="absoluteUrl('/terms', $page.props.appUrl)" />
+        <link rel="canonical" :href="absoluteUrl('/terms', appUrl)" />
 
         <!-- Open Graph -->
         <meta property="og:title" content="Terms of Service — Finance Tracker" />
         <meta property="og:description" content="The terms governing your use of Finance Tracker's financial management platform." />
         <meta property="og:type" content="website" />
-        <meta property="og:url" :content="absoluteUrl('/terms', $page.props.appUrl)" />
-        <meta property="og:image" :content="absoluteUrl('/apple-touch-icon.png', $page.props.appUrl)" />
+        <meta property="og:url" :content="absoluteUrl('/terms', appUrl)" />
+        <meta property="og:image" :content="absoluteUrl('/apple-touch-icon.png', appUrl)" />
         <meta property="og:site_name" content="Finance Tracker" />
         <meta property="og:locale" content="en_US" />
 
@@ -115,7 +115,7 @@ onMounted(() => {
         <meta name="twitter:card" content="summary" />
         <meta name="twitter:title" content="Terms of Service — Finance Tracker" />
         <meta name="twitter:description" content="Read the terms governing your use of Finance Tracker." />
-        <meta name="twitter:image" :content="absoluteUrl('/apple-touch-icon.png', $page.props.appUrl)" />
+        <meta name="twitter:image" :content="absoluteUrl('/apple-touch-icon.png', appUrl)" />
 
         <!-- JSON-LD -->
         <script type="application/ld+json" v-html="ldWebsite"></script>

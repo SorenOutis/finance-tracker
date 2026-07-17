@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Skeleton } from '@/components/ui/skeleton';
 
-const props = withDefaults(defineProps<{ count?: number }>(), { count: 6 });
+withDefaults(defineProps<{ count?: number }>(), { count: 6 });
 </script>
 
 <template>

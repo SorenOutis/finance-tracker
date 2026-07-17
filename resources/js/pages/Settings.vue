@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import { Head, useForm } from '@inertiajs/vue3';
-import { LogOut, Settings2, User, Shield } from 'lucide-vue-next';
-import { onMounted } from 'vue';
 import { usePage } from '@inertiajs/vue3';
 import { useStorage } from '@vueuse/core';
-import { useOnboarding } from '@/composables/useOnboarding';
+import { LogOut, Settings2, User } from 'lucide-vue-next';
+import { onMounted } from 'vue';
 import OnboardingTour from '@/components/OnboardingTour.vue';
-import { usePageLoading } from '@/composables/usePageLoading';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useOnboarding } from '@/composables/useOnboarding';
+import { usePageLoading } from '@/composables/usePageLoading';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { settings } from '@/routes';
 import type { BreadcrumbItem } from '@/types';

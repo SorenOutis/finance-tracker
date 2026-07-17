@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import {
-    Camera, ScanLine, Upload, FileText, X, Image,
-    Check, ChevronRight, Trash2, AlertCircle
+    Camera, X, Image,
+    Check, Trash2, AlertCircle
 } from 'lucide-vue-next';
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
+import { ref, onMounted, onUnmounted, watch } from 'vue';
 
 const emit = defineEmits<{
     (e: 'captured', data: { photoBlob: Blob; previewUrl: string; }): void;
@@ -23,7 +23,7 @@ const capturedImage = ref<string | null>(props.receiptPreview || null);
 const capturedBlob = ref<Blob | null>(null);
 const hasCamera = ref(false);
 const errorMsg = ref('');
-const isScanning = ref(false);
+
 
 // Check camera availability
 onMounted(async () => {

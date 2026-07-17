@@ -1,10 +1,9 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue';
 import {
     Bell, BellRing, AlertTriangle, Target, TrendingUp,
-    CheckCheck, X, ArrowRight
+    CheckCheck
 } from 'lucide-vue-next';
-import { Link } from '@inertiajs/vue3';
+import { ref, onMounted, computed } from 'vue';
 
 interface Notification {
     id: string;

@@ -93,8 +93,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Enhancement: Data Import
     // ============================================================
     Route::get('import', [\App\Http\Controllers\ImportController::class, 'index'])->name('import');
-    Route::post('import/preview', [\App\Http\Controllers\ImportController::class, 'preview'])->name('import.preview');
-    Route::post('import/process', [\App\Http\Controllers\ImportController::class, 'import'])->name('import.process');
+    Route::post('import/preview', [\App\Http\Controllers\ImportController::class, 'preview'])
+        ->middleware('throttle:10,1')
+        ->name('import.preview');
+    Route::post('import/process', [\App\Http\Controllers\ImportController::class, 'import'])
+        ->middleware('throttle:5,1')
+        ->name('import.process');
 
     // ============================================================
     // Enhancement: Savings Envelopes
@@ -122,7 +126,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         );
 
         return response()->json(['suggestion' => $suggestion]);
-    })->name('suggest-category');
+    })->middleware('throttle:30,1')->name('suggest-category');
 
     // ============================================================
     // Enhancement: Receipt Photo Upload

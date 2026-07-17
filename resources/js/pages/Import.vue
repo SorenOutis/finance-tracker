@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { Head, router } from '@inertiajs/vue3';
+import { Head } from '@inertiajs/vue3';
 import {
-    Upload, FileSpreadsheet, CheckCheck, ChevronRight, ArrowLeft,
-    Download, FileText, AlertCircle, Check, X
+    Upload, CheckCheck, ArrowLeft,
+    Download, AlertCircle
 } from 'lucide-vue-next';
 import { ref } from 'vue';
 import AppLayout from '@/layouts/AppLayout.vue';
@@ -17,7 +17,6 @@ const steps = ['Upload', 'Map Columns', 'Confirm'];
 const currentStep = ref(1);
 const file = ref<File | null>(null);
 const hasHeader = ref(true);
-const sourceType = ref('');
 
 const mapping = ref({
     date: '',

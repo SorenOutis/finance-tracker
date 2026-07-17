@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3';
+import { usePage } from '@inertiajs/vue3';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import {
@@ -22,7 +23,6 @@ import {
     X,
 } from 'lucide-vue-next';
 import { onMounted, ref, computed } from 'vue';
-import { usePage } from '@inertiajs/vue3';
 import { useAppearance } from '@/composables/useAppearance';
 import { useSmoothScroll } from '@/composables/useSmoothScroll';
 import { dashboard, login, register, home, pricing } from '@/routes';
@@ -541,14 +541,14 @@ onMounted(() => {
     <Head title="Finance Tracker — Master Your Wealth">
         <meta name="description" content="A minimalist finance tracker dashboard. Track your assets, analyze spending, set budgets, and secure your financial future with pure clarity. Start free." />
         <meta name="keywords" content="finance tracker, personal finance, budgeting app, expense tracker, wealth management, financial dashboard" />
-        <link rel="canonical" :href="absoluteUrl('/', $page.props.appUrl)" />
+        <link rel="canonical" :href="absoluteUrl('/', appUrl)" />
 
         <!-- Open Graph -->
         <meta property="og:title" content="Finance Tracker — Master Your Wealth" />
         <meta property="og:description" content="Master your wealth journey with a minimalist finance dashboard. Track assets, analyze spending, set intelligent budgets, and achieve your financial goals." />
         <meta property="og:type" content="website" />
-        <meta property="og:url" :content="absoluteUrl('/', $page.props.appUrl)" />
-        <meta property="og:image" :content="absoluteUrl('/apple-touch-icon.png', $page.props.appUrl)" />
+        <meta property="og:url" :content="absoluteUrl('/', appUrl)" />
+        <meta property="og:image" :content="absoluteUrl('/apple-touch-icon.png', appUrl)" />
         <meta property="og:image:width" content="166" />
         <meta property="og:image:height" content="166" />
         <meta property="og:image:alt" content="Finance Tracker Logo" />
@@ -559,7 +559,7 @@ onMounted(() => {
         <meta name="twitter:card" content="summary" />
         <meta name="twitter:title" content="Finance Tracker — Master Your Wealth" />
         <meta name="twitter:description" content="Track assets, analyze spending, and secure your financial future with minimalist clarity. Start your journey free." />
-        <meta name="twitter:image" :content="absoluteUrl('/apple-touch-icon.png', $page.props.appUrl)" />
+        <meta name="twitter:image" :content="absoluteUrl('/apple-touch-icon.png', appUrl)" />
 
         <!-- JSON-LD Structured Data -->
         <script type="application/ld+json" v-html="ldWebsite"></script>
@@ -1051,7 +1051,7 @@ onMounted(() => {
                 <!-- Feature cards grid -->
                 <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 lg:gap-6">
                     <div
-                        v-for="(feature, index) in features"
+                        v-for="feature in features"
                         :key="feature.title"
                         class="feature-card group relative p-6 sm:p-8 rounded-2xl sm:rounded-3xl border border-border/30 bg-card/30 backdrop-blur-sm transition-all duration-300 hover:border-border/60 hover:bg-card/50 hover:shadow-xl hover:-translate-y-1"
                     >

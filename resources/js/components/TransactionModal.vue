@@ -3,15 +3,15 @@ import {
     X, Calendar, FileText, ChevronRight,
     Wallet, ShoppingCart, Car, Home,
     Utensils, Coffee, Zap, Heart,
-    Landmark, MoreHorizontal, Camera, Image,
+    Landmark, MoreHorizontal, Camera,
     ArrowDownRight, ArrowUpRight,
 } from 'lucide-vue-next';
-import ReceiptScanner from '@/components/ReceiptScanner.vue';
 import { ref, computed, watch, nextTick } from 'vue';
-import { useSheetDrag } from '@/composables/useSheetDrag';
-import { useHaptic } from '@/composables/useHaptic';
 import DatePickerSheet from '@/components/DatePickerSheet.vue';
+import ReceiptScanner from '@/components/ReceiptScanner.vue';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { useHaptic } from '@/composables/useHaptic';
+import { useSheetDrag } from '@/composables/useSheetDrag';
 
 interface Account {
     id: number | string;

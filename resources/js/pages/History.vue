@@ -1,21 +1,21 @@
 <script setup lang="ts">
 import { Head, router } from '@inertiajs/vue3';
+import { usePage } from '@inertiajs/vue3';
+import { useStorage } from '@vueuse/core';
 import {
     Search, ArrowDownRight, ArrowUpRight, History as HistoryIcon, Trash2, Inbox,
 } from 'lucide-vue-next';
 import { ref, computed, watch, onMounted } from 'vue';
-import { usePage } from '@inertiajs/vue3';
-import { useStorage } from '@vueuse/core';
-import { useOnboarding } from '@/composables/useOnboarding';
 import OnboardingTour from '@/components/OnboardingTour.vue';
 import PullToRefresh from '@/components/PullToRefresh.vue';
-import SwipeToDelete from '@/components/SwipeToDelete.vue';
-import { usePageLoading } from '@/composables/usePageLoading';
 import HistorySkeleton from '@/components/Skeletons/HistorySkeleton.vue';
+import SwipeToDelete from '@/components/SwipeToDelete.vue';
+import { useOnboarding } from '@/composables/useOnboarding';
+import { usePageLoading } from '@/composables/usePageLoading';
+import { useToast } from '@/composables/useToast';
 import AppLayout from '@/layouts/AppLayout.vue';
 import type { BreadcrumbItem } from '@/types';
 import { formatCurrency } from '@/utils/currency';
-import { useToast } from '@/composables/useToast';
 
 interface AccountRef { id: number; name: string; color: string | null; type: string; }
 interface HistoryItem {
@@ -98,7 +98,7 @@ const deleteItem = (item: HistoryItem) => {
 };
 
 const refreshHistory = () => {
-    router.reload({ preserveScroll: true, only: ['items', 'query'] });
+    router.reload({ only: ['items', 'query'] });
 };
 
 // Onboarding

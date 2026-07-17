@@ -1,9 +1,13 @@
 <script setup lang="ts">
 import { Link, router } from '@inertiajs/vue3';
-import { LayoutGrid, History, CreditCard, User, Plus, Wallet, CalendarClock, ArrowDownRight, ArrowUpRight, X } from 'lucide-vue-next';
+import {
+    LayoutGrid, History, CreditCard, User, Plus, Wallet, CalendarClock,
+    ArrowDownRight, ArrowUpRight, X, LineChart, Tags, CalendarDays,
+    PiggyBank, Download, Sparkles, ReceiptText, Grid3x3,
+} from 'lucide-vue-next';
 import { ref } from 'vue';
 import { useCurrentUrl } from '@/composables/useCurrentUrl';
-import { dashboard } from '@/routes';
+import { dashboard, analytics } from '@/routes';
 
 const { isCurrentUrl } = useCurrentUrl();
 
@@ -11,10 +15,28 @@ const navItems = [
     { title: 'Dashboard', href: dashboard().url, icon: LayoutGrid },
     { title: 'History', href: '/history', icon: History },
     { title: 'Wallets', href: '/wallets', icon: CreditCard },
+    { title: 'More', href: '', icon: Grid3x3 },
+];
+
+const moreItems = [
+    { title: 'Bills', href: '/bills', icon: CalendarClock },
+    { title: 'Expenses', href: '/expenses', icon: ReceiptText },
+    { title: 'Income', href: '/incomes', icon: Wallet },
+    { title: 'Analytics', href: analytics().url, icon: LineChart },
+    { title: 'Categories', href: '/categories', icon: Tags },
+    { title: 'Calendar', href: '/calendar', icon: CalendarDays },
+    { title: 'Envelopes', href: '/envelopes', icon: PiggyBank },
+    { title: 'Import', href: '/import', icon: Download },
+    { title: 'Pricing', href: '/pricing', icon: Sparkles },
     { title: 'Profile', href: '/settings/profile', icon: User },
 ];
 
+function isMoreActive() {
+    return moreItems.some(item => item.href && isCurrentUrl(item.href));
+}
+
 const showAddSheet = ref(false);
+const showMoreSheet = ref(false);
 
 const quickAddOptions = [
     { key: 'wallets-add-modal', href: '/wallets', label: 'Wallet', sub: 'Account or card', icon: Wallet, accent: 'indigo' },
@@ -34,6 +56,11 @@ const triggerAdd = (option: typeof quickAddOptions[number]) => {
     showAddSheet.value = false;
     try { localStorage.setItem(option.key, 'true'); } catch {}
     router.visit(option.href);
+};
+
+const navigateTo = (href: string) => {
+    showMoreSheet.value = false;
+    router.visit(href);
 };
 </script>
 
@@ -66,20 +93,30 @@ const triggerAdd = (option: typeof quickAddOptions[number]) => {
                 <span class="text-[10px] font-bold mt-1 text-foreground">Add</span>
             </button>
 
+            <!-- Wallet + More -->
             <Link
-                v-for="item in navItems.slice(2)"
-                :key="item.title"
-                :href="item.href"
+                :href="navItems[2].href"
                 class="relative flex flex-1 flex-col items-center justify-center gap-1 py-1.5 px-1 text-[10px] font-medium transition-all"
-                :class="isCurrentUrl(item.href) ? 'text-primary' : 'text-muted-foreground hover:text-foreground'"
+                :class="isCurrentUrl(navItems[2].href) ? 'text-primary' : 'text-muted-foreground hover:text-foreground'"
             >
-                <div v-show="isCurrentUrl(item.href)" class="absolute -top-2 left-1/2 h-1 w-1 -translate-x-1/2 rounded-full bg-primary" />
-                <component :is="item.icon" class="h-6 w-6 stroke-[1.5]" />
-                <span class="truncate">{{ item.title }}</span>
+                <div v-show="isCurrentUrl(navItems[2].href)" class="absolute -top-2 left-1/2 h-1 w-1 -translate-x-1/2 rounded-full bg-primary" />
+                <component :is="navItems[2].icon" class="h-6 w-6 stroke-[1.5]" />
+                <span class="truncate">{{ navItems[2].title }}</span>
             </Link>
+
+            <button
+                @click="showMoreSheet = true"
+                class="relative flex flex-1 flex-col items-center justify-center gap-1 py-1.5 px-1 text-[10px] font-medium transition-all"
+                :class="isMoreActive() ? 'text-primary' : 'text-muted-foreground hover:text-foreground'"
+            >
+                <div v-show="isMoreActive()" class="absolute -top-2 left-1/2 h-1 w-1 -translate-x-1/2 rounded-full bg-primary" />
+                <Grid3x3 class="h-6 w-6 stroke-[1.5]" />
+                <span class="truncate">More</span>
+            </button>
         </div>
     </nav>
 
+    <!-- ===== Quick Add Sheet ===== -->
     <Teleport to="body">
         <Transition
             enter-active-class="transition duration-200" leave-active-class="transition duration-150"
@@ -111,6 +148,46 @@ const triggerAdd = (option: typeof quickAddOptions[number]) => {
                         </div>
                         <span class="text-xs font-black">{{ opt.label }}</span>
                         <span class="text-[9px] text-muted-foreground text-center leading-tight">{{ opt.sub }}</span>
+                    </button>
+                </div>
+            </div>
+        </Transition>
+    </Teleport>
+
+    <!-- ===== More Navigation Sheet ===== -->
+    <Teleport to="body">
+        <Transition
+            enter-active-class="transition duration-200" leave-active-class="transition duration-150"
+            enter-from-class="opacity-0" leave-to-class="opacity-0"
+        >
+            <div v-if="showMoreSheet" @click="showMoreSheet = false" class="fixed inset-0 z-[60] bg-black/50 backdrop-blur-sm md:hidden" />
+        </Transition>
+        <Transition
+            enter-active-class="transition duration-300 ease-out" leave-active-class="transition duration-200 ease-in"
+            enter-from-class="translate-y-full opacity-0" leave-to-class="translate-y-full opacity-0"
+        >
+            <div v-if="showMoreSheet"
+                class="fixed left-4 right-4 z-[61] rounded-[28px] border border-border/40 bg-background p-5 shadow-2xl md:hidden"
+                style="bottom: calc(7rem + env(safe-area-inset-bottom));"
+            >
+                <div class="flex items-center justify-between mb-3">
+                    <h3 class="text-sm font-black tracking-tight">All Pages</h3>
+                    <button @click="showMoreSheet = false" class="p-1.5 rounded-full hover:bg-muted/50">
+                        <X class="h-4 w-4 text-muted-foreground" />
+                    </button>
+                </div>
+                <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-[340px] overflow-y-auto">
+                    <button
+                        v-for="item in moreItems"
+                        :key="item.title"
+                        @click="navigateTo(item.href)"
+                        class="flex flex-col items-center justify-center gap-1.5 rounded-2xl border border-border/30 bg-card/30 p-3 transition-all active:scale-95 hover:bg-card/60 hover:border-border/60"
+                        :class="isCurrentUrl(item.href) ? 'border-primary/40 bg-primary/5 ring-1 ring-primary/20' : ''"
+                    >
+                        <div class="p-1.5 rounded-xl" :class="isCurrentUrl(item.href) ? 'bg-primary/10 text-primary' : 'bg-muted/30 text-muted-foreground'">
+                            <component :is="item.icon" class="h-5 w-5" />
+                        </div>
+                        <span class="text-[9px] font-bold text-center leading-tight" :class="isCurrentUrl(item.href) ? 'text-primary' : 'text-foreground'">{{ item.title }}</span>
                     </button>
                 </div>
             </div>

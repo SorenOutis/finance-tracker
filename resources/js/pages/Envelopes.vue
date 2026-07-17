@@ -2,14 +2,14 @@
 import { Head, useForm, router, Link } from '@inertiajs/vue3';
 import {
     PiggyBank, Plus, Trash2, Target, Wallet, Home, ShoppingCart,
-    Heart, MapPin, ShieldCheck, MoreHorizontal, ChevronRight, X,
-    ArrowDownRight, ArrowUpRight, CreditCard, CalendarClock, ReceiptText, Check
+    Heart, MapPin, ShieldCheck, ChevronRight, X,
+    ArrowDownRight, CreditCard, Check
 } from 'lucide-vue-next';
 import { ref, computed } from 'vue';
+import { useToast } from '@/composables/useToast';
 import AppLayout from '@/layouts/AppLayout.vue';
 import type { BreadcrumbItem } from '@/types';
 import { formatCurrency } from '@/utils/currency';
-import { useToast } from '@/composables/useToast';
 
 interface AccountRef { id: number; name: string; type: string; color: string | null; }
 interface Envelope {
@@ -34,8 +34,6 @@ const editingEnv = ref<Envelope | null>(null);
 const colorPalette = ['#6366F1', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#3B82F6', '#14B8A6', '#F97316'];
 
 const { addToast } = useToast();
-const iconOptions = ['PiggyBank', 'Home', 'ShoppingCart', 'Heart', 'MapPin', 'ShieldCheck', 'Target', 'Wallet'];
-
 const iconMap: Record<string, any> = { PiggyBank, Home, ShoppingCart, Heart, MapPin, ShieldCheck, Target, Wallet };
 
 const form = useForm({
@@ -89,7 +87,7 @@ const openAllocate = (env: Envelope) => {
 const doAllocate = () => {
     if (!allocateEnv.value || !allocateForm.amount) return;
     allocateForm.post(`/envelopes/${allocateEnv.value.id}/allocate`, {
-        onSuccess: () => { showAllocate.value = false; allocateEnv.value = null; addToast({ type: 'success', title: 'Money Allocated', message: `₱${Number(allocateForm.amount).toLocaleString()} to ${allocateEnv.value.name}` }); }
+        onSuccess: () => { showAllocate.value = false; const envName = allocateEnv.value?.name || 'Envelope'; allocateEnv.value = null; addToast({ type: 'success', title: 'Money Allocated', message: `₱${Number(allocateForm.amount).toLocaleString()} to ${envName}` }); }
     });
 };
 

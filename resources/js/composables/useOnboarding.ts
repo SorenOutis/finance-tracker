@@ -1,5 +1,5 @@
-import { ref, computed, watch } from 'vue';
 import { router } from '@inertiajs/vue3';
+import { ref, computed, watch } from 'vue';
 
 export interface OnboardingStep {
     title: string;
@@ -14,7 +14,7 @@ export function useOnboarding(steps: OnboardingStep[]) {
     const onboardingStep = ref(1);
     const totalSteps = steps.length;
 
-    const tooltipStyle = ref({ top: '50%', left: '50%', transform: 'translate(-50%, -50%)' });
+    const tooltipStyle = ref<Record<string, string>>({ top: '50%', left: '50%', transform: 'translate(-50%, -50%)' });
     const tooltipSide = ref<'top' | 'bottom'>('bottom');
 
     const currentStep = computed(() => steps[onboardingStep.value - 1]);

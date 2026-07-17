@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue';
 import { ChevronLeft, ChevronRight, Calendar, X } from 'lucide-vue-next';
+import { ref, computed, watch } from 'vue';
 import { useHaptic } from '@/composables/useHaptic';
 
 const props = defineProps<{
@@ -15,10 +15,7 @@ const emit = defineEmits<{
     (e: 'select', value: string): void;
 }>();
 
-const months = [
-    'January', 'February', 'March', 'April', 'May', 'June',
-    'July', 'August', 'September', 'October', 'November', 'December',
-];
+
 
 const shortMonths = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
@@ -82,11 +79,6 @@ const confirmSelection = () => {
 
 const close = () => {
     emit('update:open', false);
-};
-
-// Check if a month index is currently selected
-const isSelected = (monthIndex: number) => {
-    return selectedMonth.value === monthIndex;
 };
 
 // Check if a month is "current" (today's month)

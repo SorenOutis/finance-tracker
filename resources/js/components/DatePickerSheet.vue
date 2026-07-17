@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue';
 import { ChevronLeft, ChevronRight, Calendar, X } from 'lucide-vue-next';
+import { ref, computed, watch } from 'vue';
 import { useHaptic } from '@/composables/useHaptic';
 
 const props = defineProps<{
