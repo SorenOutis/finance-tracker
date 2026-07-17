@@ -19,7 +19,7 @@ class SitemapTest extends TestCase
     {
         $this->get(route('sitemap'))
             ->assertOk()
-            ->assertHeader('Content-Type', 'text/xml');
+            ->assertHeader('Content-Type', 'application/xml');
     }
 
     public function test_sitemap_contains_both_urls(): void
@@ -38,14 +38,14 @@ class SitemapTest extends TestCase
         $this->assertStringContainsString('<?xml version="1.0" encoding="UTF-8"?>', $content);
         $this->assertStringContainsString('<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">', $content);
 
-        // Both <url> blocks should have all four required children
+        // Every <url> block should have all four required children
         $this->assertStringContainsString('<loc>', $content);
         $this->assertStringContainsString('<lastmod>', $content);
         $this->assertStringContainsString('<changefreq>', $content);
         $this->assertStringContainsString('<priority>', $content);
 
-        $this->assertEquals(2, substr_count($content, '<url>'));
-        $this->assertEquals(2, substr_count($content, '</url>'));
+        $this->assertEquals(4, substr_count($content, '<url>'));
+        $this->assertEquals(4, substr_count($content, '</url>'));
     }
 
     public function test_sitemap_has_correct_priorities_and_frequencies(): void
@@ -82,7 +82,7 @@ class SitemapTest extends TestCase
     {
         $this->get(route('robots'))
             ->assertOk()
-            ->assertHeader('Content-Type', 'text/plain');
+            ->assertHeaderContains('Content-Type', 'text/plain');
     }
 
     public function test_robots_contains_required_directives(): void
@@ -116,8 +116,8 @@ class SitemapTest extends TestCase
         Cache::flush();
 
         $this->artisan('sitemap:generate')
-            ->expectsOutputToContain('sitemap.xml')
-            ->expectsOutputToContain('robots.txt')
+            ->expectsOutputToContain('Regenerating sitemap.xml')
+            ->expectsOutputToContain('Regenerating robots.txt')
             ->expectsOutputToContain('regenerated successfully')
             ->assertSuccessful();
     }

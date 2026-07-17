@@ -329,6 +329,19 @@ class DashboardController extends Controller
             ]),
             'recurringIncomes' => $recurringIncomes,
             'upcomingBills' => $upcomingBills->values(),
+            'recurringTransactions' => RecurringTransaction::where('user_id', $user->id)
+                ->where('is_active', true)
+                ->orderBy('next_due_date', 'asc')
+                ->get()
+                ->map(fn ($rt) => [
+                    'id' => $rt->id,
+                    'name' => $rt->name,
+                    'amount' => (float) $rt->amount,
+                    'type' => $rt->type,
+                    'frequency' => $rt->frequency,
+                    'next_due_date' => $rt->next_due_date->toDateString(),
+                    'color' => $rt->color,
+                ]),
             'accounts' => $accounts->values(),
         ]);
     }
