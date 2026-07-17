@@ -108,4 +108,73 @@ class SitemapTest extends TestCase
     {
         $this->get(route('robots'))->assertOk();
     }
+
+    // ─── sitemap:generate Command ─────────────────────────────────
+
+    public function test_sitemap_generate_command_succeeds(): void
+    {
+        Cache::flush();
+
+        $this->artisan('sitemap:generate')
+            ->expectsOutputToContain('sitemap.xml')
+            ->expectsOutputToContain('robots.txt')
+            ->expectsOutputToContain('regenerated successfully')
+            ->assertSuccessful();
+    }
+
+    public function test_sitemap_generate_warms_sitemap_cache(): void
+    {
+        Cache::forget('sitemap.xml');
+        $this->assertFalse(Cache::has('sitemap.xml'));
+
+        $this->artisan('sitemap:generate')->assertSuccessful();
+
+        $this->assertTrue(Cache::has('sitemap.xml'));
+        $content = Cache::get('sitemap.xml');
+        $this->assertStringContainsString('<loc>'.config('app.url').'/</loc>', $content);
+        $this->assertStringContainsString('<loc>'.config('app.url').'/pricing</loc>', $content);
+    }
+
+    public function test_sitemap_generate_warms_robots_cache(): void
+    {
+        Cache::forget('robots.txt');
+        $this->assertFalse(Cache::has('robots.txt'));
+
+        $this->artisan('sitemap:generate')->assertSuccessful();
+
+        $this->assertTrue(Cache::has('robots.txt'));
+        $content = Cache::get('robots.txt');
+        $this->assertStringContainsString('User-agent: *', $content);
+        $this->assertStringContainsString('Sitemap: '.config('app.url').'/sitemap.xml', $content);
+    }
+
+    public function test_sitemap_generate_overwrites_existing_cache(): void
+    {
+        // Populate cache with stale content
+        Cache::put('sitemap.xml', 'stale-content', 86400);
+        Cache::put('robots.txt', 'stale-content', 86400);
+
+        $this->artisan('sitemap:generate')->assertSuccessful();
+
+        // Cache should now have fresh content, not the stale placeholder
+        $this->assertStringContainsString('<urlset', Cache::get('sitemap.xml'));
+        $this->assertStringContainsString('User-agent: *', Cache::get('robots.txt'));
+    }
+
+    public function test_sitemap_generate_is_idempotent(): void
+    {
+        $this->artisan('sitemap:generate')->assertSuccessful();
+        $firstXml = Cache::get('sitemap.xml');
+        $firstRobots = Cache::get('robots.txt');
+
+        $this->artisan('sitemap:generate')->assertSuccessful();
+        $secondXml = Cache::get('sitemap.xml');
+        $secondRobots = Cache::get('robots.txt');
+
+        // Content should be the same (minus date which might differ)
+        $this->assertStringContainsString('<loc>', $firstXml);
+        $this->assertStringContainsString('<loc>', $secondXml);
+        $this->assertStringContainsString('User-agent:', $firstRobots);
+        $this->assertStringContainsString('User-agent:', $secondRobots);
+    }
 }
