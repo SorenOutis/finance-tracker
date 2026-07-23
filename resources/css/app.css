@@ -70,7 +70,6 @@
   color utility to any element that depends on these defaults.
 */
 @layer base {
-
     *,
     ::after,
     ::before,
@@ -81,7 +80,6 @@
 }
 
 @layer utilities {
-
     body,
     html {
         --font-sans:
@@ -177,15 +175,29 @@
 
     body {
         @apply bg-background text-foreground;
+        text-rendering: optimizeLegibility;
+    }
+
+    button,
+    a,
+    input,
+    select,
+    textarea {
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    :focus-visible {
+        outline: 2px solid var(--ring);
+        outline-offset: 3px;
     }
 }
 
 @layer utilities {
-
     /* Card Styling */
     .surface-card {
         @apply rounded-2xl border border-border/40 bg-card text-card-foreground;
-        box-shadow: rgba(14, 63, 126, 0.04) 0px 0px 0px 1px,
+        box-shadow:
+            rgba(14, 63, 126, 0.04) 0px 0px 0px 1px,
             rgba(42, 51, 69, 0.04) 0px 1px 1px -0.5px,
             rgba(42, 51, 70, 0.04) 0px 3px 3px -1.5px,
             rgba(42, 51, 70, 0.04) 0px 6px 6px -3px,
@@ -198,16 +210,35 @@
     }
 
     .premium-hover:hover {
-        @apply -translate-y-1 scale-[1.02];
-        box-shadow: rgba(14, 63, 126, 0.08) 0px 0px 0px 1px,
+        @apply -translate-y-0.5;
+        box-shadow:
+            rgba(14, 63, 126, 0.08) 0px 0px 0px 1px,
             rgba(42, 51, 69, 0.08) 0px 2px 4px -1px,
             rgba(42, 51, 70, 0.08) 0px 6px 12px -2px,
             rgba(42, 51, 70, 0.08) 12px 24px -4px;
     }
 
+    /* Consistent touch affordance for mobile-first actions. */
+    .interactive-target {
+        min-width: 2.75rem;
+        min-height: 2.75rem;
+    }
+
+    /* Ensure interactive elements meet 44px minimum touch target on mobile.
+       Apple HIG and WCAG 2.5.5 recommend at least 44×44 CSS px for touch. */
+    .touch-target {
+        min-height: 2.75rem;
+    }
+
+    .touch-target-min {
+        min-width: 2.75rem;
+        min-height: 2.75rem;
+    }
+
     .surface-elevated {
         @apply rounded-xl border border-border/40 bg-card/90 text-card-foreground backdrop-blur-md;
-        box-shadow: rgba(14, 63, 126, 0.04) 0px 0px 0px 1px,
+        box-shadow:
+            rgba(14, 63, 126, 0.04) 0px 0px 0px 1px,
             rgba(42, 51, 69, 0.04) 0px 1px 1px -0.5px,
             rgba(42, 51, 70, 0.04) 0px 3px 3px -1.5px,
             rgba(42, 51, 70, 0.04) 0px 6px 6px -3px;
@@ -215,12 +246,14 @@
 
     /* Glowing elements */
     .glow-teal-sm {
-        box-shadow: 0 0 12px 4px rgba(0, 200, 160, 0.1),
+        box-shadow:
+            0 0 12px 4px rgba(0, 200, 160, 0.1),
             0 0 24px 8px rgba(0, 200, 160, 0.05);
     }
 
     .glow-teal-md {
-        box-shadow: 0 0 16px 6px rgba(0, 200, 160, 0.15),
+        box-shadow:
+            0 0 16px 6px rgba(0, 200, 160, 0.15),
             0 0 32px 12px rgba(0, 200, 160, 0.1);
     }
 
@@ -287,23 +320,43 @@
 
     /* Stat card tint variants */
     .stat-tint-income {
-        background: linear-gradient(135deg, oklch(0.76 0.16 162 / 0.06), transparent 60%);
+        background: linear-gradient(
+            135deg,
+            oklch(0.76 0.16 162 / 0.06),
+            transparent 60%
+        );
     }
 
     .stat-tint-expense {
-        background: linear-gradient(135deg, oklch(0.62 0.22 18 / 0.06), transparent 60%);
+        background: linear-gradient(
+            135deg,
+            oklch(0.62 0.22 18 / 0.06),
+            transparent 60%
+        );
     }
 
     .stat-tint-positive {
-        background: linear-gradient(135deg, oklch(0.76 0.16 162 / 0.04), transparent 60%);
+        background: linear-gradient(
+            135deg,
+            oklch(0.76 0.16 162 / 0.04),
+            transparent 60%
+        );
     }
 
     .stat-tint-negative {
-        background: linear-gradient(135deg, oklch(0.62 0.22 18 / 0.04), transparent 60%);
+        background: linear-gradient(
+            135deg,
+            oklch(0.62 0.22 18 / 0.04),
+            transparent 60%
+        );
     }
 
     .stat-tint-accent {
-        background: linear-gradient(135deg, oklch(0.6 0.118 184.704 / 0.06), transparent 60%);
+        background: linear-gradient(
+            135deg,
+            oklch(0.6 0.118 184.704 / 0.06),
+            transparent 60%
+        );
     }
 
     /* Entry row hover accent */
@@ -330,6 +383,17 @@
 
     .list-slide-leave-active {
         position: absolute;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        scroll-behavior: auto !important;
+        transition-duration: 0.01ms !important;
     }
 }
 
