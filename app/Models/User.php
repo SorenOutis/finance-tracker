@@ -2,13 +2,14 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Fortify\TwoFactorAuthenticatable;
 
-class User extends Authenticatable
+class User extends Authenticatable implements MustVerifyEmail
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable, TwoFactorAuthenticatable;
@@ -24,6 +25,9 @@ class User extends Authenticatable
         'password',
         'pin',
         'is_onboarded',
+        'terms_accepted_at',
+        'terms_version',
+        'must_reset_password',
     ];
 
     /**
@@ -52,6 +56,14 @@ class User extends Authenticatable
             'pin' => 'hashed',
             'is_onboarded' => 'boolean',
             'two_factor_confirmed_at' => 'datetime',
+            'terms_accepted_at' => 'datetime',
+            'must_reset_password' => 'boolean',
         ];
+    }
+
+    /** @return HasMany<SocialAccount, $this> */
+    public function socialAccounts(): HasMany
+    {
+        return $this->hasMany(SocialAccount::class);
     }
 }

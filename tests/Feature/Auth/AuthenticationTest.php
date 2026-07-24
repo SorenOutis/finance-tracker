@@ -25,7 +25,7 @@ class AuthenticationTest extends TestCase
 
         $response = $this->post(route('login.store'), [
             'email' => $user->email,
-            'password' => '123456',
+            'password' => 'F1nance!Vault#2026',
         ]);
 
         $this->assertAuthenticated();
@@ -53,7 +53,7 @@ class AuthenticationTest extends TestCase
 
         $response = $this->post(route('login'), [
             'email' => $user->email,
-            'password' => '123456',
+            'password' => 'F1nance!Vault#2026',
         ]);
 
         $response->assertRedirect(route('two-factor.login'));
@@ -70,6 +70,19 @@ class AuthenticationTest extends TestCase
             'password' => 'wrong-password',
         ]);
 
+        $this->assertGuest();
+    }
+
+    public function test_legacy_users_are_sent_to_password_reset_and_logged_out()
+    {
+        $user = User::factory()->create(['must_reset_password' => true]);
+
+        $response = $this->post(route('login.store'), [
+            'email' => $user->email,
+            'password' => 'F1nance!Vault#2026',
+        ]);
+
+        $response->assertRedirect(route('password.request'));
         $this->assertGuest();
     }
 

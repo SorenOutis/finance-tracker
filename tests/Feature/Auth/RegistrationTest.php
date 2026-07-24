@@ -21,20 +21,31 @@ class RegistrationTest extends TestCase
         $response = $this->post(route('register.store'), [
             'name' => 'Test User',
             'email' => 'test@example.com',
-            'password' => '123456',
-            'password_confirmation' => '123456',
-            'account_name' => 'Test Wallet',
-            'initial_balance' => 1000,
-            'currency' => 'PHP',
+            'password' => 'F1nance!Vault#2026',
+            'password_confirmation' => 'F1nance!Vault#2026',
+            'terms' => true,
         ]);
 
         $this->assertAuthenticated();
-        $response->assertRedirect(route('dashboard', absolute: false));
+        $response->assertRedirect(route('verification.notice', absolute: false));
 
-        $this->assertDatabaseHas('accounts', [
-            'name' => 'Test Wallet',
-            'initial_balance' => 1000,
-            'currency' => 'PHP',
+        $this->assertDatabaseHas('users', [
+            'email' => 'test@example.com',
+            'terms_version' => '2026-01',
         ]);
+        $this->assertDatabaseCount('accounts', 0);
+    }
+
+    public function test_registration_requires_terms_and_a_strong_password()
+    {
+        $response = $this->post(route('register.store'), [
+            'name' => 'Test User',
+            'email' => 'test@example.com',
+            'password' => '123456',
+            'password_confirmation' => '123456',
+        ]);
+
+        $response->assertSessionHasErrors(['password', 'terms']);
+        $this->assertDatabaseCount('users', 0);
     }
 }

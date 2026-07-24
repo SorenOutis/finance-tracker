@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\Auth\GoogleAuthenticationController;
+use App\Http\Controllers\OnboardingController;
 use Illuminate\Support\Facades\Route;
 use Laravel\Fortify\Features;
 
@@ -25,13 +27,24 @@ Route::get('/robots.txt', [
     'index',
 ])->name('robots');
 
-Route::middleware(['auth', 'verified'])->group(function () {
-    Route::get('dashboard', \App\Http\Controllers\DashboardController::class)->name('dashboard');
-    Route::post('onboarding/complete', function () {
-        auth()->user()->update(['is_onboarded' => true]);
+Route::middleware('guest')->group(function () {
+    Route::get('auth/google', [GoogleAuthenticationController::class, 'redirectForLogin'])
+        ->name('google.login');
+    Route::post('auth/google/register', [GoogleAuthenticationController::class, 'redirectForRegistration'])
+        ->middleware('throttle:registration')
+        ->name('google.register');
+    Route::get('auth/google/callback', [GoogleAuthenticationController::class, 'callback'])
+        ->middleware('throttle:10,1')
+        ->name('google.callback');
+});
 
-        return back();
-    })->name('onboarding.complete');
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('onboarding', [OnboardingController::class, 'show'])->name('onboarding.show');
+    Route::post('onboarding', [OnboardingController::class, 'store'])->name('onboarding.store');
+});
+
+Route::middleware(['auth', 'verified', 'onboarded'])->group(function () {
+    Route::get('dashboard', \App\Http\Controllers\DashboardController::class)->name('dashboard');
     Route::get('yearly', \App\Http\Controllers\YearlyController::class)->name('yearly');
     Route::get('analytics', \App\Http\Controllers\AnalyticsController::class)->name('analytics');
     Route::get('history', \App\Http\Controllers\HistoryController::class)->name('history');

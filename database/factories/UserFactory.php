@@ -27,11 +27,15 @@ class UserFactory extends Factory
             'name' => fake()->name(),
             'email' => fake()->unique()->safeEmail(),
             'email_verified_at' => now(),
-            'password' => static::$password ??= Hash::make('123456'),
+            'password' => static::$password ??= Hash::make('F1nance!Vault#2026'),
             'remember_token' => Str::random(10),
             'two_factor_secret' => null,
             'two_factor_recovery_codes' => null,
             'two_factor_confirmed_at' => null,
+            'terms_accepted_at' => now(),
+            'terms_version' => '2026-01',
+            'must_reset_password' => false,
+            'is_onboarded' => true,
         ];
     }
 
