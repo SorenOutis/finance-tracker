@@ -4,10 +4,9 @@ namespace App\Actions\Fortify;
 
 use App\Concerns\PasswordValidationRules;
 use App\Concerns\ProfileValidationRules;
-use App\Models\Account;
 use App\Models\User;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 use Laravel\Fortify\Contracts\CreatesNewUsers;
 
 class CreateNewUser implements CreatesNewUsers
@@ -24,27 +23,17 @@ class CreateNewUser implements CreatesNewUsers
         Validator::make($input, [
             ...$this->profileRules(),
             'password' => $this->passwordRules(),
-            'account_name' => ['required', 'string', 'max:255'],
-            'initial_balance' => ['required', 'numeric', 'min:0'],
-            'currency' => ['required', 'string', 'size:3'],
+            'terms' => ['accepted'],
         ])->validate();
 
-        return DB::transaction(function () use ($input) {
-            $user = User::create([
-                'name' => $input['name'],
-                'email' => $input['email'],
-                'password' => $input['password'],
-            ]);
-
-            Account::create([
-                'user_id' => $user->id,
-                'name' => $input['account_name'],
-                'type' => 'cash',
-                'initial_balance' => $input['initial_balance'],
-                'currency' => $input['currency'] ?? 'PHP',
-            ]);
-
-            return $user;
-        });
+        return User::create([
+            'name' => $input['name'],
+            'email' => Str::lower($input['email']),
+            'password' => $input['password'],
+            'terms_accepted_at' => now(),
+            'terms_version' => config('auth.terms_version'),
+            'must_reset_password' => false,
+            'is_onboarded' => false,
+        ]);
     }
 }

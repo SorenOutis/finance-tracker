@@ -41,8 +41,14 @@ class HandleInertiaRequests extends Middleware
             'appUrl' => config('app.url'),
             'auth' => [
                 'user' => $request->user(),
+                'security' => $request->user() ? [
+                    'isVerified' => $request->user()->hasVerifiedEmail(),
+                    'isOnboarded' => $request->user()->is_onboarded,
+                    'mustResetPassword' => $request->user()->must_reset_password,
+                    'hasTransactionPin' => $request->user()->pin !== null,
+                    'hasTwoFactorAuthentication' => $request->user()->two_factor_confirmed_at !== null,
+                ] : null,
             ],
-            'defaultEmail' => rescue(fn () => \App\Models\User::first()?->email, null, false),
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
         ];
     }

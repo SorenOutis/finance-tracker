@@ -4,10 +4,10 @@ namespace App\Providers;
 
 use App\Actions\Fortify\CreateNewUser;
 use App\Actions\Fortify\ResetUserPassword;
-use App\Models\User;
+use App\Http\Responses\LoginResponse;
+use App\Http\Responses\RegisterResponse;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
@@ -34,15 +34,8 @@ class FortifyServiceProvider extends ServiceProvider
         $this->configureViews();
         $this->configureRateLimiting();
 
-        Fortify::authenticateUsing(function (Request $request) {
-            $user = User::where('email', $request->email)->first();
-
-            if ($user && Hash::check($request->password, $user->password)) {
-                return $user;
-            }
-
-            return null;
-        });
+        $this->app->singleton(\Laravel\Fortify\Contracts\LoginResponse::class, LoginResponse::class);
+        $this->app->singleton(\Laravel\Fortify\Contracts\RegisterResponse::class, RegisterResponse::class);
     }
 
     /**
@@ -105,11 +98,16 @@ class FortifyServiceProvider extends ServiceProvider
         });
 
         RateLimiter::for('password-reset', function (Request $request) {
-            return Limit::perHour(3)->by($request->input('email').'|'.$request->ip());
+            $email = Str::lower((string) $request->input('email'));
+
+            return Limit::perHour(3)->by($email.'|'.$request->ip());
         });
 
         RateLimiter::for('api', function (Request $request) {
-            return Limit::perMinute(200)->by($request->user()->id);
+            return Limit::perMinute(200)->by($request->user()?->id ?: $request->ip());
         });
+
+        RateLimiter::for('transaction-pin', fn (Request $request) => Limit::perMinute(6)
+            ->by((string) ($request->user()?->id ?: $request->ip())));
     }
 }
