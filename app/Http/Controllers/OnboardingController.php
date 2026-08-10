@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\CompleteOnboardingRequest;
 use App\Models\Account;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -47,6 +48,13 @@ class OnboardingController extends Controller
 
             $user->update(['is_onboarded' => true]);
         });
+
+        return redirect()->route('dashboard');
+    }
+
+    public function complete(Request $request): RedirectResponse
+    {
+        $request->user()->update(['is_onboarded' => true]);
 
         return redirect()->route('dashboard');
     }
