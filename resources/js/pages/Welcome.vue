@@ -1527,7 +1527,7 @@ onMounted(() => {
                                     :href="'/terms'"
                                     class="text-xs sm:text-sm text-muted-foreground/70 hover:text-foreground transition-colors font-medium"
                                 >
-                                    Terms of Service
+                                    Terms of Services
                                 </Link>
                             </li>
                         </ul>
